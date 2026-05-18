@@ -292,7 +292,7 @@
             }, 7000); // Cambiado de 5000 a 7000 (2 segundos más tarde)
         }
 
-       function revealAnswer() {
+      function revealAnswer() {
     const overlay = document.getElementById('mystery-overlay');
     if(overlay) overlay.style.display = 'none';
     
@@ -305,37 +305,41 @@
         if (opt.getAttribute('data-text') === correctText) {
             opt.classList.add('is-correct');
             opt.querySelector('.icon').classList.add('show-icon');
-            opt.style.visibility = 'visible'; // La correcta siempre visible
+            opt.style.setProperty('visibility', 'visible', 'important');
         } else {
-            // CAMBIO AQUÍ: Desaparecen inmediatamente al revelarse, 
-            // a menos que el juego YA estuviera pausado antes de este segundo.
+            // If we are NOT paused, they drop to hidden instantly.
+            // If we ARE paused (because STOP was pressed), they stay visible.
             if (!isPaused) {
-                opt.style.visibility = 'hidden';
+                opt.style.setProperty('visibility', 'hidden', 'important');
             } else {
-                opt.style.visibility = 'visible';
+                opt.style.setProperty('visibility', 'visible', 'important');
             }
         }
     });
-
-    // Si el juego sigue su curso normal, programamos el avance
     if(!isPaused) t3 = setTimeout(() => { currentIdx++; render(); }, 3000);
 }
 
-        function togglePause() {
-            const btn = document.getElementById('main-action-btn');
-            if (!isPaused) {
-                isPaused = true; btn.innerText = "SEGUIR"; btn.className = "btn btn-generate";
-                clearTimeout(t1); clearTimeout(t2); clearTimeout(t3);
-                revealAnswer(); 
-                // Al pausar, forzamos que todas vuelvan a ser visibles para revisión
-                document.querySelectorAll('.option').forEach(opt => opt.style.visibility = 'visible');
-                document.getElementById('timer-bar').style.transition = 'none';
-                document.getElementById('timer-bar').style.width = '0%';
-            } else {
-                isPaused = false; btn.innerText = "STOP"; btn.className = "btn btn-stop";
-                currentIdx++; render();
-            }
-        }
+function togglePause() {
+    const btn = document.getElementById('main-action-btn');
+    if (!isPaused) {
+        isPaused = true; 
+        btn.innerText = "SEGUIR"; 
+        btn.className = "btn btn-generate";
+        
+        clearTimeout(t1); 
+        clearTimeout(t2); 
+        clearTimeout(t3);
+        
+        // Force the reveal logic under the paused state
+        revealAnswer(); 
+    } else {
+        isPaused = false; 
+        btn.innerText = "STOP"; 
+        btn.className = "btn btn-stop";
+        currentIdx++; 
+        render();
+    }
+}
 
         function downloadHTML() {
             const title = document.getElementById('quiz-title-input').value || "QUIZ";
