@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quiz Interactive Pro - Generator</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght=400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: #2c3e50;
@@ -132,14 +132,13 @@
             justify-content: space-between; 
             align-items: center; 
             opacity: 0.95;
-            transition: opacity 0.3s ease, visibility 0.3s ease;
+            /* Se eliminó la transición de opacidad/visibilidad para evitar el parpadeo y lograr el cambio inmediato en el mismo segundo */
         }
 
-        /* Cambios de color solicitados: A verde, B rojo */
         .color-A { background-color: var(--success); } 
         .color-B { background-color: var(--error); } 
         .color-C { background-color: #3498db; } 
-        .color-D { background-color: #f1c40f; color: #333 !important; } /* Cambiado de E a D */
+        .color-D { background-color: #f1c40f; color: #333 !important; } 
         
         .is-correct { 
             opacity: 1 !important; 
@@ -152,7 +151,7 @@
         .show-icon { visibility: visible; }
 
         #timer-bar-container { width: 100%; background: #e2e8f0; height: 12px; border-radius: 6px; margin-bottom: 30px; overflow: hidden; }
-        #timer-bar { height: 100%; background: var(--success); width: 100%; transition: width 7s linear; } /* Ajustado a 7s por los 2s extra */
+        #timer-bar { height: 100%; background: var(--success); width: 100%; transition: width 7s linear; } 
 
         #mystery-overlay { 
             position: absolute; top: 0; left: 0; font-size: 10rem; color: #000; 
@@ -161,7 +160,6 @@
             justify-content: center; border-radius: 20px; z-index: 10; font-weight: 800;
         }
         
-        /* Modificado para que los bloques de respuestas mantengan un 50% más de opacidad (aprox 0.4 - 0.5) en lugar del difuminado extremo original */
         .opaque-answers .option {
             opacity: 0.45;
         }
@@ -230,7 +228,6 @@
             return result;
         }
 
-        // Función para mezclar el array (Fisher-Yates Shuffle)
         function shuffleArray(array) {
             for (let i = array.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -274,7 +271,7 @@
                 '<div class="option color-A" data-text="' + item.options[0] + '">A. ' + item.options[0] + ' <span class="icon">✔</span></div>' +
                 '<div class="option color-B" data-text="' + item.options[1] + '">B. ' + item.options[1] + ' <span class="icon">✔</span></div>' +
                 '<div class="option color-C" data-text="' + item.options[2] + '">C. ' + item.options[2] + ' <span class="icon">✔</span></div>' +
-                '<div class="option color-D" data-text="' + item.options[3] + '">D. ' + item.options[3] + ' <span class="icon">✔</span></div>' + // Cambiado de E a D
+                '<div class="option color-D" data-text="' + item.options[3] + '">D. ' + item.options[3] + ' <span class="icon">✔</span></div>' + 
                 '</div></div>';
             if(!isPaused) startFlow();
         }
@@ -282,64 +279,66 @@
         function startFlow() {
             const bar = document.getElementById('timer-bar');
             bar.style.transition = 'none'; bar.style.width = '100%';
-            // Ahora la barra dura 7 segundos (5s originales + 2s solicitados)
             setTimeout(() => { bar.style.transition = 'width 7s linear'; bar.style.width = '0%'; }, 50);
             
             t1 = setTimeout(() => {
                 document.getElementById('mystery-overlay').style.display = 'flex';
-                document.getElementById('options-wrapper').classList.add('opaque-answers'); // Aplica opacidad del 50% más alta
+                document.getElementById('options-wrapper').classList.add('opaque-answers'); 
                 t2 = setTimeout(revealAnswer, 2000);
-            }, 7000); // Cambiado de 5000 a 7000 (2 segundos más tarde)
+            }, 7000); 
         }
 
-      function revealAnswer() {
-    const overlay = document.getElementById('mystery-overlay');
-    if(overlay) overlay.style.display = 'none';
-    
-    const wrapper = document.getElementById('options-wrapper');
-    if(wrapper) wrapper.classList.remove('opaque-answers');
+        function revealAnswer() {
+            const overlay = document.getElementById('mystery-overlay');
+            if(overlay) overlay.style.display = 'none';
+            
+            const wrapper = document.getElementById('options-wrapper');
+            if(wrapper) wrapper.classList.remove('opaque-answers');
 
-    const correctText = questions[currentIdx].correctText;
-    
-    document.querySelectorAll('.option').forEach(opt => {
-        if (opt.getAttribute('data-text') === correctText) {
-            opt.classList.add('is-correct');
-            opt.querySelector('.icon').classList.add('show-icon');
-            opt.style.setProperty('visibility', 'visible', 'important');
-        } else {
-            // If we are NOT paused, they drop to hidden instantly.
-            // If we ARE paused (because STOP was pressed), they stay visible.
+            const correctText = questions[currentIdx].correctText;
+            
+            document.querySelectorAll('.option').forEach(opt => {
+                if (opt.getAttribute('data-text') === correctText) {
+                    opt.classList.add('is-correct');
+                    opt.querySelector('.icon').classList.add('show-icon');
+                    opt.style.setProperty('visibility', 'visible', 'important');
+                } else {
+                    // Si NO está pausado, desaparecen en el mismo instante exacto.
+                    // Si está pausado (por pulsar STOP), se mantienen visibles para revisión.
+                    if (!isPaused) {
+                        opt.style.setProperty('visibility', 'hidden', 'important');
+                    } else {
+                        opt.style.setProperty('visibility', 'visible', 'important');
+                    }
+                }
+            });
+            if(!isPaused) t3 = setTimeout(() => { currentIdx++; render(); }, 3000);
+        }
+
+        function togglePause() {
+            const btn = document.getElementById('main-action-btn');
             if (!isPaused) {
-                opt.style.setProperty('visibility', 'hidden', 'important');
+                isPaused = true; 
+                btn.innerText = "SEGUIR"; 
+                btn.className = "btn btn-generate";
+                
+                clearTimeout(t1); 
+                clearTimeout(t2); 
+                clearTimeout(t3);
+                
+                revealAnswer(); 
+                // Al pausar de manera manual, forzamos que las incorrectas vuelvan / sigan visibles
+                document.querySelectorAll('.option').forEach(opt => opt.style.setProperty('visibility', 'visible', 'important'));
+                document.getElementById('timer-bar').style.transition = 'none';
+                document.getElementById('timer-bar').style.width = '0%';
             } else {
-                opt.style.setProperty('visibility', 'visible', 'important');
+                isPaused = false; 
+                btn.innerText = "STOP"; 
+                btn.className = "btn btn-stop";
+                currentIdx++; 
+                render();
             }
         }
-    });
-    if(!isPaused) t3 = setTimeout(() => { currentIdx++; render(); }, 3000);
-}
-
-function togglePause() {
-    const btn = document.getElementById('main-action-btn');
-    if (!isPaused) {
-        isPaused = true; 
-        btn.innerText = "SEGUIR"; 
-        btn.className = "btn btn-generate";
-        
-        clearTimeout(t1); 
-        clearTimeout(t2); 
-        clearTimeout(t3);
-        
-        // Force the reveal logic under the paused state
-        revealAnswer(); 
-    } else {
-        isPaused = false; 
-        btn.innerText = "STOP"; 
-        btn.className = "btn btn-stop";
-        currentIdx++; 
-        render();
-    }
-}
 
         function downloadHTML() {
             const title = document.getElementById('quiz-title-input').value || "QUIZ";
@@ -362,7 +361,6 @@ function togglePause() {
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
             
-            // Nombre de archivo sin espacios: "quiz" + titulo sin espacios
             const cleanTitle = title.replace(/\s+/g, '');
             a.download = 'quiz' + cleanTitle + '.html';
             a.click();
