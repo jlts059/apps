@@ -292,31 +292,34 @@
             }, 7000); // Cambiado de 5000 a 7000 (2 segundos más tarde)
         }
 
-        function revealAnswer() {
-            const overlay = document.getElementById('mystery-overlay');
-            if(overlay) overlay.style.display = 'none';
-            
-            const wrapper = document.getElementById('options-wrapper');
-            if(wrapper) wrapper.classList.remove('opaque-answers');
+       function revealAnswer() {
+    const overlay = document.getElementById('mystery-overlay');
+    if(overlay) overlay.style.display = 'none';
+    
+    const wrapper = document.getElementById('options-wrapper');
+    if(wrapper) wrapper.classList.remove('opaque-answers');
 
-            const correctText = questions[currentIdx].correctText;
-            
-            document.querySelectorAll('.option').forEach(opt => {
-                if (opt.getAttribute('data-text') === correctText) {
-                    opt.classList.add('is-correct');
-                    opt.querySelector('.icon').classList.add('show-icon');
-                    opt.style.visibility = 'visible';
-                } else {
-                    // Si no está pausado, las incorrectas desaparecen por completo
-                    if (!isPaused) {
-                        opt.style.visibility = 'hidden';
-                    } else {
-                        opt.style.visibility = 'visible';
-                    }
-                }
-            });
-            if(!isPaused) t3 = setTimeout(() => { currentIdx++; render(); }, 3000);
+    const correctText = questions[currentIdx].correctText;
+    
+    document.querySelectorAll('.option').forEach(opt => {
+        if (opt.getAttribute('data-text') === correctText) {
+            opt.classList.add('is-correct');
+            opt.querySelector('.icon').classList.add('show-icon');
+            opt.style.visibility = 'visible'; // La correcta siempre visible
+        } else {
+            // CAMBIO AQUÍ: Desaparecen inmediatamente al revelarse, 
+            // a menos que el juego YA estuviera pausado antes de este segundo.
+            if (!isPaused) {
+                opt.style.visibility = 'hidden';
+            } else {
+                opt.style.visibility = 'visible';
+            }
         }
+    });
+
+    // Si el juego sigue su curso normal, programamos el avance
+    if(!isPaused) t3 = setTimeout(() => { currentIdx++; render(); }, 3000);
+}
 
         function togglePause() {
             const btn = document.getElementById('main-action-btn');
