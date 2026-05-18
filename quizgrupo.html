@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quiz Interactive Pro - Generator</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght=400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: #2c3e50;
@@ -73,7 +73,7 @@
 
         textarea { height: 180px; font-family: 'Courier New', Courier, monospace; font-size: 0.9rem; }
         
-        .controls { margin-top: 30px; display: flex; justify-content: center; gap: 20px; }
+        .controls { margin-top: 30px; display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
         
         .btn { 
             padding: 16px 35px; 
@@ -132,12 +132,14 @@
             justify-content: space-between; 
             align-items: center; 
             opacity: 0.95;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
         }
 
-        .color-A { background-color: var(--error); } 
-        .color-B { background-color: var(--success); } 
+        /* Cambios de color solicitados: A verde, B rojo */
+        .color-A { background-color: var(--success); } 
+        .color-B { background-color: var(--error); } 
         .color-C { background-color: #3498db; } 
-        .color-E { background-color: #f1c40f; color: #333 !important; }
+        .color-D { background-color: #f1c40f; color: #333 !important; } /* Cambiado de E a D */
         
         .is-correct { 
             opacity: 1 !important; 
@@ -150,13 +152,18 @@
         .show-icon { visibility: visible; }
 
         #timer-bar-container { width: 100%; background: #e2e8f0; height: 12px; border-radius: 6px; margin-bottom: 30px; overflow: hidden; }
-        #timer-bar { height: 100%; background: var(--success); width: 100%; transition: width 5s linear; }
+        #timer-bar { height: 100%; background: var(--success); width: 100%; transition: width 7s linear; } /* Ajustado a 7s por los 2s extra */
 
         #mystery-overlay { 
             position: absolute; top: 0; left: 0; font-size: 10rem; color: #000; 
             background: rgba(255,255,255,0.7); backdrop-filter: blur(8px); 
             width: 100%; height: 100%; display: none; align-items: center; 
             justify-content: center; border-radius: 20px; z-index: 10; font-weight: 800;
+        }
+        
+        /* Modificado para que los bloques de respuestas mantengan un 50% más de opacidad (aprox 0.4 - 0.5) en lugar del difuminado extremo original */
+        .opaque-answers .option {
+            opacity: 0.45;
         }
     </style>
 </head>
@@ -173,14 +180,18 @@
             <textarea id="data-input" placeholder="Pregunta	Op1	Op2	Op3	Op4	Correcta"></textarea>
         </div>
         <div class="controls">
-            <button class="btn btn-generate" onclick="startQuiz()">Generar e Iniciar</button>
+            <button class="btn btn-generate" onclick="startQuiz(false)">Generar e Iniciar</button>
+            <button class="btn btn-generate" style="background-color: #8e44ad;" onclick="startQuiz(true)">Generar e Iniciar (Shuffle)</button>
             <button class="btn btn-download" onclick="downloadHTML()">Descargar HTML</button>
         </div>
     </div>
 
     <div id="start-container" style="display:none; text-align: center; margin-top: 15vh;">
         <h1 id="final-title-display" style="font-size: 4rem; color: var(--primary); margin-bottom: 50px;"></h1>
-        <button class="btn btn-generate" style="font-size: 3.5rem; padding: 50px 110px; border-radius: 100px;" onclick="realStart()">START</button>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 20px;">
+            <button class="btn btn-generate" style="font-size: 3.5rem; padding: 40px 90px; border-radius: 100px;" onclick="realStart(false)">START</button>
+            <button class="btn btn-generate" style="font-size: 2.2rem; padding: 25px 60px; border-radius: 100px; background-color: #8e44ad;" onclick="realStart(true)">SHUFFLE</button>
+        </div>
     </div>
 
     <div id="quiz-area">
@@ -219,16 +230,31 @@
             return result;
         }
 
-        function startQuiz() {
+        // Función para mezclar el array (Fisher-Yates Shuffle)
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function startQuiz(shouldShuffle) {
             const raw = document.getElementById('data-input').value;
             questions = parseData(raw);
             if(questions.length === 0) return alert("Introduce datos válidos.");
+            if(shouldShuffle) {
+                questions = shuffleArray(questions);
+            }
             document.getElementById('setup').style.display = 'none';
             document.getElementById('quiz-area').style.display = 'block';
             render();
         }
 
-        function realStart() {
+        function realStart(shouldShuffle) {
+            if(shouldShuffle) {
+                questions = shuffleArray(questions);
+            }
             document.getElementById('start-container').style.setProperty('display', 'none', 'important');
             document.getElementById('quiz-area').style.display = 'block';
             render();
@@ -244,11 +270,11 @@
             document.getElementById('card-target').innerHTML = 
                 '<div class="title-badge" style="position: absolute; top: -65px; right: 0;">' + titleText + '</div>' +
                 '<div class="question-card"><div id="mystery-overlay">?</div><div class="question-text">' + item.q + '</div>' +
-                '<div class="options-grid">' +
+                '<div class="options-grid" id="options-wrapper">' +
                 '<div class="option color-A" data-text="' + item.options[0] + '">A. ' + item.options[0] + ' <span class="icon">✔</span></div>' +
                 '<div class="option color-B" data-text="' + item.options[1] + '">B. ' + item.options[1] + ' <span class="icon">✔</span></div>' +
                 '<div class="option color-C" data-text="' + item.options[2] + '">C. ' + item.options[2] + ' <span class="icon">✔</span></div>' +
-                '<div class="option color-E" data-text="' + item.options[3] + '">E. ' + item.options[3] + ' <span class="icon">✔</span></div>' +
+                '<div class="option color-D" data-text="' + item.options[3] + '">D. ' + item.options[3] + ' <span class="icon">✔</span></div>' + // Cambiado de E a D
                 '</div></div>';
             if(!isPaused) startFlow();
         }
@@ -256,21 +282,37 @@
         function startFlow() {
             const bar = document.getElementById('timer-bar');
             bar.style.transition = 'none'; bar.style.width = '100%';
-            setTimeout(() => { bar.style.transition = 'width 5s linear'; bar.style.width = '0%'; }, 50);
+            // Ahora la barra dura 7 segundos (5s originales + 2s solicitados)
+            setTimeout(() => { bar.style.transition = 'width 7s linear'; bar.style.width = '0%'; }, 50);
+            
             t1 = setTimeout(() => {
                 document.getElementById('mystery-overlay').style.display = 'flex';
+                document.getElementById('options-wrapper').classList.add('opaque-answers'); // Aplica opacidad del 50% más alta
                 t2 = setTimeout(revealAnswer, 2000);
-            }, 5000);
+            }, 7000); // Cambiado de 5000 a 7000 (2 segundos más tarde)
         }
 
         function revealAnswer() {
             const overlay = document.getElementById('mystery-overlay');
             if(overlay) overlay.style.display = 'none';
+            
+            const wrapper = document.getElementById('options-wrapper');
+            if(wrapper) wrapper.classList.remove('opaque-answers');
+
             const correctText = questions[currentIdx].correctText;
+            
             document.querySelectorAll('.option').forEach(opt => {
                 if (opt.getAttribute('data-text') === correctText) {
                     opt.classList.add('is-correct');
                     opt.querySelector('.icon').classList.add('show-icon');
+                    opt.style.visibility = 'visible';
+                } else {
+                    // Si no está pausado, las incorrectas desaparecen por completo
+                    if (!isPaused) {
+                        opt.style.visibility = 'hidden';
+                    } else {
+                        opt.style.visibility = 'visible';
+                    }
                 }
             });
             if(!isPaused) t3 = setTimeout(() => { currentIdx++; render(); }, 3000);
@@ -282,6 +324,8 @@
                 isPaused = true; btn.innerText = "SEGUIR"; btn.className = "btn btn-generate";
                 clearTimeout(t1); clearTimeout(t2); clearTimeout(t3);
                 revealAnswer(); 
+                // Al pausar, forzamos que todas vuelvan a ser visibles para revisión
+                document.querySelectorAll('.option').forEach(opt => opt.style.visibility = 'visible');
                 document.getElementById('timer-bar').style.transition = 'none';
                 document.getElementById('timer-bar').style.width = '0%';
             } else {
@@ -295,19 +339,25 @@
             const data = document.getElementById('data-input').value;
             const head = document.head.innerHTML;
             const script = document.getElementById('main-logic').innerHTML;
+            
             const htmlContent = '<!DOCTYPE html><html><head><meta charset="UTF-8">' + head + '</head><body>' +
                 '<div style="display:none;"><input type="text" id="quiz-title-input" value="' + title + '"><textarea id="data-input">' + data + '</textarea></div>' +
-                '<div id="start-container" style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; background:#f4f7f6; position:fixed; top:0; left:0; width:100%; z-index:9999;">' +
-                '<h1 style="font-size: 4rem; color:#2c3e50; margin-bottom:50px; font-family:sans-serif; font-weight:800;">' + title.toUpperCase() + '</h1>' +
-                '<button class="btn btn-generate" style="font-size: 4rem; padding: 50px 100px; border-radius: 100px;" onclick="realStart()">START</button></div>' +
+                '<div id="start-container" style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; background:#f4f7f6; position:fixed; top:0; left:0; width:100%; z-index:9999; gap:20px;">' +
+                '<h1 style="font-size: 4rem; color:#2c3e50; margin-bottom:30px; font-family:sans-serif; font-weight:800;">' + title.toUpperCase() + '</h1>' +
+                '<button class="btn btn-generate" style="font-size: 3.5rem; padding: 40px 90px; border-radius: 100px;" onclick="realStart(false)">START</button>' +
+                '<button class="btn btn-generate" style="font-size: 2.2rem; padding: 25px 60px; border-radius: 100px; background-color: #8e44ad;" onclick="realStart(true)">SHUFFLE</button></div>' +
                 '<div id="quiz-area" style="display:none; width: 100%; max-width: 850px; margin: 100px auto 40px auto; position: relative;">' +
                 '<div id="timer-bar-container"><div id="timer-bar"></div></div><div id="card-target"></div>' +
                 '<div class="controls"><button id="main-action-btn" class="btn btn-stop" onclick="togglePause()">STOP</button></div></div>' +
                 '<script>' + script + '\n window.onload = () => { questions = parseData(document.getElementById("data-input").value); }; <\/script></body></html>';
+            
             const blob = new Blob([htmlContent], { type: 'text/html' });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = title.replace(/\s+/g, '_') + '.html';
+            
+            // Nombre de archivo sin espacios: "quiz" + titulo sin espacios
+            const cleanTitle = title.replace(/\s+/g, '');
+            a.download = 'quiz' + cleanTitle + '.html';
             a.click();
         }
     </script>
