@@ -47,7 +47,7 @@
                 container.innerHTML = ''; // Borramos el mensaje de "Cargando"
 
                 files.forEach(file => {
-                    // Filtramos: solo archivos .html y que no sea el index
+                    // Filtramos: solo archivos .html excepto el index
                     if (file.name.endsWith('.html') && file.name.toLowerCase() !== 'index.html') {
                         
                         const link = document.createElement('a');
