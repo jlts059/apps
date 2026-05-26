@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ruleta Pro</title>
+    <style>
+        :root { --bg: #fdfdfd; --text: #475569; --accent: #e2e8f0; --result-color: #ec4899; --needle-color: #94a3b8; }
+        body { font-family: sans-serif; background: var(--bg); color: var(--text); display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        #main-title { font-size: 2rem; font-weight: 800; margin: 20px 0; text-align: center; }
+        #resultado-display { height: 100px; display: flex; align-items: center; justify-content: center; width: 100%; margin-bottom: 20px; }
+        #resultado-texto { font-size: 2.5rem; font-weight: bold; color: var(--result-color); text-align: center; }
+        #ruleta-wrapper { position: relative; cursor: pointer; }
+        #aguja { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 25px solid var(--needle-color); z-index: 10; }
+        #ruleta-circulo { width: 200px; height: 200px; border-radius: 50%; border: 8px solid var(--accent); background: linear-gradient(135deg, #f8fafc, #cbd5e1); transition: transform 4s cubic-bezier(0.15, 0, 0.15, 1); display: flex; align-items: center; justify-content: center; }
+        #ruleta-circulo::after { content: "↻"; font-size: 3rem; color: white; opacity: 0.5; }
+        .setup-container { margin-top: 30px; width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 10px; }
+        textarea { height: 100px; padding: 10px; border-radius: 10px; border: 1px solid #ccc; }
+        button { padding: 10px; border-radius: 20px; border: 1px solid #ccc; cursor: pointer; background: #eee; font-weight: bold; }
+        .hidden { display: none !important; }
+        .qr-container img { width: 80px; height: 80px; }
+    </style>
+</head>
+<body>
+
+    <div class="qr-container"><img id="qrCode" src="" alt="QR"></div>
+    <div id="main-title">Ruleta Maestra</div>
+    <div id="resultado-display"><span id="resultado-texto">Toca para girar</span></div>
+
+    <div id="ruleta-wrapper" onclick="girar()">
+        <div id="aguja"></div>
+        <div id="ruleta-circulo"></div>
+    </div>
+
+    <div id="setup" class="setup-container">
+        <textarea id="inputFrases" placeholder="Frases (una por línea)..."></textarea>
+        <button onclick="descargarHTML()">Guardar .html (Modo Juego)</button>
+        <div id="contador" style="font-size: 0.8rem; color: #999; text-align: center;"></div>
+    </div>
+
+    <script>
+        let frases = [];
+        let anguloActual = 0;
+        let girando = false;
+
+        window.onload = () => {
+            const input = document.getElementById('inputFrases');
+            const setup = document.getElementById('setup');
+            
+            // Si el textarea ya tiene texto de fábrica, ocultamos el panel
+            if (input.value.trim() !== "") {
+                setup.classList.add('hidden');
+                frases = input.value.split('\n').filter(f => f.trim() !== "");
+            }
+
+            // Generar QR
+            const qr = document.getElementById('qrCode');
+            qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(window.location.href)}`;
+        };
+
+        function girar() {
+            if (girando) return;
+            const input = document.getElementById('inputFrases');
+            const txt = document.getElementById('resultado-texto');
+            const circulo = document.getElementById('ruleta-circulo');
+
+            if (frases.length === 0) {
+                frases = input.value.split('\n').filter(f => f.trim() !== "");
+            }
+
+            if (frases.length === 0) return alert("Escribe frases primero");
+
+            girando = true;
+            anguloActual += 1440 + Math.floor(Math.random() * 1440);
+            circulo.style.transform = `rotate(${anguloActual}deg)`;
+
+            setTimeout(() => {
+                girando = false;
+                const index = Math.floor(Math.random() * frases.length);
+                const seleccionada = frases[index];
+                txt.innerText = seleccionada;
+                // Eliminar para que no repita
+                frases.splice(index, 1);
+                document.getElementById('contador').innerText = frases.length + " restantes";
+            }, 4000);
+        }
+
+        function descargarHTML() {
+            const val = document.getElementById('inputFrases').value;
+            if(!val) return alert("Pon frases");
+            
+            const titulo = document.getElementById('main-title').innerText;
+            const clon = document.documentElement.cloneNode(true);
+            
+            // PASO CRÍTICO: Inyectar el valor directamente en el atributo HTML
+            clon.querySelector('#inputFrases').innerHTML = val;
+            clon.querySelector('#setup').classList.add('hidden');
+
+            const blob = new Blob([clon.outerHTML], {type: 'text/html'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = "mi_ruleta.html";
+            a.click();
+        }
+    </script>
+</body>
+</html>
