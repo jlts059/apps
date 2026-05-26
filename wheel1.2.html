@@ -3,29 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ruleta Pro</title>
+    <title>Ruleta Pro Adaptativa</title>
     <style>
-        :root { --bg: #fdfdfd; --text: #475569; --accent: #e2e8f0; --result-color: #ec4899; --needle-color: #94a3b8; }
-        body { font-family: sans-serif; background: var(--bg); color: var(--text); display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        #main-title { font-size: 2rem; font-weight: 800; margin: 20px 0; text-align: center; }
-        #resultado-display { height: 100px; display: flex; align-items: center; justify-content: center; width: 100%; margin-bottom: 20px; }
-        #resultado-texto { font-size: 2.5rem; font-weight: bold; color: var(--result-color); text-align: center; }
-        #ruleta-wrapper { position: relative; cursor: pointer; }
-        #aguja { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 25px solid var(--needle-color); z-index: 10; }
-        #ruleta-circulo { width: 200px; height: 200px; border-radius: 50%; border: 8px solid var(--accent); background: linear-gradient(135deg, #f8fafc, #cbd5e1); transition: transform 4s cubic-bezier(0.15, 0, 0.15, 1); display: flex; align-items: center; justify-content: center; }
-        #ruleta-circulo::after { content: "↻"; font-size: 3rem; color: white; opacity: 0.5; }
-        .setup-container { margin-top: 30px; width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 10px; }
-        textarea { height: 100px; padding: 10px; border-radius: 10px; border: 1px solid #ccc; }
-        button { padding: 10px; border-radius: 20px; border: 1px solid #ccc; cursor: pointer; background: #eee; font-weight: bold; }
+        :root {
+            --bg: #fdfdfd;
+            --text: #475569;
+            --accent: #e2e8f0;
+            --result-color: #ec4899; 
+            --needle-color: #94a3b8;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+
+        #main-title {
+            font-size: 2rem;
+            font-weight: 800;
+            margin: 20px 0;
+            text-align: center;
+            color: var(--text);
+        }
+
+        .qr-container { margin-bottom: 10px; }
+        .qr-container img { width: 70px; height: 70px; background: white; padding: 5px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+
+        #resultado-display {
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            width: 100%;
+        }
+
+        #resultado-texto {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--result-color);
+            transition: opacity 0.3s;
+        }
+
+        #ruleta-wrapper { position: relative; margin: 20px 0; cursor: pointer; }
+        #aguja {
+            position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+            border-left: 15px solid transparent; border-right: 15px solid transparent;
+            border-top: 25px solid var(--needle-color); z-index: 10;
+        }
+
+        #ruleta-circulo {
+            width: 200px; height: 200px; border-radius: 50%;
+            border: 8px solid var(--accent);
+            background: linear-gradient(135deg, #f8fafc 0%, #cbd5e1 100%);
+            display: flex; align-items: center; justify-content: center;
+            transition: transform 4s cubic-bezier(0.15, 0, 0.15, 1);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        #ruleta-circulo::after { content: "↻"; font-size: 2.5rem; color: white; opacity: 0.6; }
+
+        .setup-container {
+            width: 100%; max-width: 400px; margin-top: 20px;
+            display: flex; flex-direction: column; align-items: center; gap: 10px;
+        }
+
+        textarea { width: 100%; height: 100px; padding: 12px; border-radius: 12px; border: 1px solid var(--accent); resize: none; }
+        .btn-download { background: #f1f5f9; border: 1px solid var(--accent); padding: 10px 20px; border-radius: 20px; cursor: pointer; font-weight: bold; color: #64748b; }
+        
         .hidden { display: none !important; }
-        .qr-container img { width: 80px; height: 80px; }
     </style>
 </head>
 <body>
 
     <div class="qr-container"><img id="qrCode" src="" alt="QR"></div>
-    <div id="main-title">Ruleta Maestra</div>
-    <div id="resultado-display"><span id="resultado-texto">Toca para girar</span></div>
+    <div id="main-title"></div>
+
+    <div id="resultado-display">
+        <span id="resultado-texto">Toca para girar</span>
+    </div>
 
     <div id="ruleta-wrapper" onclick="girar()">
         <div id="aguja"></div>
@@ -33,9 +96,9 @@
     </div>
 
     <div id="setup" class="setup-container">
-        <textarea id="inputFrases" placeholder="Frases (una por línea)..."></textarea>
-        <button onclick="descargarHTML()">Guardar .html (Modo Juego)</button>
-        <div id="contador" style="font-size: 0.8rem; color: #999; text-align: center;"></div>
+        <textarea id="inputFrases" placeholder="Escribe frases (una por línea)..."></textarea>
+        <button class="btn-download" onclick="descargarHTML()">Guardar .html Personalizado</button>
+        <div id="contador" style="font-size: 0.8rem; font-weight: bold; color: #94a3b8;"></div>
     </div>
 
     <script>
@@ -44,18 +107,22 @@
         let girando = false;
 
         window.onload = () => {
+            const titleDiv = document.getElementById('main-title');
             const input = document.getElementById('inputFrases');
             const setup = document.getElementById('setup');
-            
-            // Si el textarea ya tiene texto de fábrica, ocultamos el panel
-            if (input.value.trim() !== "") {
+
+            // 1. Detectar si ya hay contenido (Es una copia)
+            if (input.innerHTML.trim() !== "") {
                 setup.classList.add('hidden');
-                frases = input.value.split('\n').filter(f => f.trim() !== "");
+                frases = input.innerHTML.split('\n').filter(f => f.trim() !== "");
+            } else {
+                // 2. Es el Maestro: Pedir título
+                const promptTitle = prompt("¿Qué título le ponemos a la ruleta?");
+                titleDiv.innerText = promptTitle || "Ruleta de Clase";
             }
 
-            // Generar QR
-            const qr = document.getElementById('qrCode');
-            qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(window.location.href)}`;
+            // 3. Generar QR
+            document.getElementById('qrCode').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(window.location.href)}`;
         };
 
         function girar() {
@@ -63,43 +130,47 @@
             const input = document.getElementById('inputFrases');
             const txt = document.getElementById('resultado-texto');
             const circulo = document.getElementById('ruleta-circulo');
+            const cont = document.getElementById('contador');
 
             if (frases.length === 0) {
                 frases = input.value.split('\n').filter(f => f.trim() !== "");
             }
 
-            if (frases.length === 0) return alert("Escribe frases primero");
+            if (frases.length === 0) return alert("Escribe frases en el cuadro de abajo.");
 
             girando = true;
+            txt.style.opacity = "0.3";
             anguloActual += 1440 + Math.floor(Math.random() * 1440);
             circulo.style.transform = `rotate(${anguloActual}deg)`;
 
             setTimeout(() => {
                 girando = false;
                 const index = Math.floor(Math.random() * frases.length);
-                const seleccionada = frases[index];
-                txt.innerText = seleccionada;
-                // Eliminar para que no repita
+                const ganadora = frases[index];
+                txt.innerText = ganadora;
+                txt.style.opacity = "1";
+                
                 frases.splice(index, 1);
-                document.getElementById('contador').innerText = frases.length + " restantes";
+                cont.innerText = frases.length + " RESTANTES";
             }, 4000);
         }
 
         function descargarHTML() {
             const val = document.getElementById('inputFrases').value;
-            if(!val) return alert("Pon frases");
-            
             const titulo = document.getElementById('main-title').innerText;
+            if(!val.trim()) return alert("¡Añade contenido!");
+
             const clon = document.documentElement.cloneNode(true);
             
-            // PASO CRÍTICO: Inyectar el valor directamente en el atributo HTML
+            // Inyectamos el título y las frases en el código de la copia
+            clon.querySelector('#main-title').innerText = titulo;
             clon.querySelector('#inputFrases').innerHTML = val;
             clon.querySelector('#setup').classList.add('hidden');
 
             const blob = new Blob([clon.outerHTML], {type: 'text/html'});
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = "mi_ruleta.html";
+            a.download = titulo.replace(/\s+/g, '_').toLowerCase() + ".html";
             a.click();
         }
     </script>

@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Pair Matcher</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --success: #10b981;
+            --error: #ef4444;
+            --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f3f4f6;
+            color: #1f2937;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        #setup-screen, #admin-view {
+            max-width: 700px;
+            width: 100%;
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            box-sizing: border-box;
+        }
+        #admin-view { display: none; }
+
+        textarea {
+            width: 100%;
+            height: 150px;
+            margin: 15px 0;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-family: monospace;
+            box-sizing: border-box;
+            resize: vertical;
+            background-color: #f9fafb;
+        }
+
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            font-size: 18px;
+            border-radius: 12px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);
+        }
+        button:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        #game-screen {
+            display: none;
+            width: 100%;
+            max-width: 420px;
+            height: 80vh;
+            background: var(--bg-gradient);
+            border-radius: 24px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.25);
+            padding: 35px 25px;
+            box-sizing: border-box;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+
+        .screen-state {
+            display: none;
+            width: 100%;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .screen-state.active { display: flex; }
+
+        .big-item {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 35px;
+            word-break: break-word;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            animation: popIn 0.3s ease-out;
+            text-align: center;
+        }
+
+        select {
+            font-size: 1.8rem;
+            width: 90%;
+            padding: 14px;
+            text-align: center;
+            border: none;
+            border-radius: 14px;
+            margin-bottom: 25px;
+            background-color: rgba(255, 255, 255, 0.95);
+            color: #1f2937;
+            font-weight: 600;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            outline: none;
+            cursor: pointer;
+        }
+
+        .game-btn {
+            background-color: white;
+            color: #4f46e5;
+            width: 90%;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        #feedback {
+            font-size: 2.8rem;
+            font-weight: 800;
+            margin-top: 25px;
+            min-height: 70px;
+            text-align: center;
+        }
+        .success { color: #34d399; text-shadow: 0 0 12px rgba(52,211,153,0.4); }
+        .error { color: #f87171; text-shadow: 0 0 12px rgba(248,113,113,0.4); }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            border: 1px solid #e5e7eb;
+            padding: 12px;
+            text-align: left;
+        }
+        th { background-color: #f3f4f6; font-weight: 600; }
+
+        @keyframes popIn {
+            0% { transform: scale(0.9); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="setup-screen">
+        <h2 style="margin-top:0;">Spreadsheet Matcher</h2>
+        <p style="color:#6b7280;">Copy your two columns from Excel/Google Sheets and paste them below:</p>
+        <textarea id="data-input" placeholder="Column1[Tab]Column2&#10;Apple[Tab]Fruit&#10;Carrot[Tab]Vegetable"></textarea>
+        <button onclick="generateGame()">Generate Matcher</button>
+    </div>
+
+    <div id="admin-view">
+        <h3 style="margin-top:0;">Assigned Numbers Key</h3>
+        <p style="color:#6b7280;">Here are your pairs matching up with their randomized numbers:</p>
+        <div style="max-height: 350px; overflow-y: auto; margin-bottom: 20px;">
+            <table id="numbers-table">
+                <thead>
+                    <tr>
+                        <th>Column 1</th>
+                        <th>Column 2</th>
+                        <th>Nº 1</th>
+                        <th>Nº 2</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+        <button onclick="startMobileGame()">Proceed to Game Interface</button>
+    </div>
+
+    <div id="game-screen" onclick="clearFeedbackOnTap()">
+        <div id="state-entry" class="screen-state active">
+            <select id="search-id">
+                </select>
+            <button class="game-btn" onclick="loadItemByNumber()">OK</button>
+        </div>
+
+        <div id="state-match" class="screen-state">
+            <div id="displayed-item" class="big-item">---</div>
+            <select id="answer-id" onchange="clearFeedback()" onclick="event.stopPropagation()">
+                </select>
+            <button class="game-btn" onclick="checkMatch(event)">Check</button>
+            <div id="feedback"></div>
+        </div>
+    </div>
+
+    <script>
+        let masterList = []; 
+        let currentActiveItem = null;
+        let feedbackTimeoutId = null; // Tracks active timer
+
+        function generateGame() {
+            try {
+                const rawData = document.getElementById('data-input').value.trim();
+                if (!rawData) {
+                    alert("Error: The text box is empty. Please paste your data first!");
+                    return;
+                }
+
+                const rows = rawData.split('\n').map(r => r.trim()).filter(r => r.length > 0);
+                let temporaryItemsPool = [];
+                let parsedRows = [];
+
+                rows.forEach((row, i) => {
+                    let cols = row.split('\t');
+                    if (cols.length < 2) cols = row.split(','); 
+                    if (cols.length < 2) cols = row.split(/\s{2,}/);
+
+                    if (cols.length >= 2) {
+                        const item1 = cols[0].trim();
+                        const item2 = cols[1].trim();
+                        
+                        if (item1.toLowerCase().includes("column") || item1.toLowerCase() === "item") {
+                            return; 
+                        }
+
+                        if (item1 && item2) {
+                            temporaryItemsPool.push(item1, item2);
+                            parsedRows.push({item1, item2});
+                        }
+                    }
+                });
+
+                const totalItems = temporaryItemsPool.length;
+                if (totalItems === 0) {
+                    alert("Error: No data rows found. Ensure you copied 2 columns from your sheet.");
+                    return;
+                }
+
+                let assignedNumbers = Array.from({length: totalItems}, (_, i) => i + 1);
+                assignedNumbers.sort(() => Math.random() - 0.5);
+
+                let numberIndex = 0;
+                masterList = [];
+                
+                const tbody = document.querySelector('#numbers-table tbody');
+                tbody.innerHTML = "";
+
+                parsedRows.forEach(pair => {
+                    const id1 = assignedNumbers[numberIndex++];
+                    const id2 = assignedNumbers[numberIndex++];
+
+                    masterList.push(
+                        { id: id1, text: pair.item1, matchId: id2 },
+                        { id: id2, text: pair.item2, matchId: id1 }
+                    );
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${pair.item1}</td>
+                        <td>${pair.item2}</td>
+                        <td><strong>${id1}</strong></td>
+                        <td><strong>${id2}</strong></td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                let dynamicDropdownList = [...masterList].sort((a, b) => a.id - b.id);
+
+                const searchDropdown = document.getElementById('search-id');
+                const answerDropdown = document.getElementById('answer-id');
+                
+                searchDropdown.innerHTML = '<option value="" disabled selected>Nº</option>';
+                answerDropdown.innerHTML = '<option value="" disabled selected>nº match</option>';
+
+                dynamicDropdownList.forEach(item => {
+                    searchDropdown.options[searchDropdown.options.length] = new Option(item.id, item.id);
+                    answerDropdown.options[answerDropdown.options.length] = new Option(item.id, item.id);
+                });
+
+                document.getElementById('setup-screen').style.display = 'none';
+                document.getElementById('admin-view').style.display = 'block';
+                
+            } catch (err) {
+                alert("An error occurred during generation: " + err.message);
+            }
+        }
+
+        function startMobileGame() {
+            document.getElementById('admin-view').style.display = 'none';
+            document.getElementById('game-screen').style.display = 'flex';
+        }
+
+        function loadItemByNumber() {
+            const searchId = parseInt(document.getElementById('search-id').value);
+            if (!searchId) {
+                alert("Please select a number first!");
+                return;
+            }
+
+            const foundItem = masterList.find(item => item.id === searchId);
+            currentActiveItem = foundItem;
+
+            document.getElementById('displayed-item').innerText = currentActiveItem.text;
+            clearFeedback();
+            document.getElementById('answer-id').selectedIndex = 0;
+            
+            document.getElementById('state-entry').classList.remove('active');
+            document.getElementById('state-match').classList.add('active');
+        }
+
+        function checkMatch(event) {
+            // Stop button clicks from immediately firing the global screen-tap clearing logic
+            event.stopPropagation();
+            
+            const userAnswer = parseInt(document.getElementById('answer-id').value);
+            const feedbackDiv = document.getElementById('feedback');
+
+            if (!userAnswer) {
+                alert("Please select a number match from the menu.");
+                return;
+            }
+
+            // Clear any old timer if it exists
+            if (feedbackTimeoutId) clearTimeout(feedbackTimeoutId);
+
+            if (userAnswer === currentActiveItem.matchId) {
+                feedbackDiv.className = "success";
+                feedbackDiv.innerText = "🎉 Match!";
+            } else {
+                feedbackDiv.className = "error";
+                feedbackDiv.innerText = "❌ Try Again";
+
+                // Setup clear timer for 2.5 seconds
+                feedbackTimeoutId = setTimeout(() => {
+                    feedbackDiv.innerText = "";
+                }, 2500);
+            }
+        }
+
+        // Clears feedback immediately if the dropdown value changes
+        function clearFeedback() {
+            if (feedbackTimeoutId) clearTimeout(feedbackTimeoutId);
+            document.getElementById('feedback').innerText = "";
+        }
+
+        // Clears the error feedback immediately if the user taps anywhere on the background container
+        function clearFeedbackOnTap() {
+            const feedbackDiv = document.getElementById('feedback');
+            // Only clear if it is currently showing an error
+            if (feedbackDiv.className === "error") {
+                clearFeedback();
+            }
+        }
+    </script>
+</body>
+</html>
