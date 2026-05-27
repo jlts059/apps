@@ -469,9 +469,9 @@ Bad	der	das	die	die (pl.)	das </textarea>
                 countdownTimers.push(setTimeout(() => { overlay.innerText = "2"; }, 750));
                 countdownTimers.push(setTimeout(() => { overlay.innerText = "1"; }, 1500));
                 countdownTimers.push(setTimeout(() => { overlay.innerText = "?"; }, 2250));
-                countdownTimers.push(setTimeout(() => { overlay.innerText = " "; }, 3000));
+                countdownTimers.push(setTimeout(() => { overlay.innerText = " "; }, 2500));
                 // Ahora se esperan 1000ms (1 segundo entero) desde que aparece la "?" hasta la revelación final
-                countdownTimers.push(setTimeout(revealAnswer, 4000)); 
+                countdownTimers.push(setTimeout(revealAnswer, 3000)); 
             }, 5000); 
         }
 
