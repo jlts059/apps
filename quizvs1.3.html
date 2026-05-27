@@ -1,9 +1,11 @@
-<html lang="es"><head>
+<!DOCTYPE html>
+<html lang="es">
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quiz Interactive Pro</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: #2c3e50;
@@ -246,43 +248,15 @@
 </head>
 <body>
 
-    <div class="container hidden" id="setup">
+    <div class="container" id="setup">
         <div id="live-title-badge" class="title-badge">NUEVO QUIZ</div>
         <div class="input-group">
             <label for="quiz-title-input">TÍTULO DEL QUIZ</label>
-            <input type="text" id="quiz-title-input" placeholder="Ej: Las Partes del Cuerpo" oninput="updateLiveTitle()" value="QUIZ">
+            <input type="text" id="quiz-title-input" placeholder="Ej: Las Partes del Cuerpo" oninput="updateLiveTitle()">
         </div>
         <div class="input-group">
             <label>DATOS (Pegar desde Excel)</label>
-            <textarea id="data-input" placeholder="Pregunta	Op1	Op2	Op3	Op4	Correcta">Bett	der	das	die	die (pl.)	das 
-Bild	der	das	die	die (pl.)	das 
-Regal	der	das	die	die (pl.)	das 
-Sofa	der	das	die	die (pl.)	das 
-Fernseher	der	das	die	die (pl.)	der 
-Herd	der	das	die	die (pl.)	der 
-Kühlschrank	der	das	die	die (pl.)	der 
-Schrank	der	das	die	die (pl.)	der 
-Schreibtisch	der	das	die	die (pl.)	der 
-Sessel	der	das	die	die (pl.)	der 
-Stuhl	der	das	die	die (pl.)	der 
-Teppich	der	das	die	die (pl.)	der 
-Tisch	der	das	die	die (pl.)	der 
-Lampe	der	das	die	die (pl.)	die 
-Spülmaschine	der	das	die	die (pl.)	die 
-Waschmaschine	der	das	die	die (pl.)	die 
-Kaffeemaschine	der	das	die	die (pl.)	die 
-Wohnzimmer	der	das	die	die (pl.)	das 
-Wohnung	der	das	die	die (pl.)	die 
-Balkon	der	das	die	die (pl.)	der 
-Flur	der	das	die	die (pl.)	der 
-Küche	der	das	die	die (pl.)	die 
-Badezimmer	der	das	die	die (pl.)	das 
-Arbeitszimmer	der	das	die	die (pl.)	das 
-Schlafzimmer	der	das	die	die (pl.)	das 
-Kinderzimmer	der	das	die	die (pl.)	das 
-Toilette	der	das	die	die (pl.)	die 
-Küche	der	das	die	die (pl.)	die 
-Bad	der	das	die	die (pl.)	das </textarea>
+            <textarea id="data-input" placeholder="Pregunta	Op1	Op2	Op3	Op4	Correcta"></textarea>
         </div>
         <div class="controls">
             <button class="btn btn-generate" onclick="startQuiz(false)">Generar e Iniciar</button>
@@ -297,7 +271,7 @@ Bad	der	das	die	die (pl.)	das </textarea>
         </div>
     </div>
 
-    <div id="start-container" style="display: block; text-align: center; margin-top: 5vh; width: 100%; max-width: 600px;">
+    <div id="start-container" style="display:none; text-align: center; margin-top: 5vh; width: 100%; max-width: 600px;">
         <h1 id="final-title-display" style="font-size: 2.5rem; color: var(--primary); margin-bottom: 30px; word-wrap: break-word; text-transform: uppercase;">QUIZ INTERACTIVO</h1>
         <div style="display: flex; flex-direction: column; align-items: center; gap: 15px; width: 100%;">
             <button class="btn btn-generate" style="font-size: 2rem; padding: 20px 50px; border-radius: 50px; width: 80%;" onclick="realStart(false)">START</button>
@@ -309,7 +283,7 @@ Bad	der	das	die	die (pl.)	das </textarea>
         <div id="timer-bar-container"><div id="timer-bar"></div></div>
         <div id="card-target"></div>
         <div class="controls">
-            <button id="main-action-btn" class="btn btn-stop" onclick="togglePause()">STOP &amp; SCORE</button>
+            <button id="main-action-btn" class="btn btn-stop" onclick="togglePause()">STOP & SCORE</button>
         </div>
     </div>
 
@@ -568,5 +542,5 @@ Bad	der	das	die	die (pl.)	das </textarea>
             a.click();
         }
     </script>
-
-</body></html>
+</body>
+</html>
