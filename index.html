@@ -37,22 +37,22 @@
 </head>
 <body>
 
-    <h1>🚀Apps</h1>
+    <h1>🚀 Apps</h1>
     
     <div id="loading">Organizando tus herramientas...</div>
     
     <div class="blocks-container" id="blocks-wrapper" style="display: none;">
         <div id="block-al-container">
-            <div class="block-title">DE ALEMÁN</div>
-            <div id="tabs-al" class="tabs"></div>
+            <div class="block-title">🍺 DE ALEMÁN</div>
+        	<div id="tabs-al" class="tabs"></div>
         </div>
         <div id="block-in-container">
-            <div class="block-title">GB INGLÉS</div>
-            <div id="tabs-in" class="tabs"></div>
+            <div class="block-title">☕ GB INGLÉS</div>
+        	<div id="tabs-in" class="tabs"></div>
         </div>
         <div id="block-other-container">
-            <div class="block-title">🏠 OTROS</div>
-            <div id="tabs-other" class="tabs"></div>
+            <div class="block-title">🏠 OTROS / GENERAL</div>
+        	<div id="tabs-other" class="tabs"></div>
         </div>
     </div>
 
@@ -140,8 +140,7 @@
                 if (document.getElementById('tabs-in').children.length === 0) document.getElementById('block-in-container').style.display = 'none';
                 if (document.getElementById('tabs-other').children.length === 0) document.getElementById('block-other-container').style.display = 'none';
 
-                const primerBoton = document.querySelector('.tab-button');
-                if (primerBoton) primerBoton.click();
+                // Desactivado el primer click automático para que todo inicie cerrado.
 
             } catch (error) {
                 console.error("Error:", error);
