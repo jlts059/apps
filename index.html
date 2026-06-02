@@ -37,21 +37,21 @@
 </head>
 <body>
 
-    <h1>🚀 My Apps Dashboard</h1>
+    <h1>🚀Apps</h1>
     
     <div id="loading">Organizando tus herramientas...</div>
     
     <div class="blocks-container" id="blocks-wrapper" style="display: none;">
         <div id="block-al-container">
-            <div class="block-title">📚 Bloque AL (al_)</div>
+            <div class="block-title">🇩🇪 Alemán</div>
             <div id="tabs-al" class="tabs"></div>
         </div>
-        <div id="block-en-container">
-            <div class="block-title">🌐 Bloque EN (en_)</div>
-            <div id="tabs-en" class="tabs"></div>
+        <div id="block-in-container">
+            <div class="block-title">🇬🇧 Inglés</div>
+            <div id="tabs-in" class="tabs"></div>
         </div>
         <div id="block-other-container">
-            <div class="block-title">🏠 Otros / General</div>
+            <div class="block-title">🏠 Otros</div>
             <div id="tabs-other" class="tabs"></div>
         </div>
     </div>
@@ -92,8 +92,8 @@
                         
                         if (lowerName.startsWith('al_')) {
                             bloque = 'al';
-                        } else if (lowerName.startsWith('en_')) {
-                            bloque = 'en';
+                        } else if (lowerName.startsWith('in_')) {
+                            bloque = 'in';
                         }
 
                         // Crear pestaña en su bloque correspondiente
@@ -103,14 +103,14 @@
                         const files = await subRes.json();
                         renderFiles(files, item.name);
                     } else if (item.type === 'file' && item.name.endsWith('.html') && item.name.toLowerCase() !== 'index.html') {
-                        // Es un archivo sueltos: Renderizar en la pestaña Home
+                        // Es un archivo suelto: Renderizar en la pestaña Home
                         renderFiles([item], 'Home');
                     }
                 }
 
                 // Ocultar bloques si se quedaron completamente vacíos
                 if (document.getElementById('tabs-al').children.length === 0) document.getElementById('block-al-container').style.display = 'none';
-                if (document.getElementById('tabs-en').children.length === 0) document.getElementById('block-en-container').style.display = 'none';
+                if (document.getElementById('tabs-in').children.length === 0) document.getElementById('block-in-container').style.display = 'none';
                 if (document.getElementById('tabs-other').children.length === 0) document.getElementById('block-other-container').style.display = 'none';
 
                 // Hacer clic automáticamente en la primera pestaña que exista para inicializar la vista
@@ -130,12 +130,12 @@
             
             if (document.getElementById(`btn-${name}`)) return; // Evitar duplicados
 
-            // Limpiar el nombre para buscar el emoji (quitando el prefijo si lo deseas, ej: "al_estudios" busca "estudios")
-            const cleanKeyForEmoji = name.toLowerCase().replace(/^al_/, '').replace(/^en_/, '');
+            // Limpiar el nombre para buscar el emoji (quitando el prefijo al_ o in_)
+            const cleanKeyForEmoji = name.toLowerCase().replace(/^al_/, '').replace(/^in_/, '');
             const emoji = folderEmojis[cleanKeyForEmoji] || folderEmojis['default'];
             
-            // Nombre visual limpio de la pestaña (opcional: le quita el al_ o en_ para que se vea más estético)
-            const displayName = name.replace(/^al_|^en_/i, '');
+            // Nombre visual limpio de la pestaña (se le quita el al_ o in_ para que se vea más estético)
+            const displayName = name.replace(/^al_|^in_/i, '');
 
             const btn = document.createElement('button');
             btn.className = 'tab-button';
