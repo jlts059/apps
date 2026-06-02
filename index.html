@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Apps Dashboard</title>
+    <title>Apps</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; line-height: 1.6; max-width: 800px; margin: auto; background-color: #f9f9f9; }
         h1 { border-bottom: 2px solid #333; padding-bottom: 10px; text-align: center; color: #2c3e50; }
@@ -37,18 +37,18 @@
 </head>
 <body>
 
-    <h1>🚀 My Apps Dashboard</h1>
+    <h1>🚀Apps</h1>
     
     <div id="loading">Organizando tus herramientas...</div>
     
     <div class="blocks-container" id="blocks-wrapper" style="display: none;">
         <div id="block-al-container">
-            <div class="block-title">🇩🇪 Alemán (al_)</div>
+            <div class="block-title">🇩🇪 Alemán</div>
             <div id="tabs-al" class="tabs"></div>
         </div>
         
         <div id="block-in-container">
-            <div class="block-title">🇬🇧 Inglés (in_)</div>
+            <div class="block-title">🇬🇧 Inglés</div>
             <div id="tabs-in" class="tabs"></div>
         </div>
         
@@ -70,7 +70,7 @@
             'estudios': '📚',
             'utilidades': '🛠️',
             'quiz': '📝',
-            'gr': '📝', // Añadido por si quieres un emoji específico para 'in_gr' (ej: notas/gramática)
+            'gr': '📝',
             'default': '📁'
         };
 
@@ -92,7 +92,6 @@
                         let bloque = 'other';
                         const lowerName = item.name.toLowerCase();
                         
-                        // Lógica corregida para agrupar
                         if (lowerName.startsWith('al_')) {
                             bloque = 'al';
                         } else if (lowerName.startsWith('in_')) {
@@ -106,7 +105,7 @@
                         const files = await subRes.json();
                         renderFiles(files, item.name);
                     } else if (item.type === 'file' && item.name.endsWith('.html') && item.name.toLowerCase() !== 'index.html') {
-                        // Es un archivo suelto: Renderizar en la pestaña Home
+                        // Archivos sueltos en la raíz van a la pestaña Home
                         renderFiles([item], 'Home');
                     }
                 }
@@ -116,7 +115,7 @@
                 if (document.getElementById('tabs-in').children.length === 0) document.getElementById('block-in-container').style.display = 'none';
                 if (document.getElementById('tabs-other').children.length === 0) document.getElementById('block-other-container').style.display = 'none';
 
-                // Hacer clic automáticamente en la primera pestaña que exista para inicializar la vista
+                // Hacer clic automáticamente en la primera pestaña que exista
                 const primerBoton = document.querySelector('.tab-button');
                 if (primerBoton) primerBoton.click();
 
@@ -132,4 +131,34 @@
             
             if (document.getElementById(`btn-${name}`)) return; // Evitar duplicados
 
-            // Limpiar prefijos
+            // Limpiar prefijos para buscar emojis y nombres visuales estéticos
+            const cleanKeyForEmoji = name.toLowerCase().replace(/^al_/, '').replace(/^in_/, '');
+            const emoji = folderEmojis[cleanKeyForEmoji] || folderEmojis['default'];
+            
+            const displayName = name.replace(/^al_|^in_/i, '');
+
+            const btn = document.createElement('button');
+            btn.className = 'tab-button';
+            btn.id = `btn-${name}`;
+            btn.innerHTML = `${emoji} ${displayName}`;
+            btn.onclick = () => openTab(name);
+            tabsContainer.appendChild(btn);
+
+            const contentDiv = document.createElement('div');
+            contentDiv.id = name;
+            contentDiv.className = 'tab-content';
+            contentsContainer.appendChild(contentDiv);
+        }
+
+        function renderFiles(files, containerId) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+
+            files.forEach(file => {
+                if (file.name.endsWith('.html') && file.name.toLowerCase() !== 'index.html') {
+                    const link = document.createElement('a');
+                    link.href = containerId === 'Home' ? file.name : `${containerId}/${file.name}`;
+                    link.className = 'app-link';
+                    
+                    let fileIcon = '📄';
+                    const n = file
