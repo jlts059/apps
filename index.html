@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Apps</title>
+    <title>Apps Dashboard</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; line-height: 1.6; max-width: 800px; margin: auto; background-color: #f9f9f9; }
         h1 { border-bottom: 2px solid #333; padding-bottom: 10px; text-align: center; color: #2c3e50; }
@@ -43,13 +43,15 @@
     
     <div class="blocks-container" id="blocks-wrapper" style="display: none;">
         <div id="block-al-container">
-            <div class="block-title">📚 Bloque AL (al_)</div>
+            <div class="block-title">🇩🇪 Alemán (al_)</div>
             <div id="tabs-al" class="tabs"></div>
         </div>
-        <div id="block-en-container">
-            <div class="block-title">🌐 Bloque EN (en_)</div>
-            <div id="tabs-en" class="tabs"></div>
+        
+        <div id="block-in-container">
+            <div class="block-title">🇬🇧 Inglés (in_)</div>
+            <div id="tabs-in" class="tabs"></div>
         </div>
+        
         <div id="block-other-container">
             <div class="block-title">🏠 Otros / General</div>
             <div id="tabs-other" class="tabs"></div>
@@ -68,6 +70,7 @@
             'estudios': '📚',
             'utilidades': '🛠️',
             'quiz': '📝',
+            'gr': '📝', // Añadido por si quieres un emoji específico para 'in_gr' (ej: notas/gramática)
             'default': '📁'
         };
 
@@ -81,19 +84,19 @@
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('blocks-wrapper').style.display = 'flex';
 
-                // 1. Crear la pestaña HOME para archivos sueltos (va en el bloque general)
+                // 1. Crear la pestaña HOME para archivos sueltos
                 createTab('Home', 'other');
 
                 for (const item of items) {
                     if (item.type === 'dir') {
-                        // Determinar en qué bloque cae según el prefijo de la carpeta
                         let bloque = 'other';
                         const lowerName = item.name.toLowerCase();
                         
+                        // Lógica corregida para agrupar
                         if (lowerName.startsWith('al_')) {
                             bloque = 'al';
-                        } else if (lowerName.startsWith('en_')) {
-                            bloque = 'en';
+                        } else if (lowerName.startsWith('in_')) {
+                            bloque = 'in';
                         }
 
                         // Crear pestaña en su bloque correspondiente
@@ -103,14 +106,14 @@
                         const files = await subRes.json();
                         renderFiles(files, item.name);
                     } else if (item.type === 'file' && item.name.endsWith('.html') && item.name.toLowerCase() !== 'index.html') {
-                        // Es un archivo sueltos: Renderizar en la pestaña Home
+                        // Es un archivo suelto: Renderizar en la pestaña Home
                         renderFiles([item], 'Home');
                     }
                 }
 
                 // Ocultar bloques si se quedaron completamente vacíos
                 if (document.getElementById('tabs-al').children.length === 0) document.getElementById('block-al-container').style.display = 'none';
-                if (document.getElementById('tabs-en').children.length === 0) document.getElementById('block-en-container').style.display = 'none';
+                if (document.getElementById('tabs-in').children.length === 0) document.getElementById('block-in-container').style.display = 'none';
                 if (document.getElementById('tabs-other').children.length === 0) document.getElementById('block-other-container').style.display = 'none';
 
                 // Hacer clic automáticamente en la primera pestaña que exista para inicializar la vista
@@ -124,68 +127,9 @@
         }
 
         function createTab(name, bloque) {
-            // Seleccionar el contenedor de pestañas adecuado según el bloque asignado
             const tabsContainer = document.getElementById(`tabs-${bloque}`);
             const contentsContainer = document.getElementById('contents-container');
             
             if (document.getElementById(`btn-${name}`)) return; // Evitar duplicados
 
-            // Limpiar el nombre para buscar el emoji (quitando el prefijo si lo deseas, ej: "al_estudios" busca "estudios")
-            const cleanKeyForEmoji = name.toLowerCase().replace(/^al_/, '').replace(/^en_/, '');
-            const emoji = folderEmojis[cleanKeyForEmoji] || folderEmojis['default'];
-            
-            // Nombre visual limpio de la pestaña (opcional: le quita el al_ o en_ para que se vea más estético)
-            const displayName = name.replace(/^al_|^en_/i, '');
-
-            const btn = document.createElement('button');
-            btn.className = 'tab-button';
-            btn.id = `btn-${name}`;
-            btn.innerHTML = `${emoji} ${displayName}`;
-            btn.onclick = () => openTab(name);
-            tabsContainer.appendChild(btn);
-
-            const contentDiv = document.createElement('div');
-            contentDiv.id = name;
-            contentDiv.className = 'tab-content';
-            contentsContainer.appendChild(contentDiv);
-        }
-
-        function renderFiles(files, containerId) {
-            const container = document.getElementById(containerId);
-            if (!container) return;
-
-            files.forEach(file => {
-                if (file.name.endsWith('.html') && file.name.toLowerCase() !== 'index.html') {
-                    const link = document.createElement('a');
-                    // Mantiene el nombre real de la carpeta (con prefijo) en la URL para que no se rompa el enlace de GitHub
-                    link.href = containerId === 'Home' ? file.name : `${containerId}/${file.name}`;
-                    link.className = 'app-link';
-                    
-                    let fileIcon = '📄';
-                    const n = file.name.toLowerCase();
-                    if (n.includes('ruleta')) fileIcon = '🎲';
-                    if (n.includes('quiz')) fileIcon = '📝';
-                    if (n.includes('qr') || n.includes('drive')) fileIcon = '🔳';
-
-                    const cleanName = file.name.replace('.html', '').replace(/-/g, ' ');
-                    link.innerHTML = `<span class="icon">${fileIcon}</span> ${cleanName}`;
-                    container.appendChild(link);
-                }
-            });
-        }
-
-        function openTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
-            document.querySelectorAll('.tab-button').forEach(tb => tb.classList.remove('active'));
-            
-            const targetContent = document.getElementById(tabId);
-            const targetBtn = document.getElementById(`btn-${tabId}`);
-            
-            if(targetContent) targetContent.classList.add('active');
-            if(targetBtn) targetBtn.classList.add('active');
-        }
-
-        cargarProyectos();
-    </script>
-</body>
-</html>
+            // Limpiar prefijos
