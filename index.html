@@ -1,4 +1,64 @@
-<script>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apps</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; line-height: 1.6; max-width: 800px; margin: auto; background-color: #f9f9f9; }
+        h1 { border-bottom: 2px solid #333; padding-bottom: 10px; text-align: center; color: #2c3e50; }
+        
+        /* Contenedor principal de bloques */
+        .blocks-container { display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px; border-bottom: 2px solid #ddd; padding-bottom: 15px; }
+        .block-title { font-size: 0.9em; text-transform: uppercase; color: #666; margin: 5px 0 2px 0; font-weight: bold; letter-spacing: 1px;}
+        
+        .tabs { display: flex; flex-wrap: wrap; gap: 5px; }
+        .tab-button { 
+            padding: 10px 20px; cursor: pointer; border: none; background: #eee; 
+            border-radius: 8px; font-weight: bold; transition: 0.3s;
+        }
+        .tab-button.active { background: #0366d6; color: white; }
+        .tab-button:hover:not(.active) { background: #ddd; }
+
+        .tab-content { display: none; animation: fadeIn 0.5s; }
+        .tab-content.active { display: block; }
+
+        .app-link { 
+            display: flex; align-items: center; padding: 12px; margin-bottom: 8px; 
+            background: white; text-decoration: none; color: #333; 
+            border-radius: 8px; border: 1px solid #ddd; font-weight: 500; transition: 0.2s;
+        }
+        .app-link:hover { transform: translateX(5px); border-color: #0366d6; box-shadow: 2px 2px 10px rgba(0,0,0,0.1); }
+        .icon { margin-right: 15px; font-size: 1.2em; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        #loading { text-align: center; color: #666; font-style: italic; margin-top: 50px; }
+    </style>
+</head>
+<body>
+
+    <h1>🚀 My Apps Dashboard</h1>
+    
+    <div id="loading">Organizando tus herramientas...</div>
+    
+    <div class="blocks-container" id="blocks-wrapper" style="display: none;">
+        <div id="block-al-container">
+            <div class="block-title">📚 Bloque AL (al_)</div>
+            <div id="tabs-al" class="tabs"></div>
+        </div>
+        <div id="block-en-container">
+            <div class="block-title">🌐 Bloque EN (en_)</div>
+            <div id="tabs-en" class="tabs"></div>
+        </div>
+        <div id="block-other-container">
+            <div class="block-title">🏠 Otros / General</div>
+            <div id="tabs-other" class="tabs"></div>
+        </div>
+    </div>
+
+    <div id="contents-container"></div>
+
+    <script>
         const repoOwner = 'jlts059';
         const repoName = 'apps';
 
@@ -8,7 +68,6 @@
             'estudios': '📚',
             'utilidades': '🛠️',
             'quiz': '📝',
-            'quiz_voc': '📝',
             'default': '📁'
         };
 
@@ -17,96 +76,66 @@
             
             try {
                 const response = await fetch(url);
-                
-                // Si GitHub nos bloquea por Rate Limit, manejamos el error limpiamente
-                if (!response.ok) {
-                    throw new Error(`GitHub API respondió con estado: ${response.status}`);
-                }
-
                 const items = await response.json();
                 
-                // Si la respuesta no es un array válido, abortamos
-                if (!Array.isArray(items)) {
-                    throw new Error("La respuesta de GitHub no es un listado válido.");
-                }
-
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('blocks-wrapper').style.display = 'flex';
 
-                // 1. Crear siempre la pestaña HOME primero
+                // 1. Crear la pestaña HOME para archivos sueltos (va en el bloque general)
                 createTab('Home', 'other');
 
-                // Separar carpetas y archivos sueltos de forma segura
-                const directorios = items.filter(item => item && item.type === 'dir');
-                const archivosSueltos = items.filter(item => item && item.type === 'file' && item.name.endsWith('.html') && item.name.toLowerCase() !== 'index.html');
+                for (const item of items) {
+                    if (item.type === 'dir') {
+                        // Determinar en qué bloque cae según el prefijo de la carpeta
+                        let bloque = 'other';
+                        const lowerName = item.name.toLowerCase();
+                        
+                        if (lowerName.startsWith('al_')) {
+                            bloque = 'al';
+                        } else if (lowerName.startsWith('en_')) {
+                            bloque = 'en';
+                        }
 
-                // 2. Renderizar archivos sueltos en el Home inmediatamente
-                if (archivosSueltos.length > 0) {
-                    renderFiles(archivosSueltos, 'Home');
+                        // Crear pestaña en su bloque correspondiente
+                        createTab(item.name, bloque);
+                        
+                        const subRes = await fetch(item.url);
+                        const files = await subRes.json();
+                        renderFiles(files, item.name);
+                    } else if (item.type === 'file' && item.name.endsWith('.html') && item.name.toLowerCase() !== 'index.html') {
+                        // Es un archivo sueltos: Renderizar en la pestaña Home
+                        renderFiles([item], 'Home');
+                    }
                 }
 
-                // 3. Procesar las carpetas
-                const promesasCarpetas = directorios.map(async (item) => {
-                    let bloque = 'other';
-                    const lowerName = item.name.toLowerCase();
-                    
-                    if (lowerName.startsWith('al_')) {
-                        bloque = 'al';
-                    } else if (lowerName.startsWith('in_')) {
-                        bloque = 'in';
-                    }
-
-                    // Crear la pestaña en la interfaz
-                    createTab(item.name, bloque);
-                    
-                    // Consultar los archivos internos con su propio try/catch para que si falla una carpeta, no rompa las demás
-                    try {
-                        const subRes = await fetch(item.url);
-                        if (subRes.ok) {
-                            const files = await subRes.json();
-                            if (Array.isArray(files)) {
-                                renderFiles(files, item.name);
-                            }
-                        }
-                    } catch (err) {
-                        console.error(`Error específico cargando contenido de la carpeta ${item.name}:`, err);
-                    }
-                });
-
-                // Esperamos a que termine el procesamiento de red
-                await Promise.all(promesasCarpetas);
-
-                // 4. Limpieza: Ocultar bloques que se hayan quedado completamente vacíos
+                // Ocultar bloques si se quedaron completamente vacíos
                 if (document.getElementById('tabs-al').children.length === 0) document.getElementById('block-al-container').style.display = 'none';
-                if (document.getElementById('tabs-in').children.length === 0) document.getElementById('block-in-container').style.display = 'none';
+                if (document.getElementById('tabs-en').children.length === 0) document.getElementById('block-en-container').style.display = 'none';
                 if (document.getElementById('tabs-other').children.length === 0) document.getElementById('block-other-container').style.display = 'none';
 
-                // 5. Activar la primera pestaña disponible
+                // Hacer clic automáticamente en la primera pestaña que exista para inicializar la vista
                 const primerBoton = document.querySelector('.tab-button');
-                if (primerBoton) {
-                    primerBoton.click();
-                }
+                if (primerBoton) primerBoton.click();
 
             } catch (error) {
-                console.error("Error crítico en la carga:", error);
-                // Si todo falla (ej. Rate limit estricto), quitamos el loading y mostramos un mensaje amigable en pantalla
-                document.getElementById('loading').innerHTML = `
-                    <p style="color: #e74c3c; font-weight: bold;">⚠️ Límite de la API de GitHub alcanzado o error de red.</p>
-                    <p style="font-size: 0.9em; color: #666;">Espera unos minutos antes de recargar la página o abre la consola del navegador (F12) para más detalles.</p>
-                `;
+                console.error("Error:", error);
+                document.getElementById('loading').innerText = "Error al conectar con GitHub.";
             }
         }
 
         function createTab(name, bloque) {
+            // Seleccionar el contenedor de pestañas adecuado según el bloque asignado
             const tabsContainer = document.getElementById(`tabs-${bloque}`);
             const contentsContainer = document.getElementById('contents-container');
             
-            if (!tabsContainer || !contentsContainer) return;
-            if (document.getElementById(`btn-${name}`)) return; 
+            if (document.getElementById(`btn-${name}`)) return; // Evitar duplicados
 
-            const cleanKeyForEmoji = name.toLowerCase().replace(/^al_/, '').replace(/^in_/, '');
+            // Limpiar el nombre para buscar el emoji (quitando el prefijo si lo deseas, ej: "al_estudios" busca "estudios")
+            const cleanKeyForEmoji = name.toLowerCase().replace(/^al_/, '').replace(/^en_/, '');
             const emoji = folderEmojis[cleanKeyForEmoji] || folderEmojis['default'];
-            const displayName = name.replace(/^al_|^in_/i, '');
+            
+            // Nombre visual limpio de la pestaña (opcional: le quita el al_ o en_ para que se vea más estético)
+            const displayName = name.replace(/^al_|^en_/i, '');
 
             const btn = document.createElement('button');
             btn.className = 'tab-button';
@@ -126,18 +155,19 @@
             if (!container) return;
 
             files.forEach(file => {
-                if (file && file.name && file.name.endsWith('.html') && file.name.toLowerCase() !== 'index.html') {
+                if (file.name.endsWith('.html') && file.name.toLowerCase() !== 'index.html') {
                     const link = document.createElement('a');
+                    // Mantiene el nombre real de la carpeta (con prefijo) en la URL para que no se rompa el enlace de GitHub
                     link.href = containerId === 'Home' ? file.name : `${containerId}/${file.name}`;
                     link.className = 'app-link';
                     
                     let fileIcon = '📄';
                     const n = file.name.toLowerCase();
-                    if (n.includes('ruleta') || n.includes('wheel')) fileIcon = '🎲';
+                    if (n.includes('ruleta')) fileIcon = '🎲';
                     if (n.includes('quiz')) fileIcon = '📝';
                     if (n.includes('qr') || n.includes('drive')) fileIcon = '🔳';
 
-                    const cleanName = file.name.replace('.html', '').replace(/-/g, ' ').replace(/_/g, ' ');
+                    const cleanName = file.name.replace('.html', '').replace(/-/g, ' ');
                     link.innerHTML = `<span class="icon">${fileIcon}</span> ${cleanName}`;
                     container.appendChild(link);
                 }
@@ -155,6 +185,7 @@
             if(targetBtn) targetBtn.classList.add('active');
         }
 
-        // Ejecutar el cargador principal
         cargarProyectos();
     </script>
+</body>
+</html>
