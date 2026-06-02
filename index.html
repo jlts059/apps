@@ -8,7 +8,7 @@
             'estudios': '📚',
             'utilidades': '🛠️',
             'quiz': '📝',
-            'quiz_voc': '📝', // Añadido para que coincida exactamente
+            'quiz_voc': '📝',
             'default': '📁'
         };
 
@@ -17,24 +17,35 @@
             
             try {
                 const response = await fetch(url);
+                
+                // Si GitHub nos bloquea por Rate Limit, manejamos el error limpiamente
+                if (!response.ok) {
+                    throw new Error(`GitHub API respondió con estado: ${response.status}`);
+                }
+
                 const items = await response.json();
                 
+                // Si la respuesta no es un array válido, abortamos
+                if (!Array.isArray(items)) {
+                    throw new Error("La respuesta de GitHub no es un listado válido.");
+                }
+
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('blocks-wrapper').style.display = 'flex';
 
                 // 1. Crear siempre la pestaña HOME primero
                 createTab('Home', 'other');
 
-                // Separar carpetas y archivos sueltos
-                const directorios = items.filter(item => item.type === 'dir');
-                const archivosSueltos = items.filter(item => item.type === 'file' && item.name.endsWith('.html') && item.name.toLowerCase() !== 'index.html');
+                // Separar carpetas y archivos sueltos de forma segura
+                const directorios = items.filter(item => item && item.type === 'dir');
+                const archivosSueltos = items.filter(item => item && item.type === 'file' && item.name.endsWith('.html') && item.name.toLowerCase() !== 'index.html');
 
                 // 2. Renderizar archivos sueltos en el Home inmediatamente
                 if (archivosSueltos.length > 0) {
                     renderFiles(archivosSueltos, 'Home');
                 }
 
-                // 3. Procesar las carpetas en paralelo para evitar retrasos y desajustes
+                // 3. Procesar las carpetas
                 const promesasCarpetas = directorios.map(async (item) => {
                     let bloque = 'other';
                     const lowerName = item.name.toLowerCase();
@@ -45,36 +56,44 @@
                         bloque = 'in';
                     }
 
-                    // Crear la pestaña en su bloque correspondiente
+                    // Crear la pestaña en la interfaz
                     createTab(item.name, bloque);
                     
-                    // Consultar los archivos internos de esa carpeta
+                    // Consultar los archivos internos con su propio try/catch para que si falla una carpeta, no rompa las demás
                     try {
                         const subRes = await fetch(item.url);
-                        const files = await subRes.json();
-                        renderFiles(files, item.name);
+                        if (subRes.ok) {
+                            const files = await subRes.json();
+                            if (Array.isArray(files)) {
+                                renderFiles(files, item.name);
+                            }
+                        }
                     } catch (err) {
-                        console.error(`Error cargando carpeta ${item.name}:`, err);
+                        console.error(`Error específico cargando contenido de la carpeta ${item.name}:`, err);
                     }
                 });
 
-                // Esperar a que TODAS las carpetas se hayan procesado y pintado
+                // Esperamos a que termine el procesamiento de red
                 await Promise.all(promesasCarpetas);
 
-                // 4. Limpieza: Ocultar bloques vacíos si no tienen botones dentro
+                // 4. Limpieza: Ocultar bloques que se hayan quedado completamente vacíos
                 if (document.getElementById('tabs-al').children.length === 0) document.getElementById('block-al-container').style.display = 'none';
                 if (document.getElementById('tabs-in').children.length === 0) document.getElementById('block-in-container').style.display = 'none';
                 if (document.getElementById('tabs-other').children.length === 0) document.getElementById('block-other-container').style.display = 'none';
 
-                // 5. Activar la primera pestaña disponible una vez que TODO el DOM está listo
+                // 5. Activar la primera pestaña disponible
                 const primerBoton = document.querySelector('.tab-button');
                 if (primerBoton) {
                     primerBoton.click();
                 }
 
             } catch (error) {
-                console.error("Error:", error);
-                document.getElementById('loading').innerText = "Error al conectar con GitHub.";
+                console.error("Error crítico en la carga:", error);
+                // Si todo falla (ej. Rate limit estricto), quitamos el loading y mostramos un mensaje amigable en pantalla
+                document.getElementById('loading').innerHTML = `
+                    <p style="color: #e74c3c; font-weight: bold;">⚠️ Límite de la API de GitHub alcanzado o error de red.</p>
+                    <p style="font-size: 0.9em; color: #666;">Espera unos minutos antes de recargar la página o abre la consola del navegador (F12) para más detalles.</p>
+                `;
             }
         }
 
@@ -82,17 +101,13 @@
             const tabsContainer = document.getElementById(`tabs-${bloque}`);
             const contentsContainer = document.getElementById('contents-container');
             
-            // Evitar duplicados reales
+            if (!tabsContainer || !contentsContainer) return;
             if (document.getElementById(`btn-${name}`)) return; 
 
-            // Limpiar prefijos para buscar emojis
             const cleanKeyForEmoji = name.toLowerCase().replace(/^al_/, '').replace(/^in_/, '');
             const emoji = folderEmojis[cleanKeyForEmoji] || folderEmojis['default'];
-            
-            // Nombre visual estético (sin al_ o in_)
             const displayName = name.replace(/^al_|^in_/i, '');
 
-            // Crear Botón
             const btn = document.createElement('button');
             btn.className = 'tab-button';
             btn.id = `btn-${name}`;
@@ -100,7 +115,6 @@
             btn.onclick = () => openTab(name);
             tabsContainer.appendChild(btn);
 
-            // Crear Contenedor de Contenido para la pestaña
             const contentDiv = document.createElement('div');
             contentDiv.id = name;
             contentDiv.className = 'tab-content';
@@ -112,9 +126,8 @@
             if (!container) return;
 
             files.forEach(file => {
-                if (file.name.endsWith('.html') && file.name.toLowerCase() !== 'index.html') {
+                if (file && file.name && file.name.endsWith('.html') && file.name.toLowerCase() !== 'index.html') {
                     const link = document.createElement('a');
-                    // Ajuste de rutas para GitHub Pages
                     link.href = containerId === 'Home' ? file.name : `${containerId}/${file.name}`;
                     link.className = 'app-link';
                     
@@ -142,5 +155,6 @@
             if(targetBtn) targetBtn.classList.add('active');
         }
 
+        // Ejecutar el cargador principal
         cargarProyectos();
     </script>
