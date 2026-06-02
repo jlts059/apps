@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Apps Dashboard</title>
+    <title>Apps</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; line-height: 1.6; max-width: 800px; margin: auto; background-color: #f9f9f9; }
         h1 { border-bottom: 2px solid #333; padding-bottom: 10px; text-align: center; color: #2c3e50; }
@@ -32,12 +32,12 @@
         .icon { margin-right: 15px; font-size: 1.2em; }
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        #loading { text-align: center; color: #666; font-style: italic; margin-top: 50px; }
+        #loading { text-align: center; color: #666; font-style: italic; margin-top: 50px; padding: 20px; background: #fff; border-radius: 8px; border: 1px dashed #ccc; }
     </style>
 </head>
 <body>
 
-    <h1>🚀 My Apps Dashboard</h1>
+    <h1>🚀 Apps</h1>
     
     <div id="loading">Organizando tus herramientas...</div>
     
@@ -79,6 +79,10 @@
             
             try {
                 const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`GitHub respondió con estado ${response.status}. Es posible que hayas alcanzado el límite de peticiones de la API de forma temporal.`);
+                }
+                
                 const items = await response.json();
                 
                 document.getElementById('loading').style.display = 'none';
@@ -101,9 +105,17 @@
                         // Crear pestaña en su bloque correspondiente
                         createTab(item.name, bloque);
                         
-                        const subRes = await fetch(item.url);
-                        const files = await subRes.json();
-                        renderFiles(files, item.name);
+                        // Try/Catch interno para que si una carpeta falla, el resto siga cargando
+                        try {
+                            const subRes = await fetch(item.url);
+                            if (subRes.ok) {
+                                const files = await subRes.json();
+                                renderFiles(files, item.name);
+                            }
+                        } catch (subError) {
+                            console.error(`Error cargando la carpeta ${item.name}:`, subError);
+                        }
+                        
                     } else if (item.type === 'file' && item.name.endsWith('.html') && item.name.toLowerCase() !== 'index.html') {
                         // Archivos sueltos en la raíz van a la pestaña Home
                         renderFiles([item], 'Home');
@@ -120,8 +132,10 @@
                 if (primerBoton) primerBoton.click();
 
             } catch (error) {
-                console.error("Error:", error);
-                document.getElementById('loading').innerText = "Error al conectar con GitHub.";
+                console.error("Error general:", error);
+                const loadingDiv = document.getElementById('loading');
+                loadingDiv.style.color = "#d93025";
+                loadingDiv.innerHTML = `<strong>⚠️ Error al conectar con GitHub:</strong><br>${error.message}`;
             }
         }
 
@@ -129,7 +143,7 @@
             const tabsContainer = document.getElementById(`tabs-${bloque}`);
             const contentsContainer = document.getElementById('contents-container');
             
-            if (document.getElementById(`btn-${name}`)) return; // Evitar duplicados
+            if (!tabsContainer || document.getElementById(`btn-${name}`)) return;
 
             // Limpiar prefijos para buscar emojis y nombres visuales estéticos
             const cleanKeyForEmoji = name.toLowerCase().replace(/^al_/, '').replace(/^in_/, '');
@@ -176,16 +190,4 @@
 
         function openTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
-            document.querySelectorAll('.tab-button').forEach(tb => tb.classList.remove('active'));
-            
-            const targetContent = document.getElementById(tabId);
-            const targetBtn = document.getElementById(`btn-${tabId}`);
-            
-            if(targetContent) targetContent.classList.add('active');
-            if(targetBtn) targetBtn.classList.add('active');
-        }
-
-        cargarProyectos();
-    </script>
-</body>
-</html>
+            document.querySelectorAll('.tab-button').forEach(tb => tb.
