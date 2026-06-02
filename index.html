@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Apps</title>
+    <title>Apps Dashboard</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; line-height: 1.6; max-width: 800px; margin: auto; background-color: #f9f9f9; }
         h1 { border-bottom: 2px solid #333; padding-bottom: 10px; text-align: center; color: #2c3e50; }
@@ -37,7 +37,7 @@
 </head>
 <body>
 
-    <h1>🚀Apps</h1>
+    <h1>🚀 My Apps Dashboard</h1>
     
     <div id="loading">Organizando tus herramientas...</div>
     
@@ -161,4 +161,31 @@
                     link.className = 'app-link';
                     
                     let fileIcon = '📄';
-                    const n = file
+                    const n = file.name.toLowerCase();
+                    if (n.includes('ruleta')) fileIcon = '🎲';
+                    if (n.includes('quiz')) fileIcon = '📝';
+                    if (n.includes('gr') || n.includes('grammar')) fileIcon = '✍️';
+                    if (n.includes('qr') || n.includes('drive')) fileIcon = '🔳';
+
+                    const cleanName = file.name.replace('.html', '').replace(/-/g, ' ');
+                    link.innerHTML = `<span class="icon">${fileIcon}</span> ${cleanName}`;
+                    container.appendChild(link);
+                }
+            });
+        }
+
+        function openTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+            document.querySelectorAll('.tab-button').forEach(tb => tb.classList.remove('active'));
+            
+            const targetContent = document.getElementById(tabId);
+            const targetBtn = document.getElementById(`btn-${tabId}`);
+            
+            if(targetContent) targetContent.classList.add('active');
+            if(targetBtn) targetBtn.classList.add('active');
+        }
+
+        cargarProyectos();
+    </script>
+</body>
+</html>
