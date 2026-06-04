@@ -109,6 +109,7 @@
   #card:active { transform: scale(0.98); }
 
   .controls { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; max-width: 600px; }
+  .controls-row { display:flex; gap:8px; justify-content:center; }
 
   button {
     padding: 0.7rem 1.1rem;
@@ -159,7 +160,7 @@
     <h2 style="color: #2c3e50; margin-top: 0;">Create Your Deck</h2>
     <textarea id="csv-input" placeholder="Term [TAB] Definition"></textarea>
     <button class="btn-start" onclick="loadCustomDeck()">Generate Flashcards ➔</button>
-    <p style="font-size: 0.8rem; color: #7f8c8d; margin-top: 10px;">Shortcut: [Z] Next | [X] Discard | [Space] Flip</p>
+    <p style="font-size: 0.8rem; color: #7f8c8d; margin-top: 10px;">Shortcut: [Z] Know | [X] Discard | [Space] Flip</p>
   </div>
 
   <div id="flashcard-view">
@@ -170,13 +171,19 @@
     <div id="card" onclick="flipCard()">Loading...</div>
     
     <div class="controls">
-      <button class="btn-next" id="nextBtn" onclick="nextCard()">Next Card (Z) ➔</button>
-      <button class="btn-discard" id="discardBtn" onclick="discardCard()">🗑 Discard (X)</button>
-      <button class="btn-secondary" onclick="showList()">👁 Show List</button>
-      <button class="btn-secondary" onclick="resetDeck()">↺ Restart Deck</button>
-      <button class="btn-review" id="reviewBtn" onclick="reviewRemaining()">🔥 Review Remaining</button>
-      <button class="btn-save" onclick="downloadCurrentDeck()">💾 Save Deck</button>
-      <button class="btn-secondary" onclick="location.reload()">↺ New List</button>
+      <div class="controls-row" id="controls-top">
+        <button class="btn-next" id="knowBtn" onclick="knowCard()">Know (Z)</button>
+        <button class="btn-discard" id="discardBtn" onclick="discardCard()">🗑 Discard (X)</button>
+        <button class="btn-secondary" id="shuffleBtn" onclick="shuffleDeck()">🔀 Shuffle</button>
+        <button class="btn-secondary" id="restartBtn" onclick="resetDeckSequential()">↺ Restart</button>
+      </div>
+
+      <div class="controls-row" id="controls-bottom" style="margin-top:8px;">
+        <button class="btn-secondary" id="starBtn" onclick="toggleStar()">☆ Star</button>
+        <button class="btn-save" id="saveFullBtn" onclick="saveFull()">💾 Save Full</button>
+        <button class="btn-save" id="saveLeftBtn" onclick="saveLeft()">💾 Save Left</button>
+        <button class="btn-save" id="saveStarBtn" onclick="saveStar()">💾 Save Star</button>
+      </div>
     </div>
   </div>
 
@@ -196,6 +203,8 @@
 <script>
 let originalDeck = []; 
 let activeDeck = []; 
+let discardedDeck = []; // items discarded with the Discard action
+let knownDeck = []; // items marked as Known
 let currentIndex = 0;
 let isFlipped = false;
 
@@ -205,21 +214,17 @@ window.onload = function() {
 
 // --- KEYBOARD SHORTCUTS ---
 document.addEventListener('keydown', function(event) {
-  // Ignorar si el usuario está escribiendo en el textarea
   if (event.target.tagName === 'TEXTAREA') return;
 
   const key = event.key.toLowerCase();
-  
   if (key === 'z') {
-    const btn = document.getElementById("nextBtn");
-    if (!btn.disabled) nextCard();
-  } 
-  else if (key === 'x') {
+    const btn = document.getElementById("knowBtn");
+    if (!btn.disabled) knowCard();
+  } else if (key === 'x') {
     const btn = document.getElementById("discardBtn");
     if (!btn.disabled) discardCard();
-  } 
-  else if (key === ' ') {
-    event.preventDefault(); // Evita scroll
+  } else if (key === ' ') {
+    event.preventDefault(); // prevent scroll
     flipCard();
   }
 });
@@ -230,9 +235,12 @@ function loadCustomDeck() {
   const lines = input.split('\n');
   originalDeck = lines.map(line => {
     const parts = line.split('\t');
-    return { sideA: parts[0] ? parts[0].trim() : "", sideB: parts[1] ? parts[1].trim() : "" };
+    return { sideA: parts[0] ? parts[0].trim() : "", sideB: parts[1] ? parts[1].trim() : "", starred: false };
   }).filter(item => item.sideA || item.sideB);
   if (originalDeck.length === 0) return alert("No valid data found.");
+  // reset tracking arrays
+  discardedDeck = [];
+  knownDeck = [];
   startApp();
 }
 
@@ -240,48 +248,57 @@ function startApp() {
   document.getElementById('setup-container').style.display = 'none';
   document.getElementById('flashcard-view').style.display = 'flex';
   generateClassroomQR();
-  resetDeck();
+  resetDeckSequential(); // Defaults to sequential order on start
 }
 
-function resetDeck() {
-  activeDeck = [...originalDeck]; // Mantiene el orden exacto del input
-  document.getElementById('reviewBtn').style.display = 'none';
+function resetDeckSequential() {
+  // Restart: bring discarded back into the active deck and use the original chronological order
+  const returned = [...discardedDeck];
+  discardedDeck = [];
+  activeDeck = [...originalDeck].filter(item => !knownDeck.includes(item)).map(item => ({...item}));
+  // ensure returned discarded items are added back in original order
+  returned.forEach(it => {
+    const idx = originalDeck.indexOf(it);
+    if (idx >= 0) {
+      // already included by filter above
+    } else {
+      activeDeck.push(it);
+    }
+  });
   initSession();
 }
 
-function reviewRemaining() {
-  if (activeDeck.length === 0) return resetDeck();
-  activeDeck = [...activeDeck]; // Mantiene el orden de los que quedan sin mezclar
-  document.getElementById('reviewBtn').style.display = 'none';
+function shuffleDeck() {
+  // shuffle only the active set (keeps originalDeck intact)
+  activeDeck = [...activeDeck];
+  for (let i = activeDeck.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [activeDeck[i], activeDeck[j]] = [activeDeck[j], activeDeck[i]];
+  }
   initSession();
 }
 
 function initSession() {
   currentIndex = 0;
   isFlipped = false;
-  document.getElementById("nextBtn").disabled = false;
-  document.getElementById("discardBtn").disabled = false;
+  // update star button state
+  updateStarButton();
   updateDisplay();
 }
 
 function updateDisplay() {
-  const current = activeDeck[currentIndex];
   const card = document.getElementById("card");
-  
-  if (!current || activeDeck.length === 0 || currentIndex >= activeDeck.length) {
+  if (!activeDeck || activeDeck.length === 0 || currentIndex >= activeDeck.length) {
     card.innerHTML = "<b>Excellent!</b><br>Session finished.";
     card.style.background = "#d4edda";
-    document.getElementById("nextBtn").disabled = true;
+    document.getElementById("knowBtn").disabled = true;
     document.getElementById("discardBtn").disabled = true;
-    
-    if (activeDeck.length > 0) {
-        document.getElementById('reviewBtn').style.display = 'inline-block';
-    }
     return;
   }
 
+  const current = activeDeck[currentIndex];
   document.getElementById("progress").textContent = `Card ${currentIndex + 1} of ${activeDeck.length}`;
-  
+
   if (!isFlipped) {
     card.innerHTML = `<div>${current.sideA}</div>`; 
     card.style.background = "white";
@@ -291,10 +308,12 @@ function updateDisplay() {
     card.style.background = "#eef6ff";
     card.style.color = "#1565c0";
   }
+
+  updateStarButton();
 }
 
 function flipCard() {
-  if (currentIndex >= activeDeck.length) return;
+  if (!activeDeck || currentIndex >= activeDeck.length) return;
   isFlipped = !isFlipped;
   updateDisplay();
 }
@@ -310,17 +329,45 @@ function nextCard() {
   }
 }
 
-function discardCard() {
+function knowCard() {
+  if (!activeDeck || currentIndex >= activeDeck.length) return;
+  const item = activeDeck[currentIndex];
+  knownDeck.push(item);
   activeDeck.splice(currentIndex, 1);
-  if (activeDeck.length === 0) {
-    updateDisplay();
-  } else {
-    if (currentIndex >= activeDeck.length) {
-        currentIndex = activeDeck.length;
-    }
+  if (currentIndex >= activeDeck.length) currentIndex = Math.max(0, activeDeck.length - 1);
+  isFlipped = false;
+  updateDisplay();
+}
+
+function discardCard() {
+  if (!activeDeck || currentIndex >= activeDeck.length) return;
+  const item = activeDeck[currentIndex];
+  // show other side for 2 seconds, then remove
+  isFlipped = true;
+  updateDisplay();
+  setTimeout(() => {
+    discardedDeck.push(item);
+    // remove from active
+    activeDeck.splice(currentIndex, 1);
+    if (currentIndex >= activeDeck.length) currentIndex = Math.max(0, activeDeck.length - 1);
     isFlipped = false;
     updateDisplay();
-  }
+  }, 2000);
+}
+
+function toggleStar() {
+  if (!activeDeck || currentIndex >= activeDeck.length) return;
+  const item = activeDeck[currentIndex];
+  item.starred = !item.starred;
+  updateStarButton();
+}
+
+function updateStarButton() {
+  const btn = document.getElementById('starBtn');
+  if (!btn) return;
+  if (!activeDeck || currentIndex >= activeDeck.length) { btn.textContent = '☆ Star'; return; }
+  const item = activeDeck[currentIndex];
+  btn.textContent = item && item.starred ? '★ Starred' : '☆ Star';
 }
 
 function showList() {
@@ -328,10 +375,11 @@ function showList() {
   tbody.innerHTML = "";
   originalDeck.forEach(item => {
     const row = tbody.insertRow();
-    row.insertCell(0).innerHTML = item.sideA;
-    row.insertCell(1).innerHTML = item.sideB;
+    row.insertCell(0).innerHTML = item.sideA + (item.starred ? ' ★' : '');
+    const status = discardedDeck.includes(item) ? 'Discarded' : (knownDeck.includes(item) ? 'Known' : 'Active');
+    row.insertCell(1).innerHTML = item.sideB + ' <span style="color:#888;font-size:0.9rem">(' + status + ')</span>';
   });
-  document.getElementById("list-modal").style.display = "block";
+  document.getElementById("list-modal").style.display = 'block';
 }
 
 function closeList() { document.getElementById("list-modal").style.display = "none"; }
@@ -347,16 +395,42 @@ function generateClassroomQR() {
   };
 }
 
-function downloadCurrentDeck() {
-    let docHtml = document.documentElement.outerHTML;
-    const dataString = `let originalDeck = ${JSON.stringify(originalDeck)};`;
-    const finalHtml = docHtml.replace(/let originalDeck = \[\];/, dataString);
-    const blob = new Blob([finalHtml], { type: 'text/html' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'MyFlashcards.html';
-    a.click();
+// Helpers to save custom HTML containing a deck variable
+function downloadHtmlWithDeck(deckArray, filename) {
+  // embed deck as JS variable named originalDeck
+  const docHtml = document.documentElement.outerHTML;
+  const dataString = `let originalDeck = ${JSON.stringify(deckArray, null, 2)};`;
+  // replace existing declaration if present, otherwise append before closing script
+  let finalHtml;
+  if (/let originalDeck =/.test(docHtml)) {
+    finalHtml = docHtml.replace(/let originalDeck = [\s\S]*?;\n/, dataString + '\n');
+  } else {
+    finalHtml = docHtml.replace('<\/script>', '<script>\n' + dataString + '\n<\/script>');
+  }
+  const blob = new Blob([finalHtml], { type: 'text/html' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
 }
+
+function saveFull() {
+  downloadHtmlWithDeck(originalDeck, 'flashcards-full.html');
+}
+
+function saveLeft() {
+  // save items that are currently not discarded (i.e., active + those not removed by discard)
+  // We'll save the current activeDeck as the "left" set
+  downloadHtmlWithDeck(activeDeck, 'flashcards-left.html');
+}
+
+function saveStar() {
+  const stars = originalDeck.filter(it => it.starred);
+  downloadHtmlWithDeck(stars, 'flashcards-starred.html');
+}
+
+// legacy compatibility: a simple download of the full original deck
+function downloadCurrentDeck() { saveFull(); }
 </script>
 
 </body>
