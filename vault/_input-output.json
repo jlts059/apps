@@ -1,0 +1,32 @@
+{
+  "categorias": [
+    {
+      "nombre": "DE ALEMÁN",
+      "icono": "🍺",
+      "inputs": [
+        {
+          "tipo": "Quiz (6 columns)",
+          "juegos": [
+            { "nombre": "flash", "url": "flash/index.html" },
+            { "nombre": "quiz_gr", "url": "quiz_gr/index.html" },
+            { "nombre": "quiz_voc", "url": "quiz_voc/index.html" },
+            { "nombre": "wheel", "url": "wheel/index.html" }
+          ]
+        }
+      ]
+    },
+    {
+      "nombre": "GB INGLÉS",
+      "icono": "☕",
+      "inputs": [
+        {
+          "tipo": "Word + Def",
+          "juegos": [
+            { "nombre": "gr", "url": "gr/index.html" },
+            { "nombre": "voc", "url": "voc/index.html" }
+          ]
+        }
+      ]
+    }
+  ]
+}

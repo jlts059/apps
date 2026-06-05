@@ -4,10 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Apps</title>
-    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
-    <script>
-        mermaid.initialize({ startOnLoad: false, theme: 'neutral' });
-    </script>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; line-height: 1.6; max-width: 800px; margin: auto; background-color: #f9f9f9; }
         h1 { border-bottom: 2px solid #333; padding-bottom: 10px; text-align: center; color: #2c3e50; }
@@ -35,23 +31,6 @@
         .app-link:hover { transform: translateX(5px); border-color: #0366d6; box-shadow: 2px 2px 10px rgba(0,0,0,0.1); }
         .icon { margin-right: 15px; font-size: 1.2em; }
 
-        /* Estilos para el nuevo panel del Diagrama */
-        .diagram-container {
-            margin-top: 30px;
-            padding: 20px;
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
-        }
-        .diagram-title {
-            font-size: 0.85em; text-transform: uppercase; color: #888; 
-            margin-bottom: 12px; font-weight: bold; letter-spacing: 1px;
-        }
-        .mermaid-wrapper {
-            display: flex; justify-content: center; overflow-x: auto; width: 100%;
-        }
-
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         #loading { text-align: center; color: #666; font-style: italic; margin-top: 50px; }
     </style>
@@ -65,26 +44,19 @@
     <div class="blocks-container" id="blocks-wrapper" style="display: none;">
         <div id="block-al-container">
             <div class="block-title">🍺 DE ALEMÁN</div>
-            <div id="tabs-al" class="tabs"></div>
+        	<div id="tabs-al" class="tabs"></div>
         </div>
         <div id="block-in-container">
             <div class="block-title">☕ GB INGLÉS</div>
-            <div id="tabs-in" class="tabs"></div>
+        	<div id="tabs-in" class="tabs"></div>
         </div>
         <div id="block-other-container">
             <div class="block-title">🏠 OTROS / GENERAL</div>
-            <div id="tabs-other" class="tabs"></div>
+        	<div id="tabs-other" class="tabs"></div>
         </div>
     </div>
 
     <div id="contents-container"></div>
-
-    <div id="diagram-section" class="diagram-container" style="display: none;">
-        <div class="diagram-title">📊 Estructura de Inputs e Outputs</div>
-        <div class="mermaid-wrapper">
-            <div id="diagram-target" class="mermaid"></div>
-        </div>
-    </div>
 
     <script>
         const repoOwner = 'jlts059';
@@ -100,6 +72,7 @@
         };
 
         // --- DATOS DE SIMULACIÓN LOCAL ---
+        // Modifica esto si quieres simular que añades carpetas nuevas en tu PC para ver cómo quedan
         const localMockData = [
             { type: 'dir', name: 'al_flash', files: [{ name: 'flashcardscp.html' }, { name: 'flashcardscporder.html' }] },
             { type: 'dir', name: 'al_quiz_gr', files: [{ name: 'quizg.html' }] },
@@ -114,15 +87,18 @@
         ];
 
         async function cargarProyectos() {
+            // Detectamos si el archivo se abrió desde el disco duro (local)
             const esLocal = window.location.protocol === 'file:';
             
             try {
                 let items = [];
 
                 if (esLocal) {
+                    // Si es local, usamos los datos simulados de arriba al instante
                     items = localMockData;
                     console.log("Modo de desarrollo local activado.");
                 } else {
+                    // Si está en GitHub, hace las peticiones reales a la API
                     const url = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/`;
                     const response = await fetch(url);
                     items = await response.json();
@@ -164,8 +140,7 @@
                 if (document.getElementById('tabs-in').children.length === 0) document.getElementById('block-in-container').style.display = 'none';
                 if (document.getElementById('tabs-other').children.length === 0) document.getElementById('block-other-container').style.display = 'none';
 
-                // Una vez cargadas las carpetas, cargamos y generamos el diagrama
-                cargarYGenerarDiagrama();
+                // Desactivado el primer click automático para que todo inicie cerrado.
 
             } catch (error) {
                 console.error("Error:", error);
@@ -228,54 +203,6 @@
             
             if(targetContent) targetContent.classList.add('active');
             if(targetBtn) targetBtn.classList.add('active');
-        }
-
-        // FUNCIÓN MODIFICADA: Ahora busca el JSON dentro de la carpeta /vault
-        async function cargarYGenerarDiagrama() {
-            try {
-                // Modificado para buscar en la subcarpeta vault
-                const response = await fetch('vault/_input-output.json');
-                if (!response.ok) throw new Error("No se pudo encontrar el archivo JSON en /vault");
-                
-                const data = await response.json();
-                
-                let mermaidSyntax = "graph LR\n";
-                let inputCounter = 0;
-                let gameCounter = 0;
-
-                data.categorias.forEach(cat => {
-                    if (cat.inputs) {
-                        cat.inputs.forEach(input => {
-                            inputCounter++;
-                            const inputId = `I${inputCounter}`;
-                            mermaidSyntax += `    ${inputId}[${input.tipo}]\n`;
-                            mermaidSyntax += `    style ${inputId} fill:#0366d6,stroke:#024ea4,color:#fff,font-weight:bold\n`;
-
-                            if (input.juegos) {
-                                input.juegos.forEach(juego => {
-                                    gameCounter++;
-                                    const gameId = `G${gameCounter}`;
-                                    mermaidSyntax += `    ${inputId} --> ${gameId}(${juego.nombre})\n`;
-                                    mermaidSyntax += `    style ${gameId} fill:#fff,stroke:#ddd,color:#333\n`;
-                                });
-                            }
-                        });
-                    }
-                });
-
-                if (inputCounter > 0) {
-                    const diagramSection = document.getElementById('diagram-section');
-                    const diagramTarget = document.getElementById('diagram-target');
-                    
-                    diagramSection.style.display = 'block';
-                    diagramTarget.textContent = mermaidSyntax;
-                    
-                    mermaid.run({ nodes: [diagramTarget] });
-                }
-
-            } catch (err) {
-                console.warn("Diagrama no generado: Asegúrate de que '_input-output.json' esté en la carpeta vault y bien formateado.", err);
-            }
         }
 
         cargarProyectos();

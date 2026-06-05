@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Vokabelübung Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        .drop-zone {
+            min-width: 90px;
+            height: 1.6em;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-bottom: 2px solid #4a5568;
+            margin: 0 4px;
+            padding: 0 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            top: 2px;
+        }
+        .drop-zone:hover { background-color: #f7fafc; }
+        .drop-zone.selected {
+            background-color: #ebf8ff;
+            border-color: #4299e1;
+            border-bottom-style: dashed;
+        }
+        .item-card {
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.1s;
+        }
+        .item-card:active { transform: scale(0.95); }
+        .item-card.selected {
+            background-color: #4299e1 !important;
+            color: white !important;
+            box-shadow: 0 0 0 2px #bee3f8;
+        }
+        /* Colores de estados en los huecos */
+        .placed-word { color: #1a202c; font-weight: bold; }
+        .placed-word.active-orange { color: #ea580c !important; } /* Naranja al seleccionar */
+        
+        .correct { color: #38a169; font-weight: bold; display: inline-flex; align-items: center; gap: 2px; }
+        .incorrect { color: #e53e3e; font-weight: bold; text-decoration: line-through; }
+        .solution { color: #3182ce; font-weight: bold; margin-left: 6px; font-size: 0.95em; }
+        #qrcode img, #modal-qrcode img { display: inline-block; }
+        
+        /* Selector de palabras interactivo (Modo 3) */
+        .selectable-word { cursor: pointer; padding: 2px 4px; border-radius: 4px; transition: all 0.1s; }
+        .selectable-word:hover { background-color: #ffe0b2; color: #b78103; }
+        .selectable-word.chosen { background-color: #f59e0b; color: white; font-weight: bold; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-4 font-sans">
+
+    <div id="generator-panel" class="max-w-3xl mx-auto bg-white rounded-xl shadow-lg p-6 mb-8 border border-blue-200">
+        <h2 class="text-xl font-bold text-blue-800 mb-4">⚙️ Panel del Generador Multimodo</h2>
+        
+        <div class="text-sm text-gray-600 mb-4 space-y-1">
+            <p><strong>Modo 1 y 2 (2 Columnas de Excel):</strong> Columna 1 (Palabra) + Columna 2 (Frase con u ocultando palabra exacta).</p>
+            <p><strong>Modo 3 (1 Sola Columna):</strong> ¡Pega solo las frases completas y luego haz clic en la palabra que quieras ocultar!</p>
+        </div>
+
+        <textarea id="excel-input" class="w-full h-40 p-3 border border-gray-300 rounded-lg font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Frase ejemplo 1 sin tabular&#10;Frase ejemplo 2 sin tabular"></textarea>
+        
+        <div class="flex gap-4 mt-4">
+            <button id="btn-process" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-full font-semibold transition shadow-md">
+                Procesar Contenido
+            </button>
+            <button id="btn-download" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-full font-semibold transition shadow-md hidden">
+                Descargar HTML del Juego
+            </button>
+        </div>
+    </div>
+
+    <div id="word-selector-panel" class="max-w-3xl mx-auto bg-white rounded-xl shadow-lg p-6 mb-8 border border-amber-200 hidden">
+        <h3 class="text-lg font-bold text-amber-800 mb-2">🎯 Elige la palabra oculta para cada frase</h3>
+        <p class="text-xs text-gray-500 mb-4">Haz clic sobre la palabra de cada línea que se convertirá en el hueco a rellenar.</p>
+        <div id="selector-lines" class="space-y-3 mb-6"></div>
+        <button id="btn-finalize-mode3" class="bg-amber-600 hover:bg-amber-700 text-white px-6 py-2 rounded-full font-semibold transition shadow-md">
+            Confirmar y Generar Juego
+        </button>
+    </div>
+
+    <div id="game-container" class="max-w-2xl mx-auto bg-white rounded-xl shadow-lg p-6 hidden">
+        <div class="flex flex-row items-center justify-between gap-4 mb-6 pb-4 border-b border-gray-100">
+            <p class="text-sm text-gray-600 italic leading-snug flex-1 m-0">
+                Marca un ítem y un hueco para moverlo ahí, o al revés. Para cambiarlo, tócalo y se volverá naranja. Si lo tocas de nuevo, volverá a la caja de palabras. Si picas en otro hueco, se moverá ahí. Tu objetivo es hacer una ronda donde las aciertes todas.
+            </p>
+            <div id="qrcode" onclick="openQRModal()" class="bg-white p-1 border border-gray-200 rounded shadow-sm shrink-0 cursor-pointer hover:border-blue-400 transition" title="Click para agrandar"></div>
+        </div>
+
+        <div id="items-container" class="flex flex-wrap gap-2 mb-8 p-4 bg-blue-50 rounded-lg min-h-auto border-2 border-dashed border-blue-200"></div>
+        <div id="sentences-list" class="space-y-4 mb-8"></div>
+        <div id="result-container" class="hidden mb-6 p-4 rounded-lg text-center font-bold text-lg"></div>
+
+        <div class="flex gap-4 justify-center">
+            <button id="btn-check" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-full font-semibold transition shadow-md">corregir</button>
+            <button id="btn-reset" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-full font-semibold transition shadow-md">intentarlo de nuevo</button>
+        </div>
+    </div>
+
+    <div id="qr-modal" onclick="closeQRModal()" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+        <div onclick="event.stopPropagation()" class="bg-white p-6 rounded-xl shadow-2xl text-center max-w-xs w-full relative">
+            <button onclick="closeQRModal()" class="absolute top-2 right-3 text-gray-400 hover:text-gray-700 font-bold text-lg">&times;</button>
+            <div id="modal-qrcode" class="inline-block bg-white p-2 border border-gray-100 rounded mt-2"></div>
+        </div>
+    </div>
+
+    <script>
+        let vocabulary = [];
+        let temporaryLines = []; 
+        let state = { selectedItem: null, selectedSlot: null, placements: {}, isCorrected: false, currentOrder: [] };
+
+        const itemsContainer = document.getElementById('items-container');
+        const sentencesList = document.getElementById('sentences-list');
+        const btnCheck = document.getElementById('btn-check');
+        const btnReset = document.getElementById('btn-reset');
+        const resultContainer = document.getElementById('result-container');
+
+        function generateQRCodes() {
+            const currentURL = window.location.href || "https://localhost";
+            document.getElementById("qrcode").innerHTML = ""; 
+            new QRCode(document.getElementById("qrcode"), { text: currentURL, width: 50, height: 50, correctLevel: QRCode.CorrectLevel.M });
+            document.getElementById("modal-qrcode").innerHTML = "";
+            new QRCode(document.getElementById("modal-qrcode"), { text: currentURL, width: 200, height: 200, correctLevel: QRCode.CorrectLevel.H });
+        }
+
+        function openQRModal() { document.getElementById('qr-modal').classList.remove('hidden'); }
+        function closeQRModal() { document.getElementById('qr-modal').classList.add('hidden'); }
+
+        document.getElementById('btn-process').onclick = () => {
+            const text = document.getElementById('excel-input').value.trim();
+            if (!text) return alert("Por favor, introduce o pega datos primero.");
+
+            const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+            vocabulary = [];
+            temporaryLines = [];
+            
+            const isTwoColumns = lines[0].includes('\t');
+
+            if (isTwoColumns) {
+                document.getElementById('word-selector-panel').classList.add('hidden');
+                lines.forEach((line, index) => {
+                    const columns = line.split('\t');
+                    if (columns.length >= 2) {
+                        const word = columns[0].trim();
+                        let sentence = columns[1].trim();
+                        
+                        if (/___+/.test(sentence)) {
+                            sentence = sentence.replace(/___+/g, '[gap]');
+                        } else {
+                            const regex = new RegExp('\\b' + word + '\\b', 'gi');
+                            sentence = sentence.match(regex) ? sentence.replace(regex, '[gap]') : sentence.replace(word, '[gap]');
+                        }
+                        vocabulary.push({ id: index + 1, text: word, solution: word, sentence: sentence });
+                    }
+                });
+                launchGame();
+            } else {
+                document.getElementById('game-container').classList.add('hidden');
+                document.getElementById('btn-download').classList.add('hidden');
+                const selectorLinesDiv = document.getElementById('selector-lines');
+                selectorLinesDiv.innerHTML = '';
+
+                lines.forEach((line, lineIndex) => {
+                    const words = line.split(/(\s+)/);
+                    temporaryLines.push({ originalWords: words, chosenWordIndex: null });
+
+                    const rowDiv = document.createElement('div');
+                    rowDiv.className = "p-2 bg-gray-50 rounded border border-gray-200 text-sm md:text-base flex flex-wrap gap-y-1";
+                    
+                    let spanIndex = 0;
+                    words.forEach((word) => {
+                        if (word.trim().length === 0) {
+                            const space = document.createElement('span');
+                            space.innerHTML = "&nbsp;";
+                            rowDiv.appendChild(space);
+                        } else {
+                            const currentIndex = spanIndex;
+                            const wordSpan = document.createElement('span');
+                            wordSpan.className = "selectable-word";
+                            wordSpan.textContent = word;
+                            wordSpan.onclick = () => {
+                                rowDiv.querySelectorAll('.selectable-word').forEach(el => el.classList.remove('chosen'));
+                                wordSpan.classList.add('chosen');
+                                temporaryLines[lineIndex].chosenWordIndex = currentIndex;
+                            };
+                            rowDiv.appendChild(wordSpan);
+                            spanIndex++;
+                        }
+                    });
+                    selectorLinesDiv.appendChild(rowDiv);
+                });
+
+                document.getElementById('word-selector-panel').classList.remove('hidden');
+                document.getElementById('word-selector-panel').scrollIntoView({ behavior: 'smooth' });
+            }
+        };
+
+        document.getElementById('btn-finalize-mode3').onclick = () => {
+            let incomplete = false;
+            vocabulary = [];
+
+            temporaryLines.forEach((lineData) => {
+                if (lineData.chosenWordIndex === null) incomplete = true;
+            });
+
+            if (incomplete) {
+                return alert("Por favor, selecciona una palabra oculta en cada una de las frases antes de continuar.");
+            }
+
+            temporaryLines.forEach((lineData, index) => {
+                let cleanSolution = "";
+                let sentenceStructure = "";
+                let spanIndex = 0;
+
+                lineData.originalWords.forEach((word) => {
+                    if (word.trim().length === 0) {
+                        sentenceStructure += word;
+                    } else {
+                        if (spanIndex === lineData.chosenWordIndex) {
+                            cleanSolution = word.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()¿?¡!]/g, "").trim();
+                            sentenceStructure += "[gap]";
+                            const punctuationMatch = word.match(/[.,\/#!$%\^&\*;:{}=\-_`~()¿?¡!]+$/);
+                            if (punctuationMatch) sentenceStructure += punctuationMatch[0];
+                        } else {
+                            sentenceStructure += word;
+                        }
+                        spanIndex++;
+                    }
+                });
+
+                vocabulary.push({ id: index + 1, text: cleanSolution, solution: cleanSolution, sentence: sentenceStructure });
+            });
+
+            document.getElementById('word-selector-panel').classList.add('hidden');
+            launchGame();
+        };
+
+        function launchGame() {
+            if (vocabulary.length === 0) return alert("No hay datos válidos para iniciar.");
+            document.getElementById('game-container').classList.remove('hidden');
+            document.getElementById('btn-download').classList.remove('hidden');
+            init();
+            generateQRCodes();
+            document.getElementById('game-container').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function init() {
+            state.isCorrected = false; state.placements = {}; state.selectedItem = null; state.selectedSlot = null;
+            resultContainer.classList.add('hidden');
+            state.currentOrder = [...vocabulary].sort(() => Math.random() - 0.5);
+            render();
+        }
+
+        function render() {
+            itemsContainer.innerHTML = '';
+            const placedItemIds = Object.values(state.placements);
+            
+            if (placedItemIds.length === vocabulary.length) {
+                itemsContainer.classList.add('hidden');
+            } else {
+                itemsContainer.classList.remove('hidden');
+            }
+
+            vocabulary.forEach(item => {
+                if (!placedItemIds.includes(item.id)) {
+                    const div = document.createElement('div');
+                    div.className = `item-card px-3 py-1 bg-white border border-blue-300 rounded shadow-sm text-sm font-medium ${state.selectedItem === item.id ? 'selected' : ''}`;
+                    div.textContent = item.text; div.onclick = () => handleItemClick(item.id);
+                    itemsContainer.appendChild(div);
+                }
+            });
+
+            sentencesList.innerHTML = '';
+            state.currentOrder.forEach((data, index) => {
+                const div = document.createElement('div');
+                div.className = "flex flex-wrap items-baseline text-gray-800 leading-relaxed text-sm md:text-base";
+                
+                const parts = data.sentence.split('[gap]');
+                const startText = document.createElement('span');
+                startText.textContent = `${index + 1}. ${parts[0]}`;
+                div.appendChild(startText);
+
+                const slot = document.createElement('span');
+                slot.className = `drop-zone ${state.selectedSlot === index ? 'selected' : ''}`;
+                
+                const placedId = state.placements[index];
+                if (placedId) {
+                    const itemData = vocabulary.find(v => v.id === placedId);
+                    if (state.isCorrected) {
+                        const isRight = itemData.id === data.id;
+                        const span = document.createElement('span');
+                        span.className = isRight ? 'correct' : 'incorrect';
+                        
+                        if (isRight) {
+                            span.innerHTML = `${itemData.text} <span class="text-emerald-600 ml-1">✔</span>`; slot.appendChild(span);
+                        } else {
+                            span.textContent = itemData.text; slot.appendChild(span);
+                            const solSpan = document.createElement('span');
+                            solSpan.className = 'solution'; solSpan.textContent = ` ${data.solution}`;
+                            slot.appendChild(solSpan);
+                        }
+                    } else { 
+                        // Aplicar clase naranja si este hueco específico es el seleccionado actualmente
+                        const isOrange = (state.selectedSlot === index);
+                        const span = document.createElement('span');
+                        span.className = `placed-word ${isOrange ? 'active-orange' : ''}`;
+                        span.textContent = itemData.text;
+                        slot.appendChild(span);
+                    }
+                } else if (state.isCorrected) {
+                    const solSpan = document.createElement('span');
+                    solSpan.className = 'solution'; solSpan.textContent = ` ${data.solution}`;
+                    slot.appendChild(solSpan);
+                }
+                
+                slot.onclick = () => handleSlotClick(index);
+                div.appendChild(slot);
+
+                if (parts[1]) {
+                    const endText = document.createElement('span'); endText.textContent = parts[1];
+                    div.appendChild(endText);
+                }
+                sentencesList.appendChild(div);
+            });
+        }
+
+        function handleItemClick(itemId) {
+            if (state.isCorrected) return;
+            // Si veníamos de un hueco con palabra (naranja) o de la caja superior, lo metemos en el hueco que estuviera pre-seleccionado
+            if (state.selectedSlot !== null && !state.placements[state.selectedSlot]) { 
+                moveItemToSlot(itemId, state.selectedSlot); 
+            } else { 
+                state.selectedItem = state.selectedItem === itemId ? null : itemId; 
+                state.selectedSlot = null; // Limpiar selección de huecos
+            }
+            render();
+        }
+
+        function handleSlotClick(slotIndex) {
+            if (state.isCorrected) return;
+            
+            const itemInSlot = state.placements[slotIndex];
+
+            if (state.selectedItem !== null) {
+                // Caso A: Teníamos una palabra seleccionada arriba y tocamos un hueco (vacío o lleno)
+                moveItemToSlot(state.selectedItem, slotIndex);
+            } 
+            else if (state.selectedSlot !== null) {
+                // Caso B: Ya teníamos un hueco (origen) seleccionado previamente
+                if (state.selectedSlot === slotIndex) {
+                    // Segundo toque en el mismo hueco -> Vuelve a la caja principal (Negro normal)
+                    delete state.placements[slotIndex];
+                    state.selectedSlot = null;
+                } else {
+                    // Toque en un hueco DIFERENTE
+                    const itemToMove = state.placements[state.selectedSlot];
+                    if (itemToMove) {
+                        // Si el hueco de origen tenía palabra, la movemos al nuevo hueco (pasa a negro + bold)
+                        for (let key in state.placements) { if (state.placements[key] === itemToMove) delete state.placements[key]; }
+                        state.placements[slotIndex] = itemToMove;
+                    }
+                    state.selectedSlot = null;
+                }
+            } 
+            else {
+                // Caso C: No había nada seleccionado antes
+                if (itemInSlot) {
+                    // Si el hueco tiene una palabra -> Cambia a Naranja (Esperando destino o segundo click)
+                    state.selectedSlot = slotIndex;
+                } else {
+                    // Si el hueco está vacío -> Lo dejamos marcado para recibir una palabra de la caja superior
+                    state.selectedSlot = slotIndex;
+                }
+            }
+            render();
+        }
+
+        function moveItemToSlot(itemId, slotIndex) {
+            for (let key in state.placements) { if (state.placements[key] === itemId) delete state.placements[key]; }
+            state.placements[slotIndex] = itemId; state.selectedItem = null; state.selectedSlot = null;
+        }
+
+        btnCheck.onclick = () => {
+            if (state.isCorrected) return; let score = 0;
+            state.currentOrder.forEach((data, index) => { if (state.placements[index] === data.id) score++; });
+            state.isCorrected = true;
+            resultContainer.textContent = `Puntuación: ${score} / ${vocabulary.length}`;
+            resultContainer.className = `mb-6 p-4 rounded-lg text-center font-bold text-lg ${score === vocabulary.length ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'}`;
+            resultContainer.classList.remove('hidden'); render();
+        };
+
+        btnReset.onclick = init;
+
+        // BOTÓN DESCARGAR: Guarda el juego final con todas las mejoras de flujo táctil aplicadas
+        document.getElementById('btn-download').onclick = () => {
+            const cleanHTML = `<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vokabelübung Interactive</title>
+    <script src="https://cdn.tailwindcss.com"><\/script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
+    <style>
+        .drop-zone { min-width: 90px; height: 1.6em; display: inline-flex; align-items: center; justify-content: center; border-bottom: 2px solid #4a5568; margin: 0 4px; padding: 0 8px; cursor: pointer; transition: all 0.2s; position: relative; top: 2px; }
+        .drop-zone:hover { background-color: #f7fafc; }
+        .drop-zone.selected { background-color: #ebf8ff; border-color: #4299e1; border-bottom-style: dashed; }
+        .item-card { cursor: pointer; user-select: none; transition: all 0.1s; }
+        .item-card:active { transform: scale(0.95); }
+        .item-card.selected { background-color: #4299e1 !important; color: white !important; box-shadow: 0 0 0 2px #bee3f8; }
+        .placed-word { color: #1a202c; font-weight: bold; }
+        .placed-word.active-orange { color: #ea580c !important; }
+        .correct { color: #38a169; font-weight: bold; display: inline-flex; align-items: center; gap: 2px; }
+        .incorrect { color: #e53e3e; font-weight: bold; text-decoration: line-through; }
+        .solution { color: #3182ce; font-weight: bold; margin-left: 6px; font-size: 0.95em; }
+        #qrcode img, #modal-qrcode img { display: inline-block; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen p-4 font-sans flex items-center justify-center">
+    <div id="game-container" class="max-w-2xl w-full mx-auto bg-white rounded-xl shadow-lg p-6">
+        <div class="flex flex-row items-center justify-between gap-4 mb-6 pb-4 border-b border-gray-100">
+            <p class="text-sm text-gray-600 italic leading-snug flex-1 m-0">
+                Toca un item y un hueco para moverlo ahí, o al revés. Para cambiarlo, selecciónalo y toca adonde quieras moverlo. El objetivo continuar hasta acertarlas todas.
+            </p>
+            <div id="qrcode" onclick="openQRModal()" class="bg-white p-1 border border-gray-200 rounded shadow-sm shrink-0 cursor-pointer hover:border-blue-400 transition" title="Click para agrandar"></div>
+        </div>
+        <div id="items-container" class="flex flex-wrap gap-2 mb-8 p-4 bg-blue-50 rounded-lg min-h-auto border-2 border-dashed border-blue-200"></div>
+        <div id="sentences-list" class="space-y-4 mb-8"></div>
+        <div id="result-container" class="hidden mb-6 p-4 rounded-lg text-center font-bold text-lg"></div>
+        <div class="flex gap-4 justify-center">
+            <button id="btn-check" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-full font-semibold transition shadow-md">corregir</button>
+            <button id="btn-reset" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-full font-semibold transition shadow-md">intentarlo de nuevo</button>
+        </div>
+    </div>
+
+    <div id="qr-modal" onclick="closeQRModal()" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+        <div onclick="event.stopPropagation()" class="bg-white p-6 rounded-xl shadow-2xl text-center max-w-xs w-full relative">
+            <button onclick="closeQRModal()" class="absolute top-2 right-3 text-gray-400 hover:text-gray-700 font-bold text-lg">&times;</button>
+            <div id="modal-qrcode" class="inline-block bg-white p-2 border border-gray-100 rounded mt-2"></div>
+        </div>
+    </div>
+
+    <script>
+        const vocabulary = ${JSON.stringify(vocabulary)};
+        let state = { selectedItem: null, selectedSlot: null, placements: {}, isCorrected: false, currentOrder: [] };
+        const itemsContainer = document.getElementById('items-container');
+        const sentencesList = document.getElementById('sentences-list');
+        const btnCheck = document.getElementById('btn-check');
+        const btnReset = document.getElementById('btn-reset');
+        const resultContainer = document.getElementById('result-container');
+
+        function generateQRCodes() {
+            const currentURL = window.location.href;
+            new QRCode(document.getElementById("qrcode"), { text: currentURL, width: 50, height: 50, correctLevel: QRCode.CorrectLevel.M });
+            new QRCode(document.getElementById("modal-qrcode"), { text: currentURL, width: 200, height: 200, correctLevel: QRCode.CorrectLevel.H });
+        }
+        function openQRModal() { document.getElementById('qr-modal').classList.remove('hidden'); }
+        function closeQRModal() { document.getElementById('qr-modal').classList.add('hidden'); }
+        
+        function init() {
+            state.isCorrected = false; state.placements = {}; state.selectedItem = null; state.selectedSlot = null;
+            resultContainer.classList.add('hidden');
+            state.currentOrder = [...vocabulary].sort(() => Math.random() - 0.5);
+            render();
+        }
+        function render() {
+            itemsContainer.innerHTML = '';
+            const placedItemIds = Object.values(state.placements);
+            if (placedItemIds.length === vocabulary.length) {
+                itemsContainer.classList.add('hidden');
+            } else {
+                itemsContainer.classList.remove('hidden');
+            }
+            vocabulary.forEach(item => {
+                if (!placedItemIds.includes(item.id)) {
+                    const div = document.createElement('div');
+                    div.className = \`item-card px-3 py-1 bg-white border border-blue-300 rounded shadow-sm text-sm font-medium \${state.selectedItem === item.id ? 'selected' : ''}\`;
+                    div.textContent = item.text; div.onclick = () => handleItemClick(item.id); itemsContainer.appendChild(div);
+                }
+            });
+            sentencesList.innerHTML = '';
+            state.currentOrder.forEach((data, index) => {
+                const div = document.createElement('div');
+                div.className = "flex flex-wrap items-baseline text-gray-800 leading-relaxed text-sm md:text-base";
+                const parts = data.sentence.split('[gap]');
+                const startText = document.createElement('span'); startText.textContent = \`\${index + 1}. \${parts[0]}\`; div.appendChild(startText);
+                const slot = document.createElement('span'); slot.className = \`drop-zone \${state.selectedSlot === index ? 'selected' : ''}\`;
+                const placedId = state.placements[index];
+                if (placedId) {
+                    const itemData = vocabulary.find(v => v.id === placedId);
+                    if (state.isCorrected) {
+                        const isRight = itemData.id === data.id;
+                        const span = document.createElement('span'); span.className = isRight ? 'correct' : 'incorrect';
+                        if (isRight) {
+                            span.innerHTML = \`\${itemData.text} <span class="text-emerald-600 ml-1">✔</span>\`; slot.appendChild(span);
+                        } else {
+                            span.textContent = itemData.text; slot.appendChild(span);
+                            const solSpan = document.createElement('span'); solSpan.className = 'solution'; solSpan.textContent = \` \${data.solution}\`; slot.appendChild(solSpan);
+                        }
+                    } else { 
+                        const isOrange = (state.selectedSlot === index);
+                        const span = document.createElement('span');
+                        span.className = \`placed-word \${isOrange ? 'active-orange' : ''}\`;
+                        span.textContent = itemData.text;
+                        slot.appendChild(span);
+                    }
+                } else if (state.isCorrected) {
+                    const solSpan = document.createElement('span'); solSpan.className = 'solution'; solSpan.textContent = \` \${data.solution}\`; slot.appendChild(solSpan);
+                }
+                slot.onclick = () => handleSlotClick(index); div.appendChild(slot);
+                if (parts[1]) {
+                    const endText = document.createElement('span'); endText.textContent = parts[1]; div.appendChild(endText);
+                }
+                sentencesList.appendChild(div);
+            });
+        }
+        function handleItemClick(itemId) {
+            if (state.isCorrected) return;
+            if (state.selectedSlot !== null && !state.placements[state.selectedSlot]) { moveItemToSlot(itemId, state.selectedSlot); } 
+            else { state.selectedItem = state.selectedItem === itemId ? null : itemId; state.selectedSlot = null; }
+            render();
+        }
+        function handleSlotClick(slotIndex) {
+            if (state.isCorrected) return;
+            const itemInSlot = state.placements[slotIndex];
+            if (state.selectedItem !== null) { moveItemToSlot(state.selectedItem, slotIndex); } 
+            else if (state.selectedSlot !== null) {
+                if (state.selectedSlot === slotIndex) { delete state.placements[slotIndex]; state.selectedSlot = null; } 
+                else {
+                    const itemToMove = state.placements[state.selectedSlot];
+                    if (itemToMove) {
+                        for (let key in state.placements) { if (state.placements[key] === itemToMove) delete state.placements[key]; }
+                        state.placements[slotIndex] = itemToMove;
+                    }
+                    state.selectedSlot = null;
+                }
+            } else { if (itemInSlot) { state.selectedSlot = slotIndex; } else { state.selectedSlot = slotIndex; } }
+            render();
+        }
+        function moveItemToSlot(itemId, slotIndex) {
+            for (let key in state.placements) { if (state.placements[key] === itemId) delete state.placements[key]; }
+            state.placements[slotIndex] = itemId; state.selectedItem = null; state.selectedSlot = null;
+        }
+        btnCheck.onclick = () => {
+            if (state.isCorrected) return; let score = 0;
+            state.currentOrder.forEach((data, index) => { if (state.placements[index] === data.id) score++; });
+            state.isCorrected = true; resultContainer.textContent = \`Puntuación: \${score} / \${vocabulary.length}\`;
+            resultContainer.className = \`mb-6 p-4 rounded-lg text-center font-bold text-lg \${score === vocabulary.length ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'}\`;
+            resultContainer.classList.remove('hidden'); render();
+        };
+        btnReset.onclick = init;
+        window.onload = () => { init(); generateQRCodes(); };
+    <\/script>
+</body>
+</html>`;
+
+            const blob = new Blob([cleanHTML], { type: 'text/html' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'vokabelubung_juego.html';
+            a.click();
+        };
+    </script>
+</body>
+</html>
