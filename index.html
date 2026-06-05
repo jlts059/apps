@@ -105,7 +105,7 @@
         };
 
         async function cargarProyectos() {
-            // Intentamos cargar el diagrama desde tu archivo .txt
+            // Intentamos cargar el diagrama desde tu archivo independiente .txt
             cargarDiagramaDesdeTxt();
             
             try {
@@ -159,7 +159,7 @@
             
             if (document.getElementById(`btn-${name}`)) return;
 
-            const cleanKey ForEmoji = name.toLowerCase().replace(/^al_/, '').replace(/^in_/, '');
+            const cleanKeyForEmoji = name.toLowerCase().replace(/^al_/, '').replace(/^in_/, '');
             const emoji = folderEmojis[cleanKeyForEmoji] || folderEmojis['default'];
             const displayName = name.replace(/^al_|^in_/i, '');
 
@@ -216,13 +216,11 @@
             const diagramSection = document.getElementById('diagram-section');
             
             try {
-                // Lee el archivo de texto plano directamente
                 const response = await fetch('vault/_input-output.txt');
                 if (!response.ok) throw new Error("No se pudo leer el archivo de texto");
                 
                 const textoNotas = await response.text();
                 
-                // Si el archivo tiene texto, activamos el panel y lo dibujamos
                 if (textoNotas.trim().length > 0) {
                     diagramSection.style.display = 'block';
                     diagramTarget.removeAttribute('data-processed');
