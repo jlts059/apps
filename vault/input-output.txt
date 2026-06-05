@@ -4,8 +4,9 @@ graph LR
     I3["🔤 Single Word"]
 
     %% Conexiones de la Categoría 1 (Quiz -> Azul)
-    I1 --> G1("👥 Group Game")
+    I1 --> G1("👥 Plenary Game with Colour Cards")
     I1 --> G2("👤 Individual Game")
+    I1 --> G3("⚔️ Versus Game")
     
     %% Conexiones de la Categoría 2 (Word + Def -> Verde/Esmeralda)
     I2 --> O1("🗂️ Flashcard")
