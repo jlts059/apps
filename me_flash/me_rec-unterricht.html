@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="de"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phrasen-Filter</title>
+    <style>
+        :root {
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-color: #212529;
+            --primary-color: #4a90e2;
+            --accent-blue: #1a73e8;
+            --border-radius: 12px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 16px;
+            padding-bottom: 90px; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Input Setup Styling */
+        #setupContainer {
+            width: 100%;
+            max-width: 500px;
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            box-sizing: border-box;
+        }
+
+        #setupContainer h2 {
+            margin-top: 0;
+            font-size: 1.3rem;
+        }
+
+        textarea {
+            width: 100%;
+            height: 250px;
+            padding: 12px;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 1rem;
+            box-sizing: border-box;
+            resize: vertical;
+            margin-bottom: 15px;
+        }
+
+        .primary-btn {
+            width: 100%;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 14px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+        }
+
+        /* App Layout Styles */
+        #appContainer {
+            display: none;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .menu-container {
+            width: 100%;
+            margin-bottom: 20px;
+            background-color: #ffffff;
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+
+        .menu-summary {
+            display: none;
+            padding: 14px;
+            text-align: center;
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
+            cursor: pointer;
+            border-radius: var(--border-radius);
+        }
+
+        .button-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 12px;
+            justify-content: center;
+        }
+
+        .category-btn {
+            flex: 1 1 calc(50% - 10px);
+            padding: 14px 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border: 2px solid var(--primary-color);
+            border-radius: var(--border-radius);
+            background-color: transparent;
+            color: var(--primary-color);
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .phrases-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .phrase-card {
+            background-color: var(--card-bg);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border-left: 5px solid var(--primary-color);
+            font-size: 1.3rem;
+            line-height: 1.5;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .phrase-card b {
+            color: var(--accent-blue);
+            font-weight: 700;
+        }
+
+        /* Reset Button Styling */
+        .reset-btn {
+            display: none;
+            width: 100%;
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            padding: 14px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        /* Sticky Download Button Bottom Right */
+        .download-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 14px 22px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 1000;
+            display: none; 
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    
+
+    <div id="appContainer" style="display: block;">
+        <div class="menu-container" id="menuWrapper">
+            <div class="menu-summary" id="menuSummary" onclick="expandMenu()"></div>
+            <div class="button-container" id="actualButtons"><button class="category-btn" onclick="filterPhrases('🌍Übersetzung', '🌍Übersetzung')">🌍Übersetzung</button><button class="category-btn" onclick="filterPhrases('🎭Pantomime', '🎭Pantomime')">🎭Pantomime</button><button class="category-btn" onclick="filterPhrases('👂Hört mal', '👂Hört mal')">👂Hört mal</button><button class="category-btn" onclick="filterPhrases('👌Gut', '👌Gut')">👌Gut</button><button class="category-btn" onclick="filterPhrases('👌Ok?', '👌Ok?')">👌Ok?</button><button class="category-btn" onclick="filterPhrases('👨‍👩‍👧‍👦Plenum', '👨‍👩‍👧‍👦Plenum')">👨‍👩‍👧‍👦Plenum</button></div>
+        </div>
+
+        <div class="phrases-container" id="phrasesList"><div class="phrase-card" data-category="🌍Übersetzung">wie <b>heißen</b> diese Wörter in Spanisch?</div><div class="phrase-card" data-category="🌍Übersetzung">wie <b>• sagt • lautet • nennt man</b> das auf D? was bedeutet das? wie wird X gesagt? übersetzt man X ins Spanische? könnte jemand es auf S sagen?</div><div class="phrase-card" data-category="🎭Pantomime">habt ihr <b>Ideen dafür?</b> / <b>fällt euch eine Geste ein?</b> / könnt ihr <b>euch eine Geste vorstelle</b>?</div><div class="phrase-card" data-category="🎭Pantomime"><b>hier sind die Regeln des Spiele</b>: es handelt sich von einem Wettbewerb!</div><div class="phrase-card" data-category="🎭Pantomime">ich mache eine Geste / ich mime oder <b>gestikuliere</b>/ wir machen Pantomime!</div><div class="phrase-card" data-category="🎭Pantomime">ich <b>stelle es mit Gesten dar</b> // Ich sage/nenne das Wort und mache es gleichzeitig vor / <b>spiele … vor</b></div><div class="phrase-card" data-category="🎭Pantomime">ich <b>rufe ein Wort aus und mime es dazu</b></div><div class="phrase-card" data-category="🎭Pantomime">ihr bekommt ein Zettel von mir / jetzt ein paar Minuten Zeit</div><div class="phrase-card" data-category="🎭Pantomime">ihr braucht ein leeres Blatt papier / einen leeren Zettel</div><div class="phrase-card" data-category="🎭Pantomime">ihr habt drei Minuten, um aufzuschreiben, so viele Wörter zum Essen wie ihr kennt</div><div class="phrase-card" data-category="🎭Pantomime">Jetzt -schauen wir uns- Kasus genauer -an- / also, schauen wir mal!</div><div class="phrase-card" data-category="🎭Pantomime">kannst du bitte mir BEI etwas hilfen?</div><div class="phrase-card" data-category="👂Hört mal"><b>alle mal ganz kurz</b> / <b>ganz kurz ma eben!</b></div><div class="phrase-card" data-category="👂Hört mal"><b>alle mal herhören!!</b> / alle Achtung!</div><div class="phrase-card" data-category="👂Hört mal">bitte hört mich an / <b>hört mir zu</b> (+común)</div><div class="phrase-card" data-category="👂Hört mal">Einmal…</div><div class="phrase-card" data-category="👌Gut">(ganz) toll, (sehr) schön, (richtig) gut, (echt) Klasse, gut gemacht, großartig, prima, <b>tipp(i)-topp(i)</b></div><div class="phrase-card" data-category="👌Gut">geeeenaau, <b>stimmt voll!</b> voll richtig! <b>du hast voll recht!</b></div><div class="phrase-card" data-category="👌Ok?">geht in Ordnung? / geht schon? (ésta es mía) vielleicht wird es jetzt ein bisschen klarer</div><div class="phrase-card" data-category="👌Ok?">ist (das) klar / okay? alles klar / gut / in Ordnung? <b>geht das so /s/? passt das?</b> / verstanden?</div><div class="phrase-card" data-category="👌Ok?"><b>versteht man das?</b></div><div class="phrase-card" data-category="👌Ok?">stimmt das? ist das richtig? geht das? / stimmt das genau?</div><div class="phrase-card" data-category="👨‍👩‍👧‍👦Plenum">komm runter (ugs)</div><div class="phrase-card" data-category="👨‍👩‍👧‍👦Plenum">melde dich bitte / meldet euch bitte / heb(t) die Hand</div><div class="phrase-card" data-category="👨‍👩‍👧‍👦Plenum">Moment, nicht alle durcheinander! jeder "nacheinander", Leute / einer-es nach dem anderen!</div><div class="phrase-card" data-category="👨‍👩‍👧‍👦Plenum">noch Ana? es könnte auch jemand anderes sein!</div><div class="phrase-card" data-category="👨‍👩‍👧‍👦Plenum">reg dich nicht auf! / regt euch nicht auf, es ist nur ein Test!</div><div class="phrase-card" data-category="👨‍👩‍👧‍👦Plenum">Ruhe / sei ruhig / beruhige dich / Klappe / Fresse halten / halt’s Maul</div><div class="phrase-card" data-category="👨‍👩‍👧‍👦Plenum">Ruhe!</div><div class="phrase-card" data-category="👨‍👩‍👧‍👦Plenum">Sei / seid still, bitte Ruhe, Bitte ruhig bleiben / regt euch ab (ugs) / beruhigt euch</div></div>
+        
+        <button class="reset-btn" id="resetBtn" onclick="resetView()">↩ Zurück / Alle ausblenden</button>
+    </div>
+
+    
+
+    <script>
+        function buildAppFromInput() {
+            const rawText = document.getElementById('rawData').value.trim();
+            if(!rawText) return alert("Bitte füge zuerst einige Daten ein!");
+
+            const lines = rawText.split('\n');
+            const categories = new Set();
+            const phrasesList = document.getElementById('phrasesList');
+            const actualButtons = document.getElementById('actualButtons');
+
+            phrasesList.innerHTML = '';
+            actualButtons.innerHTML = '';
+
+            lines.forEach(line => {
+                if(!line.trim()) return;
+                
+                let parts = line.split('\t');
+                if(parts.length < 2) {
+                    parts = line.split(/ {2,}/);
+                }
+
+                if(parts.length >= 2) {
+                    const cat = parts[0].trim();
+                    const phraseHtml = parts[1].trim();
+                    categories.add(cat);
+
+                    const card = document.createElement('div');
+                    card.className = 'phrase-card';
+                    card.setAttribute('data-category', cat);
+                    card.innerHTML = phraseHtml;
+                    phrasesList.appendChild(card);
+                }
+            });
+
+            categories.forEach(cat => {
+                const btn = document.createElement('button');
+                btn.className = 'category-btn';
+                const safeCat = cat.replace(/'/g, "\\'");
+                btn.setAttribute('onclick', `filterPhrases('${safeCat}', '${safeCat}')`);
+                btn.innerText = cat;
+                actualButtons.appendChild(btn);
+            });
+
+            document.getElementById('setupContainer').style.display = 'none';
+            document.getElementById('appContainer').style.display = 'block';
+            document.getElementById('downloadBtn').style.display = 'block'; 
+        }
+
+        function filterPhrases(category, labelText) {
+            const cards = document.querySelectorAll('.phrase-card');
+            cards.forEach(card => {
+                if (card.getAttribute('data-category') === category) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            document.getElementById('actualButtons').style.display = 'none';
+            const summary = document.getElementById('menuSummary');
+            summary.innerText = "Auswahl: " + labelText + " ▾ (Tippen zum Ändern)";
+            summary.style.display = 'block';
+            document.getElementById('resetBtn').style.display = 'block';
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function expandMenu() {
+            document.getElementById('actualButtons').style.display = 'flex';
+            document.getElementById('menuSummary').style.display = 'none';
+        }
+
+        function resetView() {
+            const cards = document.querySelectorAll('.phrase-card');
+            cards.forEach(card => card.style.display = 'none');
+            expandMenu();
+            document.getElementById('resetBtn').style.display = 'none';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function downloadCurrentHTML() {
+            // Clone the current document structure to clean it up before downloading
+            const docClone = document.documentElement.cloneNode(true);
+            
+            // 1. Permanently strip out the input box wrapper
+            const setupBlock = docClone.querySelector('#setupContainer');
+            if (setupBlock) setupBlock.remove();
+            
+            // 2. Permanently strip out the download button itself
+            const dlBtn = docClone.querySelector('#downloadBtn');
+            if (dlBtn) dlBtn.remove();
+            
+            // 3. Ensure the main App interface initializes as fully visible
+            const appBlock = docClone.querySelector('#appContainer');
+            if (appBlock) appBlock.style.display = 'block';
+
+            // Generate the output source stream
+            const totalSource = "<!DOCTYPE html>\n" + docClone.outerHTML;
+            const blob = new Blob([totalSource], { type: "text/html;charset=utf-8" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "phrases_clean_app.html";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+
+</body></html>
