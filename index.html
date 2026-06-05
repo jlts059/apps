@@ -6,10 +6,12 @@
     <title>Apps</title>
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
     <script>
+        // CONFIGURACIÓN SEGURA: Permite procesar emojis y textos sin colgarse
         mermaid.initialize({ 
             startOnLoad: false, 
             theme: 'neutral',
-            securityLevel: 'loose'
+            securityLevel: 'loose',
+            htmlLabels: true
         });
     </script>
     <style>
@@ -105,7 +107,7 @@
         };
 
         async function cargarProyectos() {
-            // Intentamos cargar el diagrama desde tu archivo independiente .txt
+            // Intentamos renderizar tu archivo .txt independiente de notas
             cargarDiagramaDesdeTxt();
             
             try {
@@ -210,13 +212,14 @@
             if(targetBtn) targetBtn.classList.add('active');
         }
 
-        // --- LECTURA DIRECTA DE TU ARCHIVO .TXT DE NOTAS ---
+        // --- LECTURA DE TU ARCHIVO .TXT ---
         async function cargarDiagramaDesdeTxt() {
             const diagramTarget = document.getElementById('diagram-target');
             const diagramSection = document.getElementById('diagram-section');
             
             try {
-                const response = await fetch('vault/_input-output.txt');
+                // Añadimos un parámetro de tiempo para romper la caché del navegador en cada recarga
+                const response = await fetch('vault/_input-output.txt?v=' + new Date().getTime());
                 if (!response.ok) throw new Error("No se pudo leer el archivo de texto");
                 
                 const textoNotas = await response.text();
@@ -226,10 +229,11 @@
                     diagramTarget.removeAttribute('data-processed');
                     diagramTarget.textContent = textoNotas;
                     
+                    // Ejecutamos Mermaid pasándole el contenedor de forma segura
                     await mermaid.run({ nodes: [diagramTarget] });
                 }
             } catch (err) {
-                console.log("Diagrama oculto (Esperando entorno online o archivo .txt válido).");
+                console.log("Diagrama oculto temporalmente:", err);
                 diagramSection.style.display = 'none';
             }
         }
