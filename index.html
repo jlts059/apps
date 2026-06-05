@@ -6,7 +6,12 @@
     <title>Apps</title>
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
     <script>
-        mermaid.initialize({ startOnLoad: false, theme: 'neutral' });
+        // Inicialización limpia de Mermaid
+        mermaid.initialize({ 
+            startOnLoad: false, 
+            theme: 'neutral',
+            securityLevel: 'loose'
+        });
     </script>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; line-height: 1.6; max-width: 800px; margin: auto; background-color: #f9f9f9; }
@@ -35,21 +40,22 @@
         .app-link:hover { transform: translateX(5px); border-color: #0366d6; box-shadow: 2px 2px 10px rgba(0,0,0,0.1); }
         .icon { margin-right: 15px; font-size: 1.2em; }
 
-        /* Estilos para el nuevo panel del Diagrama */
+        /* Estilos corregidos para el panel del Diagrama */
         .diagram-container {
-            margin-top: 30px;
+            margin-top: 35px;
             padding: 20px;
             background: white;
-            border: 1px solid #ddd;
+            border: 1px solid #eee;
             border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
         }
         .diagram-title {
             font-size: 0.85em; text-transform: uppercase; color: #888; 
-            margin-bottom: 12px; font-weight: bold; letter-spacing: 1px;
+            margin-bottom: 15px; font-weight: bold; letter-spacing: 1px;
+            border-bottom: 1px dashed #eee; padding-bottom: 5px;
         }
         .mermaid-wrapper {
-            display: flex; justify-content: center; overflow-x: auto; width: 100%;
+            display: flex; justify-content: center; overflow-x: auto; width: 100%; padding: 10px 0;
         }
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -79,10 +85,11 @@
 
     <div id="contents-container"></div>
 
-    <div id="diagram-section" class="diagram-container" style="display: none;">
+    <div id="diagram-section" class="diagram-container">
         <div class="diagram-title">📊 Estructura de Inputs e Outputs</div>
         <div class="mermaid-wrapper">
-            <div id="diagram-target" class="mermaid"></div>
+            <div id="diagram-target" class="mermaid">
+                </div>
         </div>
     </div>
 
@@ -164,7 +171,7 @@
                 if (document.getElementById('tabs-in').children.length === 0) document.getElementById('block-in-container').style.display = 'none';
                 if (document.getElementById('tabs-other').children.length === 0) document.getElementById('block-other-container').style.display = 'none';
 
-                // Una vez cargadas las carpetas, cargamos y generamos el diagrama
+                // Llamada inmediata tras renderizar la interfaz principal
                 cargarYGenerarDiagrama();
 
             } catch (error) {
@@ -230,15 +237,18 @@
             if(targetBtn) targetBtn.classList.add('active');
         }
 
-        // FUNCIÓN MODIFICADA: Ahora busca el JSON dentro de la carpeta /vault
+        // LÓGICA DE DIAGRAMA REOPTIMIZADA
         async function cargarYGenerarDiagrama() {
+            const diagramTarget = document.getElementById('diagram-target');
+            const diagramSection = document.getElementById('diagram-section');
+            
             try {
-                // Modificado para buscar en la subcarpeta vault
                 const response = await fetch('vault/_input-output.json');
-                if (!response.ok) throw new Error("No se pudo encontrar el archivo JSON en /vault");
+                if (!response.ok) throw new Error("No se pudo obtener el JSON de la carpeta vault");
                 
                 const data = await response.json();
                 
+                // Iniciamos la sintaxis limpia de Mermaid
                 let mermaidSyntax = "graph LR\n";
                 let inputCounter = 0;
                 let gameCounter = 0;
@@ -263,18 +273,21 @@
                     }
                 });
 
+                // Si logramos construir nodos válidos, renderizamos
                 if (inputCounter > 0) {
-                    const diagramSection = document.getElementById('diagram-section');
-                    const diagramTarget = document.getElementById('diagram-target');
-                    
-                    diagramSection.style.display = 'block';
+                    diagramTarget.removeAttribute('data-processed'); // Resetea estado previo de Mermaid
                     diagramTarget.textContent = mermaidSyntax;
                     
-                    mermaid.run({ nodes: [diagramTarget] });
+                    // Ejecuta el renderizado asíncrono seguro
+                    await mermaid.run({ nodes: [diagramTarget] });
+                } else {
+                    diagramSection.style.display = 'none';
                 }
 
             } catch (err) {
-                console.warn("Diagrama no generado: Asegúrate de que '_input-output.json' esté en la carpeta vault y bien formateado.", err);
+                console.warn("Aviso: No se pudo renderizar el diagrama dinámico.", err);
+                // Si falla el archivo, escondemos la sección elegantemente para no dejar un hueco feo
+                diagramSection.style.display = 'none';
             }
         }
 
