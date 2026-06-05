@@ -4,14 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Apps</title>
-    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
-    <script>
-        mermaid.initialize({ 
-            startOnLoad: false, 
-            theme: 'neutral',
-            securityLevel: 'loose'
-        });
-    </script>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; line-height: 1.6; max-width: 800px; margin: auto; background-color: #f9f9f9; }
         h1 { border-bottom: 2px solid #333; padding-bottom: 10px; text-align: center; color: #2c3e50; }
@@ -39,24 +31,6 @@
         .app-link:hover { transform: translateX(5px); border-color: #0366d6; box-shadow: 2px 2px 10px rgba(0,0,0,0.1); }
         .icon { margin-right: 15px; font-size: 1.2em; }
 
-        /* Estilos para tu panel visual de Notas */
-        .diagram-container {
-            margin-top: 40px;
-            padding: 20px;
-            background: white;
-            border: 1px solid #eee;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-        }
-        .diagram-title {
-            font-size: 0.85em; text-transform: uppercase; color: #888; 
-            margin-bottom: 15px; font-weight: bold; letter-spacing: 1px;
-            border-bottom: 1px dashed #eee; padding-bottom: 5px;
-        }
-        .mermaid-wrapper {
-            display: flex; justify-content: center; overflow-x: auto; width: 100%; padding: 10px 0;
-        }
-
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         #loading { text-align: center; color: #666; font-style: italic; margin-top: 50px; }
     </style>
@@ -65,31 +39,24 @@
 
     <h1>🚀 Apps</h1>
     
-    <div id="loading">Conectando con tu repositorio...</div>
+    <div id="loading">Organizando tus herramientas...</div>
     
     <div class="blocks-container" id="blocks-wrapper" style="display: none;">
         <div id="block-al-container">
             <div class="block-title">🍺 DE ALEMÁN</div>
-            <div id="tabs-al" class="tabs"></div>
+        	<div id="tabs-al" class="tabs"></div>
         </div>
         <div id="block-in-container">
             <div class="block-title">☕ GB INGLÉS</div>
-            <div id="tabs-in" class="tabs"></div>
+        	<div id="tabs-in" class="tabs"></div>
         </div>
         <div id="block-other-container">
             <div class="block-title">🏠 OTROS / GENERAL</div>
-            <div id="tabs-other" class="tabs"></div>
+        	<div id="tabs-other" class="tabs"></div>
         </div>
     </div>
 
     <div id="contents-container"></div>
-
-    <div id="diagram-section" class="diagram-container" style="display: none;">
-        <div class="diagram-title">📊 Estructura de Inputs & Outputs</div>
-        <div class="mermaid-wrapper">
-            <div id="diagram-target" class="mermaid"></div>
-        </div>
-    </div>
 
     <script>
         const repoOwner = 'jlts059';
@@ -104,16 +71,38 @@
             'default': '📁'
         };
 
+        // --- DATOS DE SIMULACIÓN LOCAL ---
+        // Modifica esto si quieres simular que añades carpetas nuevas en tu PC para ver cómo quedan
+        const localMockData = [
+            { type: 'dir', name: 'al_flash', files: [{ name: 'flashcardscp.html' }, { name: 'flashcardscporder.html' }] },
+            { type: 'dir', name: 'al_quiz_gr', files: [{ name: 'quizg.html' }] },
+            { type: 'dir', name: 'al_quiz_voc', files: [{ name: 'quizvs1.3.html' }] },
+            { type: 'dir', name: 'al_wheel', files: [{ name: 'wheel1.2.html' }] },
+            { type: 'dir', name: 'in_gr', files: [{ name: 'quizg.html' }] },
+            { type: 'dir', name: 'in_voc', files: [{ name: 'quizi.html' }] },
+            { type: 'dir', name: 'vault', files: [] },
+            { type: 'file', name: 'drive2qr.html' },
+            { type: 'file', name: 'match0.1.html' },
+            { type: 'file', name: 'vrace.html' }
+        ];
+
         async function cargarProyectos() {
-            // Ejecutamos la carga del diagrama de notas en segundo plano
-            cargarYGenerarDiagrama();
+            // Detectamos si el archivo se abrió desde el disco duro (local)
+            const esLocal = window.location.protocol === 'file:';
             
             try {
-                // LEER SIEMPRE DE LA API REAL DE GITHUB (Sin simulaciones locales rotas)
-                const url = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/`;
-                const response = await fetch(url);
-                if (!response.ok) throw new Error("API bloqueada temporalmente por límite de peticiones.");
-                const items = await response.json();
+                let items = [];
+
+                if (esLocal) {
+                    // Si es local, usamos los datos simulados de arriba al instante
+                    items = localMockData;
+                    console.log("Modo de desarrollo local activado.");
+                } else {
+                    // Si está en GitHub, hace las peticiones reales a la API
+                    const url = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/`;
+                    const response = await fetch(url);
+                    items = await response.json();
+                }
                 
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('blocks-wrapper').style.display = 'flex';
@@ -133,12 +122,14 @@
 
                         createTab(item.name, bloque);
                         
-                        // Buscamos los archivos reales que hay dentro de esta carpeta en GitHub
-                        const subRes = await fetch(item.url);
-                        if (subRes.ok) {
-                            const files = await subRes.json();
-                            renderFiles(files, item.name);
+                        let files = [];
+                        if (esLocal) {
+                            files = item.files || [];
+                        } else {
+                            const subRes = await fetch(item.url);
+                            files = await subRes.json();
                         }
+                        renderFiles(files, item.name);
 
                     } else if (item.type === 'file' && item.name.endsWith('.html') && item.name.toLowerCase() !== 'index.html') {
                         renderFiles([item], 'Home');
@@ -149,9 +140,11 @@
                 if (document.getElementById('tabs-in').children.length === 0) document.getElementById('block-in-container').style.display = 'none';
                 if (document.getElementById('tabs-other').children.length === 0) document.getElementById('block-other-container').style.display = 'none';
 
+                // Desactivado el primer click automático para que todo inicie cerrado.
+
             } catch (error) {
-                console.error("Error crítico:", error);
-                document.getElementById('loading').innerText = "La API de GitHub está saturada. Espera unos minutos para que se desbloquee y tus archivos aparecerán solos.";
+                console.error("Error:", error);
+                document.getElementById('loading').innerText = "Error al cargar las herramientas.";
             }
         }
 
@@ -210,59 +203,6 @@
             
             if(targetContent) targetContent.classList.add('active');
             if(targetBtn) targetBtn.classList.add('active');
-        }
-
-        // --- PROCESADOR EXCLUSIVO DE TU JSON DE NOTAS ---
-        async function cargarYGenerarDiagrama() {
-            const diagramTarget = document.getElementById('diagram-target');
-            const diagramSection = document.getElementById('diagram-section');
-            
-            try {
-                const response = await fetch('vault/_input-output.json');
-                if (!response.ok) throw new Error("No se pudo leer el archivo JSON");
-                
-                const data = await response.json();
-                
-                let mermaidSyntax = "graph LR\n";
-                let inputCounter = 0;
-                let gameCounter = 0;
-
-                if (!data.categorias) return;
-
-                data.categorias.forEach(cat => {
-                    if (cat.inputs) {
-                        cat.inputs.forEach(input => {
-                            inputCounter++;
-                            const inputId = `I${inputCounter}`;
-                            
-                            mermaidSyntax += `    ${inputId}["${input.tipo}"]\n`;
-                            mermaidSyntax += `    style ${inputId} fill:#0366d6,stroke:#024ea4,color:#fff,font-weight:bold\n`;
-
-                            if (input.juegos) {
-                                input.juegos.forEach(juego => {
-                                    gameCounter++;
-                                    const gameId = `G${gameCounter}`;
-                                    
-                                    mermaidSyntax += `    ${inputId} --> ${gameId}("${juego.nombre}")\n`;
-                                    mermaidSyntax += `    style ${gameId} fill:#fff,stroke:#ccc,color:#333\n`;
-                                });
-                            }
-                        });
-                    }
-                });
-
-                if (inputCounter > 0) {
-                    diagramSection.style.display = 'block';
-                    diagramTarget.removeAttribute('data-processed');
-                    diagramTarget.textContent = mermaidSyntax;
-                    
-                    await mermaid.run({ nodes: [diagramTarget] });
-                }
-
-            } catch (err) {
-                console.log("Diagrama en espera (Se mostrará automáticamente en GitHub Pages).");
-                diagramSection.style.display = 'none';
-            }
         }
 
         cargarProyectos();
