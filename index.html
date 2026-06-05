@@ -84,7 +84,7 @@
 
     <div id="contents-container"></div>
 
-    <div id="diagram-section" class="diagram-container">
+    <div id="diagram-section" class="diagram-container" style="display: none;">
         <div class="diagram-title">📊 Estructura de Inputs e Outputs</div>
         <div class="mermaid-wrapper">
             <div id="diagram-target" class="mermaid"></div>
@@ -104,46 +104,27 @@
             'default': '📁'
         };
 
-        // --- DATOS DE SIMULACIÓN LOCAL PARA CARPETAS ---
-        const localMockData = [
-            { type: 'dir', name: 'al_flash', files: [{ name: 'flashcardscp.html' }, { name: 'flashcardscporder.html' }] },
-            { type: 'dir', name: 'al_quiz_gr', files: [{ name: 'quizg.html' }] },
-            { type: 'dir', name: 'al_quiz_voc', files: [{ name: 'quizvs1.3.html' }] },
-            { type: 'dir', name: 'al_wheel', files: [{ name: 'wheel1.2.html' }] },
-            { type: 'dir', name: 'in_gr', files: [{ name: 'quizg.html' }] },
-            { type: 'dir', name: 'in_voc', files: [{ name: 'quizi.html' }] },
-            { type: 'dir', name: 'vault', files: [] },
-            { type: 'file', name: 'drive2qr.html' },
-            { type: 'file', name: 'match0.1.html' },
-            { type: 'file', name: 'vrace.html' }
-        ];
-
-        // --- MOCK LOCAL DEL DIAGRAMA (Para saltarse la seguridad CORS al probar en PC) ---
-        const localMockJson = {
-            "categorias": [
-                {
-                    "nombre": "DE ALEMÁN",
-                    "inputs": [
-                        { "tipo": "Quiz (6 columns)", "juegos": [{ "nombre": "Group" }, { "nombre": "Indiv" }] },
-                        { "tipo": "Word + Def", "juegos": [{ "nombre": "Flashcard" }, { "nombre": "Vocab Race" }, { "nombre": "Gap" }] },
-                        { "tipo": "Word", "juegos": [{ "nombre": "Roulette" }] }
-                    ]
-                }
-            ]
-        };
-
         async function cargarProyectos() {
+            // Ejecutamos la carga del diagrama de forma paralela e independiente
+            cargarYGenerarDiagrama();
+
             const esLocal = window.location.protocol === 'file:';
             
             try {
                 let items = [];
 
                 if (esLocal) {
-                    items = localMockData;
-                    console.log("Modo de desarrollo local activado.");
+                    // Simulación local si abres el archivo en PC
+                    items = [
+                        { type: 'dir', name: 'al_flash' }, { type: 'dir', name: 'al_quiz_gr' },
+                        { type: 'dir', name: 'al_quiz_voc' }, { type: 'dir', name: 'al_wheel' },
+                        { type: 'dir', name: 'in_gr' }, { type: 'dir', name: 'in_voc' },
+                        { type: 'dir', name: 'vault' }
+                    ];
                 } else {
                     const url = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/`;
                     const response = await fetch(url);
+                    if (!response.ok) throw new Error("Límite de API de GitHub alcanzado");
                     items = await response.json();
                 }
                 
@@ -167,10 +148,10 @@
                         
                         let files = [];
                         if (esLocal) {
-                            files = item.files || [];
+                            files = [{ name: 'index.html' }];
                         } else {
                             const subRes = await fetch(item.url);
-                            files = await subRes.json();
+                            if (subRes.ok) files = await subRes.json();
                         }
                         renderFiles(files, item.name);
 
@@ -183,11 +164,9 @@
                 if (document.getElementById('tabs-in').children.length === 0) document.getElementById('block-in-container').style.display = 'none';
                 if (document.getElementById('tabs-other').children.length === 0) document.getElementById('block-other-container').style.display = 'none';
 
-                cargarYGenerarDiagrama(esLocal);
-
             } catch (error) {
-                console.error("Error:", error);
-                document.getElementById('loading').innerText = "Error al cargar las herramientas.";
+                console.error("Error al cargar carpetas:", error);
+                document.getElementById('loading').innerText = "Carpetas pausadas temporalmente por límite de GitHub. Revisa en unos minutos.";
             }
         }
 
@@ -248,28 +227,22 @@
             if(targetBtn) targetBtn.classList.add('active');
         }
 
-        // PROCESADOR DE DIAGRAMA CON SOPORTE CORREGIDO PARA LOCAL
-        async function cargarYGenerarDiagrama(esLocal) {
+        // PROCESADOR AISLADO Y SEGURO DE DIAGRAMA
+        async function cargarYGenerarDiagrama() {
             const diagramTarget = document.getElementById('diagram-target');
             const diagramSection = document.getElementById('diagram-section');
             
             try {
-                let data;
-
-                if (esLocal) {
-                    // Si trabajas desde el disco duro, usa los datos directos para evitar el fallo CORS
-                    data = localMockJson;
-                    console.log("Cargando estructura del diagrama desde datos locales integrados.");
-                } else {
-                    // Si está en producción (GitHub Pages), lee el archivo JSON real de forma dinámica
-                    const response = await fetch('vault/_input-output.json');
-                    if (!response.ok) throw new Error("No se pudo obtener el JSON de la carpeta vault");
-                    data = await response.json();
-                }
+                const response = await fetch('vault/_input-output.json');
+                if (!response.ok) throw new Error("No se encuentra el JSON");
+                
+                const data = await response.json();
                 
                 let mermaidSyntax = "graph LR\n";
                 let inputCounter = 0;
                 let gameCounter = 0;
+
+                if (!data.categorias) throw new Error("Estructura JSON incorrecta");
 
                 data.categorias.forEach(cat => {
                     if (cat.inputs) {
@@ -292,16 +265,17 @@
                 });
 
                 if (inputCounter > 0) {
+                    // Solo si el JSON es perfecto y se procesa, mostramos el recuadro
+                    diagramSection.style.display = 'block';
                     diagramTarget.removeAttribute('data-processed');
                     diagramTarget.textContent = mermaidSyntax;
                     
                     await mermaid.run({ nodes: [diagramTarget] });
-                } else {
-                    diagramSection.style.display = 'none';
                 }
 
             } catch (err) {
-                console.warn("Aviso: No se pudo renderizar el diagrama.", err);
+                console.error("Error crítico en el JSON:", err);
+                // Si el JSON tiene una errata, escondemos la sección para que no afee la web
                 diagramSection.style.display = 'none';
             }
         }
