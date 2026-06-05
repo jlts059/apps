@@ -85,7 +85,7 @@
     <div id="contents-container"></div>
 
     <div id="diagram-section" class="diagram-container" style="display: none;">
-        <div class="diagram-title">📊 Type of Input & Output (Mis Notas)</div>
+        <div class="diagram-title">📊 Estructura de Inputs & Outputs</div>
         <div class="mermaid-wrapper">
             <div id="diagram-target" class="mermaid"></div>
         </div>
@@ -105,13 +105,14 @@
         };
 
         async function cargarProyectos() {
-            // Intentamos cargar el diagrama desde tu archivo .txt
-            cargarDiagramaDesdeTxt();
+            // Ejecutamos la carga del diagrama de notas en segundo plano
+            cargarYGenerarDiagrama();
             
             try {
+                // LEER SIEMPRE DE LA API REAL DE GITHUB (Sin simulaciones locales rotas)
                 const url = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/`;
                 const response = await fetch(url);
-                if (!response.ok) throw new Error("API bloqueada temporalmente.");
+                if (!response.ok) throw new Error("API bloqueada temporalmente por límite de peticiones.");
                 const items = await response.json();
                 
                 document.getElementById('loading').style.display = 'none';
@@ -132,6 +133,7 @@
 
                         createTab(item.name, bloque);
                         
+                        // Buscamos los archivos reales que hay dentro de esta carpeta en GitHub
                         const subRes = await fetch(item.url);
                         if (subRes.ok) {
                             const files = await subRes.json();
@@ -149,7 +151,7 @@
 
             } catch (error) {
                 console.error("Error crítico:", error);
-                document.getElementById('loading').innerText = "Cargando tus aplicaciones...";
+                document.getElementById('loading').innerText = "La API de GitHub está saturada. Espera unos minutos para que se desbloquee y tus archivos aparecerán solos.";
             }
         }
 
@@ -159,7 +161,7 @@
             
             if (document.getElementById(`btn-${name}`)) return;
 
-            const cleanKey ForEmoji = name.toLowerCase().replace(/^al_/, '').replace(/^in_/, '');
+            const cleanKeyForEmoji = name.toLowerCase().replace(/^al_/, '').replace(/^in_/, '');
             const emoji = folderEmojis[cleanKeyForEmoji] || folderEmojis['default'];
             const displayName = name.replace(/^al_|^in_/i, '');
 
@@ -210,28 +212,55 @@
             if(targetBtn) targetBtn.classList.add('active');
         }
 
-        // --- LECTURA DIRECTA DE TU ARCHIVO .TXT DE NOTAS ---
-        async function cargarDiagramaDesdeTxt() {
+        // --- PROCESADOR EXCLUSIVO DE TU JSON DE NOTAS ---
+        async function cargarYGenerarDiagrama() {
             const diagramTarget = document.getElementById('diagram-target');
             const diagramSection = document.getElementById('diagram-section');
             
             try {
-                // Lee el archivo de texto plano directamente
-                const response = await fetch('vault/_input-output.txt');
-                if (!response.ok) throw new Error("No se pudo leer el archivo de texto");
+                const response = await fetch('vault/_input-output.json');
+                if (!response.ok) throw new Error("No se pudo leer el archivo JSON");
                 
-                const textoNotas = await response.text();
+                const data = await response.json();
                 
-                // Si el archivo tiene texto, activamos el panel y lo dibujamos
-                if (textoNotas.trim().length > 0) {
+                let mermaidSyntax = "graph LR\n";
+                let inputCounter = 0;
+                let gameCounter = 0;
+
+                if (!data.categorias) return;
+
+                data.categorias.forEach(cat => {
+                    if (cat.inputs) {
+                        cat.inputs.forEach(input => {
+                            inputCounter++;
+                            const inputId = `I${inputCounter}`;
+                            
+                            mermaidSyntax += `    ${inputId}["${input.tipo}"]\n`;
+                            mermaidSyntax += `    style ${inputId} fill:#0366d6,stroke:#024ea4,color:#fff,font-weight:bold\n`;
+
+                            if (input.juegos) {
+                                input.juegos.forEach(juego => {
+                                    gameCounter++;
+                                    const gameId = `G${gameCounter}`;
+                                    
+                                    mermaidSyntax += `    ${inputId} --> ${gameId}("${juego.nombre}")\n`;
+                                    mermaidSyntax += `    style ${gameId} fill:#fff,stroke:#ccc,color:#333\n`;
+                                });
+                            }
+                        });
+                    }
+                });
+
+                if (inputCounter > 0) {
                     diagramSection.style.display = 'block';
                     diagramTarget.removeAttribute('data-processed');
-                    diagramTarget.textContent = textoNotas;
+                    diagramTarget.textContent = mermaidSyntax;
                     
                     await mermaid.run({ nodes: [diagramTarget] });
                 }
+
             } catch (err) {
-                console.log("Diagrama oculto (Esperando entorno online o archivo .txt válido).");
+                console.log("Diagrama en espera (Se mostrará automáticamente en GitHub Pages).");
                 diagramSection.style.display = 'none';
             }
         }
