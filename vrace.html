@@ -2,57 +2,365 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Vocab Race Master</title>
+    <title>Vocab Race Master Pro</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f4f8; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .container { background: white; padding: 2rem; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 600px; text-align: center; }
-        textarea { width: 100%; height: 200px; margin: 15px 0; padding: 10px; border: 2px solid #cbd5e0; border-radius: 10px; box-sizing: border-box; font-family: inherit; }
-        button { background: #38a169; color: white; border: none; padding: 15px 30px; font-weight: bold; border-radius: 10px; cursor: pointer; font-size: 1.1rem; }
-        button:hover { background: #2f855a; }
-        p { color: #666; font-size: 0.9rem; }
+        :root {
+            --primary: #3182ce;
+            --success: #38a169;
+            --danger: #e53e3e;
+            --bg: #f0f4f8;
+        }
+
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: var(--bg); 
+            display: flex; 
+            flex-direction: column;
+            align-items: center; 
+            min-height: 100vh; 
+            margin: 0; 
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .container { 
+            background: white; 
+            padding: 2rem; 
+            border-radius: 20px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1); 
+            width: 100%;
+            max-width: 600px; 
+            text-align: center; 
+            margin-bottom: 20px;
+        }
+
+        textarea { 
+            width: 100%; 
+            height: 150px; 
+            margin: 15px 0; 
+            padding: 12px; 
+            border: 2px solid #cbd5e0; 
+            border-radius: 10px; 
+            box-sizing: border-box; 
+            font-family: inherit; 
+            resize: vertical;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        button { 
+            color: white; 
+            border: none; 
+            padding: 12px 24px; 
+            font-weight: bold; 
+            border-radius: 10px; 
+            cursor: pointer; 
+            font-size: 1rem; 
+            transition: background 0.2s, transform 0.1s;
+        }
+        button:active { transform: scale(0.98); }
+        
+        .btn-preview { background: var(--primary); }
+        .btn-preview:hover { background: #2b6cb0; }
+        .btn-download { background: var(--success); }
+        .btn-download:hover { background: #2f855a; }
+        .btn-go { background: var(--primary); padding: 15px 50px; font-size: 1.8rem; border-radius: 15px; }
+        .btn-go:hover { background: #2b6cb0; }
+        .btn-next { background: var(--success); width: 100%; padding: 15px; font-size: 1.3rem; margin-bottom: 10px; }
+        .btn-next:hover { background: #2f855a; }
+        .btn-finish { background: var(--danger); width: 100%; padding: 12px; font-size: 1.1rem; }
+        .btn-finish:hover { background: #c53030; }
+        .btn-list { background: #805ad5; margin-top: 15px; }
+        .btn-list:hover { background: #6b46c1; }
+
+        p { color: #666; font-size: 0.9rem; margin: 5px 0; }
+
+        /* Estilos del área de juego / Box */
+        .box { 
+            background: white; 
+            padding: 2rem; 
+            border-radius: 24px; 
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1); 
+            width: 100%; 
+            max-width: 500px; 
+            text-align: center; 
+            display: none; 
+            margin-top: 10px;
+        }
+
+        .timer { font-size: 2rem; color: var(--primary); font-weight: bold; margin-bottom: 10px; }
+        .progress-text { color: #718096; font-size: 0.95rem; margin-bottom: 15px; }
+        
+        /* Layout con Número Grande */
+        .game-layout {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 25px;
+            margin: 25px 0;
+            min-height: 100px;
+        }
+
+        .huge-number {
+            font-size: 4.5rem;
+            font-weight: 900;
+            color: #e2e8f0;
+            line-height: 1;
+            user-select: none;
+            border-right: 4px solid #edf2f7;
+            padding-right: 20px;
+        }
+
+        .def { 
+            font-size: 1.8rem; 
+            font-weight: 600;
+            color: #2d3748; 
+            text-align: left;
+            flex: 1;
+            word-break: break-word;
+        }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; text-align: left; }
+        th, td { padding: 10px; border-bottom: 1px solid #eee; font-size: 0.95rem; }
+        th { background: #f7fafc; color: #4a5568; }
+        
+        .scroll-container {
+            max-height: 300px; 
+            overflow-y: auto; 
+            border: 1px solid #e2e8f0; 
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
-    <div class="container">
+
+    <div class="container" id="creator-panel">
         <h2>Vocab Race Master</h2>
-        <p>Paste your data (Definition [TAB] Word), then download the student file.</p>
-        <textarea id="inputData" placeholder="cambiar [TAB] wechseln"></textarea>
-        <br>
-        <button onclick="generateFile()">Download Student HTML File 💾</button>
+        <p>Paste your data (Definition [TAB] Word) from Excel or text.</p>
+        <textarea id="inputData" placeholder="cambiar [TAB] wechseln&#10;auto [TAB] Auto"></textarea>
+        <div class="controls">
+            <button class="btn-preview" onclick="setupEngine(false)">Generar Vista Previa 🎮</button>
+            <button class="btn-download" onclick="setupEngine(true)">Download Student File 💾</button>
+        </div>
+    </div>
+
+    <div class="box" id="game-box">
+        <div id="s1">
+            <h2 style="margin-top:0">Ready?</h2>
+            <p style="color:#718096">The timer starts when you click GO.</p>
+            <button class="btn-go" onclick="startRace()">GO!</button>
+        </div>
+
+        <div id="s2" style="display:none">
+            <div class="timer" id="t">0.0s</div>
+            <div class="progress-text" id="p"></div>
+            
+            <div class="game-layout">
+                <div class="huge-number" id="num-display">1</div>
+                <div class="def" id="d"></div>
+            </div>
+            
+            <button class="btn-next" onclick="nextWord()">Next ➡️</button>
+            <button class="btn-finish" onclick="endRace()">Finish 🛑</button>
+        </div>
+
+        <div id="s3" style="display:none">
+            <h2 style="margin-top:0">Race Complete!</h2>
+            <div id="sc" style="font-weight:bold; font-size:1.3rem; color: var(--primary);"></div>
+            
+            <button id="show-list-btn" class="btn-list hidden" onclick="toggleVocabularyList()">Mostrar Lista 📋</button>
+            
+            <div id="vocab-list-wrapper" class="scroll-container hidden">
+                <table>
+                    <thead><tr><th style="width: 60px;">N°</th><th>Palabra (Columna 1)</th></tr></thead>
+                    <tbody id="vocab-tb"></tbody>
+                </table>
+            </div>
+
+            <div class="scroll-container" style="margin-top: 20px;">
+                <table>
+                    <thead><tr><th>N°</th><th>Definition</th><th>Your Race Path</th></tr></thead>
+                    <tbody id="tb"></tbody>
+                </table>
+            </div>
+            <br>
+            <button onclick="resetApp()" style="background:#4299e1; padding:10px 20px;">Back to Editor</button>
+        </div>
     </div>
 
     <script>
-        function generateFile() {
-            const raw = document.getElementById('inputData').value.trim();
-            if (!raw) return alert("Please paste your data first!");
-            
-            const deck = raw.split('\n').map(line => {
+        // Variables globales para la ejecución de la vista previa
+        let deck = [];
+        let idx = 0;
+        let timeStart;
+        let timerTicker;
+        let logs = [];
+
+        function parseTextData(text) {
+            return text.trim().split('\n').map(line => {
                 const p = line.split('\t');
                 return { d: p[0]?.trim(), w: p[1]?.trim() };
             }).filter(item => item.d && item.w);
+        }
 
-            if (deck.length === 0) return alert("Format error: Ensure there is a TAB between the definition and the word.");
+        function setupEngine(shouldDownload) {
+            const raw = document.getElementById('inputData').value.trim();
+            if (!raw) return alert("Please paste your data first!");
+            
+            const parsedDeck = parseTextData(raw);
+            if (parsedDeck.length === 0) {
+                return alert("Format error: Ensure there is a TAB between the definition and the word.");
+            }
 
-            const htmlContent = `
-<!DOCTYPE html>
+            if (shouldDownload) {
+                buildAndDownloadHTML(parsedDeck);
+            } else {
+                // Lanzar Vista Previa en Vivo
+                deck = parsedDeck;
+                document.getElementById('creator-panel').classList.add('hidden');
+                document.getElementById('game-box').style.display = 'block';
+                resetRaceState();
+            }
+        }
+
+        function resetRaceState() {
+            idx = 0;
+            logs = [];
+            clearInterval(timerTicker);
+            document.getElementById('s1').style.display = 'block';
+            document.getElementById('s2').style.display = 'none';
+            document.getElementById('s3').style.display = 'none';
+            document.getElementById('t').innerText = '0.0s';
+            document.getElementById('show-list-btn').classList.add('hidden');
+            document.getElementById('vocab-list-wrapper').classList.add('hidden');
+        }
+
+        function startRace() {
+            document.getElementById('s1').style.display = 'none';
+            document.getElementById('s2').style.display = 'block';
+            timeStart = Date.now();
+            timerTicker = setInterval(() => {
+                const elapsed = (Date.now() - timeStart) / 1000;
+                document.getElementById('t').innerText = elapsed.toFixed(1) + 's';
+            }, 100);
+            renderWord();
+        }
+
+        function renderWord() {
+            if (idx >= deck.length) {
+                endRace();
+                return;
+            }
+            // En el juego original o modificado, deck[idx].w es el item de la segunda columna
+            document.getElementById('d').innerText = deck[idx].w; 
+            document.getElementById('num-display').innerText = (idx + 1);
+            document.getElementById('p').innerText = "Item " + (idx + 1) + " of " + deck.length;
+        }
+
+        function nextWord() {
+            logs.push({
+                num: idx + 1,
+                d: deck[idx].d, 
+                w: deck[idx].w
+            });
+            idx++;
+            renderWord();
+        }
+
+        function endRace() {
+            clearInterval(timerTicker);
+            document.getElementById('s2').style.display = 'none';
+            document.getElementById('s3').style.display = 'block';
+            
+            document.getElementById('sc').innerText = "Total Items Tracked: " + logs.length + " | Time: " + document.getElementById('t').innerText;
+            
+            // Mostrar de forma condicional el botón solicitado
+            document.getElementById('show-list-btn').classList.remove('hidden');
+
+            let rows = "";
+            let vocabRows = "";
+            
+            // Generar tabla de logs recorridos
+            logs.forEach(l => {
+                rows += `<tr>
+                    <td><b>${l.num}</b></td>
+                    <td>${l.w}</td>
+                    <td style="color:#4a5568;">➡️ Passed</td>
+                </tr>`;
+            });
+            document.getElementById('tb').innerHTML = rows;
+
+            // Generar tabla alternativa de Palabras de la columna 1 claramente numeradas
+            deck.forEach((item, index) => {
+                vocabRows += `<tr>
+                    <td><b>${index + 1}</b></td>
+                    <td style="color:#2d3748; font-weight:600;">${item.d}</td>
+                </tr>`;
+            });
+            document.getElementById('vocab-tb').innerHTML = vocabRows;
+        }
+
+        function toggleVocabularyList() {
+            const list = document.getElementById('vocab-list-wrapper');
+            if(list.classList.contains('hidden')) {
+                list.classList.remove('hidden');
+                document.getElementById('show-list-btn').innerText = "Ocultar Lista 📋";
+            } else {
+                list.classList.add('hidden');
+                document.getElementById('show-list-btn').innerText = "Mostrar Lista 📋";
+            }
+        }
+
+        function resetApp() {
+            document.getElementById('game-box').style.display = 'none';
+            document.getElementById('creator-panel').classList.remove('hidden');
+        }
+
+        // Inyección dinámica para construir el archivo autónomo del alumno
+        function buildAndDownloadHTML(deckData) {
+            const htmlContent = `<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <title>Vocab Race</title>
     <style>
-        body { font-family: sans-serif; background: #f0f4f8; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        :root {
+            --primary: #3182ce;
+            --success: #38a169;
+            --danger: #e53e3e;
+        }
+        body { font-family: sans-serif; background: #f0f4f8; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 15px; box-sizing: border-box; }
         .box { background: white; padding: 2rem; border-radius: 24px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); width: 90%; max-width: 500px; text-align: center; }
-        .timer { font-size: 1.5rem; color: #e53e3e; font-weight: bold; margin-bottom: 10px; }
-        .def { font-size: 1.6rem; margin: 20px 0; min-height: 60px; line-height: 1.4; color: #2d3748; }
-        input { width: 90%; padding: 12px; font-size: 1.2rem; border: 3px solid #edf2f7; border-radius: 10px; text-align: center; outline: none; }
-        input:focus { border-color: #4299e1; }
-        .btn-go { background: #e53e3e; color: white; padding: 20px 60px; font-size: 2rem; border-radius: 15px; cursor: pointer; border: none; font-weight: bold; }
-        .btn-go:hover { background: #c53030; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; text-align: left; }
-        th, td { padding: 10px; border-bottom: 1px solid #eee; font-size: 0.9rem; }
-        .tick { color: #38a169; } .cross { color: #e53e3e; }
-        .cor { color: #38a169; font-weight: bold; display: block; font-size: 0.85rem; margin-top: 4px; }
-        .old { text-decoration: line-through; color: #a0aec0; }
+        .timer { font-size: 2rem; color: var(--primary); font-weight: bold; margin-bottom: 10px; }
+        .progress-text { color: #718096; font-size: 0.95rem; margin-bottom: 15px; }
+        
+        .game-layout { display: flex; align-items: center; justify-content: center; gap: 25px; margin: 25px 0; min-height: 100px; }
+        .huge-number { font-size: 4.5rem; font-weight: 900; color: #e2e8f0; line-height: 1; user-select: none; border-right: 4px solid #edf2f7; padding-right: 20px; }
+        .def { font-size: 1.8rem; font-weight: 600; color: #2d3748; text-align: left; flex: 1; word-break: break-word; }
+        
+        button { color: white; border: none; padding: 12px 24px; font-weight: bold; border-radius: 10px; cursor: pointer; transition: background 0.2s; }
+        .btn-go { background: var(--primary); padding: 20px 60px; font-size: 2rem; border-radius: 15px; }
+        .btn-go:hover { background: #2b6cb0; }
+        .btn-next { background: var(--success); width: 100%; padding: 15px; font-size: 1.3rem; margin-bottom: 10px; }
+        .btn-next:hover { background: #2f855a; }
+        .btn-finish { background: var(--danger); width: 100%; padding: 12px; font-size: 1.1rem; }
+        .btn-finish:hover { background: #c53030; }
+        .btn-list { background: #805ad5; margin-top: 15px; }
+        .btn-list:hover { background: #6b46c1; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; text-align: left; }
+        th, td { padding: 10px; border-bottom: 1px solid #eee; font-size: 0.95rem; }
+        th { background: #f7fafc; }
+        .scroll-container { max-height: 300px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 10px; margin-top: 15px; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
@@ -65,63 +373,62 @@
 
         <div id="s2" style="display:none">
             <div class="timer" id="t">0.0s</div>
-            <div id="p" style="color:#718096; font-size: 0.9rem; margin-bottom: 10px;"></div>
-            <div class="def" id="d"></div>
-            <input type="text" id="i" autocomplete="off" onkeydown="if(event.key==='Enter') next()">
+            <div class="progress-text" id="p"></div>
+            <div class="game-layout">
+                <div class="huge-number" id="num-display">1</div>
+                <div class="def" id="d"></div>
+            </div>
+            <button class="btn-next" onclick="next()">Next ➡️</button>
+            <button class="btn-finish" onclick="end()">Finish 🛑</button>
         </div>
 
         <div id="s3" style="display:none">
             <h2 style="margin-top:0">Race Complete!</h2>
-            <div id="sc" style="font-weight:bold; font-size:1.3rem; margin-bottom: 10px;"></div>
-            <div style="max-height:350px; overflow-y:auto; border: 1px solid #e2e8f0; border-radius: 10px;">
+            <div id="sc" style="font-weight:bold; font-size:1.3rem; color: var(--primary);"></div>
+            
+            <button id="show-list-btn" class="btn-list hidden" onclick="toggleList()">Mostrar Lista 📋</button>
+            
+            <div id="vocab-list-wrapper" class="scroll-container hidden">
                 <table>
-                    <thead><tr><th>Status</th><th>Def</th><th>Answer</th></tr></thead>
+                    <thead><tr><th style="width: 60px;">N°</th><th>Palabra (Columna 1)</th></tr></thead>
+                    <tbody id="vocab-tb"></tbody>
+                </table>
+            </div>
+
+            <div class="scroll-container">
+                <table>
+                    <thead><tr><th>N°</th><th>Definition</th><th>Your Race Path</th></tr></thead>
                     <tbody id="tb"></tbody>
                 </table>
             </div>
             <br>
-            <button onclick="location.reload()" style="background:#4299e1; color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer;">Try Again</button>
+            <button onclick="location.reload()" style="background:#4299e1;">Try Again</button>
         </div>
     </div>
 
     <script>
-        // Data injected here
-        const deck = ${JSON.stringify(deck)};
-        let idx = 0;
-        let timeStart;
-        let timerTicker;
-        let logs = [];
+        const deck = ${JSON.stringify(deckData)};
+        let idx = 0, timeStart, timerTicker, logs = [];
         
         function start() {
             document.getElementById('s1').style.display = 'none';
             document.getElementById('s2').style.display = 'block';
             timeStart = Date.now();
             timerTicker = setInterval(() => {
-                const elapsed = (Date.now() - timeStart) / 1000;
-                document.getElementById('t').innerText = elapsed.toFixed(1) + 's';
+                document.getElementById('t').innerText = ((Date.now() - timeStart) / 1000).toFixed(1) + 's';
             }, 100);
             render();
         }
 
         function render() {
-            if (idx >= deck.length) {
-                end();
-                return;
-            }
-            document.getElementById('d').innerText = deck[idx].d;
+            if (idx >= deck.length) { end(); return; }
+            document.getElementById('d').innerText = deck[idx].w;
+            document.getElementById('num-display').innerText = (idx + 1);
             document.getElementById('p').innerText = "Item " + (idx + 1) + " of " + deck.length;
-            document.getElementById('i').value = '';
-            document.getElementById('i').focus();
         }
 
         function next() {
-            let val = document.getElementById('i').value.trim();
-            logs.push({
-                d: deck[idx].d, 
-                c: deck[idx].w, 
-                u: val, 
-                ok: val.toLowerCase() === deck[idx].w.toLowerCase()
-            });
+            logs.push({ num: idx + 1, d: deck[idx].d, w: deck[idx].w });
             idx++;
             render();
         }
@@ -130,23 +437,31 @@
             clearInterval(timerTicker);
             document.getElementById('s2').style.display = 'none';
             document.getElementById('s3').style.display = 'block';
+            document.getElementById('sc').innerText = "Total Items Tracked: " + logs.length + " | Time: " + document.getElementById('t').innerText;
+            document.getElementById('show-list-btn').classList.remove('hidden');
             
-            const okCount = logs.filter(l => l.ok).length;
-            document.getElementById('sc').innerText = "Score: " + okCount + " / " + logs.length + " | Time: " + document.getElementById('t').innerText;
-            
-            let rows = "";
+            let rows = "", vocabRows = "";
             logs.forEach(l => {
-                let display = l.ok ? 
-                    '<span class="tick">' + l.u + '</span>' : 
-                    '<span class="old">' + (l.u || '-') + '</span><span class="cor">✔ ' + l.c + '</span>';
-                
-                rows += '<tr>' +
-                    '<td style="text-align:center">' + (l.ok ? '✔' : '✘') + '</td>' +
-                    '<td>' + l.d + '</td>' +
-                    '<td>' + display + '</td>' +
-                '</tr>';
+                rows += '<tr><td><b>'+l.num+'</b></td><td>'+l.w+'</td><td style="color:#4a5568;">➡️ Passed</td></tr>';
             });
             document.getElementById('tb').innerHTML = rows;
+
+            deck.forEach((item, index) => {
+                vocabRows += '<tr><td><b>'+(index + 1)+'</b></td><td style="color:#2d3748; font-weight:600;">'+item.d+'</td></tr>';
+            });
+            document.getElementById('vocab-tb').innerHTML = vocabRows;
+        }
+
+        function toggleList() {
+            const list = document.getElementById('vocab-list-wrapper');
+            const btn = document.getElementById('show-list-btn');
+            if(list.classList.contains('hidden')) {
+                list.classList.remove('hidden');
+                btn.innerText = "Ocultar Lista 📋";
+            } else {
+                list.classList.add('hidden');
+                btn.innerText = "Mostrar Lista 📋";
+            }
         }
     <\/script>
 </body>
