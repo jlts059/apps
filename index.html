@@ -39,7 +39,7 @@
         .app-link:hover { transform: translateX(5px); border-color: #0366d6; box-shadow: 2px 2px 10px rgba(0,0,0,0.1); }
         .icon { margin-right: 15px; font-size: 1.2em; }
 
-        /* Estilos para tu nuevo panel visual de Notas */
+        /* Estilos para tu panel visual de Notas */
         .diagram-container {
             margin-top: 40px;
             padding: 20px;
@@ -104,14 +104,17 @@
             'default': '📁'
         };
 
-        // --- DATOS DE SIMULACIÓN LOCAL ---
-        const localMockData = [
+        // --- SISTEMA ANTICAÍDAS ---
+        // Si la API de GitHub se bloquea, la web usará instantáneamente esta estructura guardada
+        const copiaRespaldoProyectos = [
             { type: 'dir', name: 'al_flash', files: [{ name: 'flashcardscp.html' }, { name: 'flashcardscporder.html' }] },
+            { type: 'dir', name: 'al_gap', files: [{ name: 'gap.html' }] },
             { type: 'dir', name: 'al_quiz_gr', files: [{ name: 'quizg.html' }] },
             { type: 'dir', name: 'al_quiz_voc', files: [{ name: 'quizvs1.3.html' }] },
             { type: 'dir', name: 'al_wheel', files: [{ name: 'wheel1.2.html' }] },
             { type: 'dir', name: 'in_gr', files: [{ name: 'quizg.html' }] },
             { type: 'dir', name: 'in_voc', files: [{ name: 'quizi.html' }] },
+            { type: 'dir', name: 'me_flash', files: [{ name: 'index.html' }] },
             { type: 'dir', name: 'vault', files: [] },
             { type: 'file', name: 'drive2qr.html' },
             { type: 'file', name: 'match0.1.html' },
@@ -119,63 +122,69 @@
         ];
 
         async function cargarProyectos() {
-            // Lanzamos la carga de tus notas de forma paralela para que no ralentice la web
-            cargarYGenerarDiagrama();
+            cargarYGenerarDiagrama(); // Ejecuta el diagrama de notas de forma independiente
 
             const esLocal = window.location.protocol === 'file:';
+            let items = [];
             
             try {
-                let items = [];
-
                 if (esLocal) {
-                    items = localMockData;
-                    console.log("Modo de desarrollo local activado.");
+                    items = copiaRespaldoProyectos;
                 } else {
                     const url = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/`;
                     const response = await fetch(url);
+                    
+                    // Si GitHub da error por exceso de uso, forzamos el uso del respaldo para salvar la web
+                    if (!response.ok) throw new Error("API Limitada");
                     items = await response.json();
                 }
-                
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('blocks-wrapper').style.display = 'flex';
+            } catch (error) {
+                console.warn("API de GitHub saturada temporalmente. Cargando sistema anticaídas...", error);
+                items = copiaRespaldoProyectos; // <--- Aquí rescatamos tus pestañas
+            }
 
-                createTab('Home', 'other');
+            // Pintar la interfaz con lo que tengamos disponible
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('blocks-wrapper').style.display = 'flex';
 
-                for (const item of items) {
-                    if (item.type === 'dir') {
-                        let bloque = 'other';
-                        const lowerName = item.name.toLowerCase();
-                        
-                        if (lowerName.startsWith('al_')) {
-                            bloque = 'al';
-                        } else if (lowerName.startsWith('in_')) {
-                            bloque = 'in';
-                        }
+            createTab('Home', 'other');
 
-                        createTab(item.name, bloque);
-                        
-                        let files = [];
-                        if (esLocal) {
+            for (const item of items) {
+                if (item.type === 'dir') {
+                    let bloque = 'other';
+                    const lowerName = item.name.toLowerCase();
+                    
+                    if (lowerName.startsWith('al_')) {
+                        bloque = 'al';
+                    } else if (lowerName.startsWith('in_')) {
+                        bloque = 'in';
+                    }
+
+                    createTab(item.name, bloque);
+                    
+                    let files = [];
+                    try {
+                        if (esLocal || items === copiaRespaldoProyectos) {
                             files = item.files || [];
                         } else {
                             const subRes = await fetch(item.url);
-                            files = await subRes.json();
+                            if (subRes.ok) files = await subRes.json();
                         }
-                        renderFiles(files, item.name);
-
-                    } else if (item.type === 'file' && item.name.endsWith('.html') && item.name.toLowerCase() !== 'index.html') {
-                        renderFiles([item], 'Home');
+                    } catch (e) {
+                        // Respaldo individual por si falla la subcarpeta
+                        const match = copiaRespaldoProyectos.find(x => x.name === item.name);
+                        files = match ? match.files : [];
                     }
+                    renderFiles(files, item.name);
+
+                } else if (item.type === 'file' && item.name.endsWith('.html') && item.name.toLowerCase() !== 'index.html') {
+                    renderFiles([item], 'Home');
                 }
-
-                if (document.getElementById('tabs-al').children.length === 0) document.getElementById('block-al-container').style.display = 'none';
-                if (document.getElementById('tabs-in').children.length === 0) document.getElementById('block-in-container').style.display = 'none';
-                if (document.getElementById('tabs-other').children.length === 0) document.getElementById('block-other-container').style.display = 'none';
-
-            } catch (error) {
-                console.error("Error:", error);
-                document.getElementById('loading').innerText = "Error al cargar las herramientas.";
             }
+
+            if (document.getElementById('tabs-al').children.length === 0) document.getElementById('block-al-container').style.display = 'none';
+            if (document.getElementById('tabs-in').children.length === 0) document.getElementById('block-in-container').style.display = 'none';
+            if (document.getElementById('tabs-other').children.length === 0) document.getElementById('block-other-container').style.display = 'none';
         }
 
         function createTab(name, bloque) {
@@ -204,6 +213,9 @@
         function renderFiles(files, containerId) {
             const container = document.getElementById(containerId);
             if (!container) return;
+
+            // Limpiamos contenido previo para evitar duplicados
+            container.innerHTML = '';
 
             files.forEach(file => {
                 if (file.name.endsWith('.html') && file.name.toLowerCase() !== 'index.html') {
@@ -241,13 +253,11 @@
             const diagramSection = document.getElementById('diagram-section');
             
             try {
-                // Va a buscar tu archivo de notas a la carpeta vault
                 const response = await fetch('vault/_input-output.json');
-                if (!response.ok) throw new Error("Notas no disponibles o en local");
+                if (!response.ok) throw new Error("No se pudo leer el archivo JSON");
                 
                 const data = await response.json();
                 
-                // Sintaxis base de Mermaid (Diagrama de Izquierda a Derecha)
                 let mermaidSyntax = "graph LR\n";
                 let inputCounter = 0;
                 let gameCounter = 0;
@@ -260,7 +270,6 @@
                             inputCounter++;
                             const inputId = `I${inputCounter}`;
                             
-                            // Nodo del Tipo de Entrada (Formato azul corporativo destacable)
                             mermaidSyntax += `    ${inputId}["${input.tipo}"]\n`;
                             mermaidSyntax += `    style ${inputId} fill:#0366d6,stroke:#024ea4,color:#fff,font-weight:bold\n`;
 
@@ -269,7 +278,6 @@
                                     gameCounter++;
                                     const gameId = `G${gameCounter}`;
                                     
-                                    // Conexión limpia con flechas hacia las dinámicas resultantes
                                     mermaidSyntax += `    ${inputId} --> ${gameId}("${juego.nombre}")\n`;
                                     mermaidSyntax += `    style ${gameId} fill:#fff,stroke:#ccc,color:#333\n`;
                                 });
@@ -279,7 +287,6 @@
                 });
 
                 if (inputCounter > 0) {
-                    // Todo correcto: Revelamos el panel y dibujamos las cajas
                     diagramSection.style.display = 'block';
                     diagramTarget.removeAttribute('data-processed');
                     diagramTarget.textContent = mermaidSyntax;
@@ -288,8 +295,7 @@
                 }
 
             } catch (err) {
-                // Si estás en local o no hay JSON, se oculta en silencio sin romper la carga superior
-                console.log("Diagrama en espera (Modo Producción HTTPS requerido para leer el JSON).");
+                console.log("Diagrama en espera de entorno seguro o JSON válido.");
                 diagramSection.style.display = 'none';
             }
         }
