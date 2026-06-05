@@ -1,29 +1,28 @@
 {
   "categorias": [
     {
-      "nombre": "DE ALEMÁN",
-      "icono": "🍺",
+      "nombre": "Estructura de Inputs & Outputs",
+      "icono": "📊",
       "inputs": [
         {
-          "tipo": "Quiz (6 columns)",
+          "tipo": "📝 Quiz (6 columns)",
           "juegos": [
-            { "nombre": "flash", "url": "flash/index.html" },
-            { "nombre": "quiz_gr", "url": "quiz_gr/index.html" },
-            { "nombre": "quiz_voc", "url": "quiz_voc/index.html" },
-            { "nombre": "wheel", "url": "wheel/index.html" }
+            { "nombre": "👥 Group Game" },
+            { "nombre": "👤 Individual Game" }
           ]
-        }
-      ]
-    },
-    {
-      "nombre": "GB INGLÉS",
-      "icono": "☕",
-      "inputs": [
+        },
         {
-          "tipo": "Word + Def",
+          "tipo": "📖 Word + Definition",
           "juegos": [
-            { "nombre": "gr", "url": "gr/index.html" },
-            { "nombre": "voc", "url": "voc/index.html" }
+            { "nombre": "🗂️ Flashcard" },
+            { "nombre": "🏃 Vocab Race" },
+            { "nombre": "🕳️ Gap Fill" }
+          ]
+        },
+        {
+          "tipo": "🔤 Single Word",
+          "juegos": [
+            { "nombre": "🎲 Roulette" }
           ]
         }
       ]

@@ -39,9 +39,9 @@
         .app-link:hover { transform: translateX(5px); border-color: #0366d6; box-shadow: 2px 2px 10px rgba(0,0,0,0.1); }
         .icon { margin-right: 15px; font-size: 1.2em; }
 
-        /* Estilos del panel del Diagrama */
+        /* Estilos para tu nuevo panel visual de Notas */
         .diagram-container {
-            margin-top: 35px;
+            margin-top: 40px;
             padding: 20px;
             background: white;
             border: 1px solid #eee;
@@ -85,7 +85,7 @@
     <div id="contents-container"></div>
 
     <div id="diagram-section" class="diagram-container" style="display: none;">
-        <div class="diagram-title">📊 Estructura de Inputs e Outputs</div>
+        <div class="diagram-title">📊 Estructura de Inputs & Outputs</div>
         <div class="mermaid-wrapper">
             <div id="diagram-target" class="mermaid"></div>
         </div>
@@ -104,8 +104,22 @@
             'default': '📁'
         };
 
+        // --- DATOS DE SIMULACIÓN LOCAL ---
+        const localMockData = [
+            { type: 'dir', name: 'al_flash', files: [{ name: 'flashcardscp.html' }, { name: 'flashcardscporder.html' }] },
+            { type: 'dir', name: 'al_quiz_gr', files: [{ name: 'quizg.html' }] },
+            { type: 'dir', name: 'al_quiz_voc', files: [{ name: 'quizvs1.3.html' }] },
+            { type: 'dir', name: 'al_wheel', files: [{ name: 'wheel1.2.html' }] },
+            { type: 'dir', name: 'in_gr', files: [{ name: 'quizg.html' }] },
+            { type: 'dir', name: 'in_voc', files: [{ name: 'quizi.html' }] },
+            { type: 'dir', name: 'vault', files: [] },
+            { type: 'file', name: 'drive2qr.html' },
+            { type: 'file', name: 'match0.1.html' },
+            { type: 'file', name: 'vrace.html' }
+        ];
+
         async function cargarProyectos() {
-            // Ejecutamos la carga del diagrama de forma paralela e independiente
+            // Lanzamos la carga de tus notas de forma paralela para que no ralentice la web
             cargarYGenerarDiagrama();
 
             const esLocal = window.location.protocol === 'file:';
@@ -114,17 +128,11 @@
                 let items = [];
 
                 if (esLocal) {
-                    // Simulación local si abres el archivo en PC
-                    items = [
-                        { type: 'dir', name: 'al_flash' }, { type: 'dir', name: 'al_quiz_gr' },
-                        { type: 'dir', name: 'al_quiz_voc' }, { type: 'dir', name: 'al_wheel' },
-                        { type: 'dir', name: 'in_gr' }, { type: 'dir', name: 'in_voc' },
-                        { type: 'dir', name: 'vault' }
-                    ];
+                    items = localMockData;
+                    console.log("Modo de desarrollo local activado.");
                 } else {
                     const url = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/`;
                     const response = await fetch(url);
-                    if (!response.ok) throw new Error("Límite de API de GitHub alcanzado");
                     items = await response.json();
                 }
                 
@@ -148,10 +156,10 @@
                         
                         let files = [];
                         if (esLocal) {
-                            files = [{ name: 'index.html' }];
+                            files = item.files || [];
                         } else {
                             const subRes = await fetch(item.url);
-                            if (subRes.ok) files = await subRes.json();
+                            files = await subRes.json();
                         }
                         renderFiles(files, item.name);
 
@@ -165,8 +173,8 @@
                 if (document.getElementById('tabs-other').children.length === 0) document.getElementById('block-other-container').style.display = 'none';
 
             } catch (error) {
-                console.error("Error al cargar carpetas:", error);
-                document.getElementById('loading').innerText = "Carpetas pausadas temporalmente por límite de GitHub. Revisa en unos minutos.";
+                console.error("Error:", error);
+                document.getElementById('loading').innerText = "Error al cargar las herramientas.";
             }
         }
 
@@ -227,37 +235,43 @@
             if(targetBtn) targetBtn.classList.add('active');
         }
 
-        // PROCESADOR AISLADO Y SEGURO DE DIAGRAMA
+        // --- PROCESADOR EXCLUSIVO DE TU JSON DE NOTAS ---
         async function cargarYGenerarDiagrama() {
             const diagramTarget = document.getElementById('diagram-target');
             const diagramSection = document.getElementById('diagram-section');
             
             try {
+                // Va a buscar tu archivo de notas a la carpeta vault
                 const response = await fetch('vault/_input-output.json');
-                if (!response.ok) throw new Error("No se encuentra el JSON");
+                if (!response.ok) throw new Error("Notas no disponibles o en local");
                 
                 const data = await response.json();
                 
+                // Sintaxis base de Mermaid (Diagrama de Izquierda a Derecha)
                 let mermaidSyntax = "graph LR\n";
                 let inputCounter = 0;
                 let gameCounter = 0;
 
-                if (!data.categorias) throw new Error("Estructura JSON incorrecta");
+                if (!data.categorias) return;
 
                 data.categorias.forEach(cat => {
                     if (cat.inputs) {
                         cat.inputs.forEach(input => {
                             inputCounter++;
                             const inputId = `I${inputCounter}`;
-                            mermaidSyntax += `    ${inputId}[${input.tipo}]\n`;
+                            
+                            // Nodo del Tipo de Entrada (Formato azul corporativo destacable)
+                            mermaidSyntax += `    ${inputId}["${input.tipo}"]\n`;
                             mermaidSyntax += `    style ${inputId} fill:#0366d6,stroke:#024ea4,color:#fff,font-weight:bold\n`;
 
                             if (input.juegos) {
                                 input.juegos.forEach(juego => {
                                     gameCounter++;
                                     const gameId = `G${gameCounter}`;
-                                    mermaidSyntax += `    ${inputId} --> ${gameId}(${juego.nombre})\n`;
-                                    mermaidSyntax += `    style ${gameId} fill:#fff,stroke:#ddd,color:#333\n`;
+                                    
+                                    // Conexión limpia con flechas hacia las dinámicas resultantes
+                                    mermaidSyntax += `    ${inputId} --> ${gameId}("${juego.nombre}")\n`;
+                                    mermaidSyntax += `    style ${gameId} fill:#fff,stroke:#ccc,color:#333\n`;
                                 });
                             }
                         });
@@ -265,7 +279,7 @@
                 });
 
                 if (inputCounter > 0) {
-                    // Solo si el JSON es perfecto y se procesa, mostramos el recuadro
+                    // Todo correcto: Revelamos el panel y dibujamos las cajas
                     diagramSection.style.display = 'block';
                     diagramTarget.removeAttribute('data-processed');
                     diagramTarget.textContent = mermaidSyntax;
@@ -274,8 +288,8 @@
                 }
 
             } catch (err) {
-                console.error("Error crítico en el JSON:", err);
-                // Si el JSON tiene una errata, escondemos la sección para que no afee la web
+                // Si estás en local o no hay JSON, se oculta en silencio sin romper la carga superior
+                console.log("Diagrama en espera (Modo Producción HTTPS requerido para leer el JSON).");
                 diagramSection.style.display = 'none';
             }
         }
