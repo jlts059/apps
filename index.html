@@ -219,7 +219,7 @@
             
             try {
                 // Añadimos un parámetro de tiempo para romper la caché del navegador en cada recarga
-                const response = await fetch('vault/_input-output.txt?v=' + new Date().getTime());
+                const response = await fetch('vault/input-output.txt?v=' + new Date().getTime());
                 if (!response.ok) throw new Error("No se pudo leer el archivo de texto");
                 
                 const textoNotas = await response.text();
