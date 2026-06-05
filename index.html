@@ -6,12 +6,10 @@
     <title>Apps</title>
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
     <script>
-        // CONFIGURACIÓN SEGURA: Permite procesar emojis y textos sin colgarse
         mermaid.initialize({ 
             startOnLoad: false, 
             theme: 'neutral',
-            securityLevel: 'loose',
-            htmlLabels: true
+            securityLevel: 'loose'
         });
     </script>
     <style>
@@ -57,6 +55,7 @@
         }
         .mermaid-wrapper {
             display: flex; justify-content: center; overflow-x: auto; width: 100%; padding: 10px 0;
+            min-height: 50px;
         }
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -89,7 +88,7 @@
     <div id="diagram-section" class="diagram-container" style="display: none;">
         <div class="diagram-title">📊 Type of Input & Output (Mis Notas)</div>
         <div class="mermaid-wrapper">
-            <div id="diagram-target" class="mermaid"></div>
+            <div id="diagram-target"></div>
         </div>
     </div>
 
@@ -107,8 +106,8 @@
         };
 
         async function cargarProyectos() {
-            // Intentamos renderizar tu archivo .txt independiente de notas
-            cargarDiagramaDesdeTxt();
+            // Primero disparamos la carga de tus notas externas
+            inyectarNotasDesdeTxt();
             
             try {
                 const url = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/`;
@@ -150,7 +149,7 @@
                 if (document.getElementById('tabs-other').children.length === 0) document.getElementById('block-other-container').style.display = 'none';
 
             } catch (error) {
-                console.error("Error crítico:", error);
+                console.error(error);
                 document.getElementById('loading').innerText = "Cargando tus aplicaciones...";
             }
         }
@@ -212,29 +211,32 @@
             if(targetBtn) targetBtn.classList.add('active');
         }
 
-        // --- LECTURA DE TU ARCHIVO .TXT ---
-        async function cargarDiagramaDesdeTxt() {
-            const diagramTarget = document.getElementById('diagram-target');
-            const diagramSection = document.getElementById('diagram-section');
+        // --- SISTEMA DE INYECCIÓN DE TEXTO SEGURO ---
+        async function inyectarNotasDesdeTxt() {
+            const target = document.getElementById('diagram-target');
+            const section = document.getElementById('diagram-section');
             
             try {
-                // Añadimos un parámetro de tiempo para romper la caché del navegador en cada recarga
+                // Buscamos tu archivo limpio sin guion bajo y rompemos la caché
                 const response = await fetch('vault/input-output.txt?v=' + new Date().getTime());
-                if (!response.ok) throw new Error("No se pudo leer el archivo de texto");
+                if (!response.ok) throw new Error("No disponible");
                 
-                const textoNotas = await response.text();
+                const textoRaw = await response.text();
                 
-                if (textoNotas.trim().length > 0) {
-                    diagramSection.style.display = 'block';
-                    diagramTarget.removeAttribute('data-processed');
-                    diagramTarget.textContent = textoNotas;
+                if (textoRaw.trim().length > 0) {
+                    // Mostramos la caja de notas
+                    section.style.display = 'block';
                     
-                    // Ejecutamos Mermaid pasándole el contenedor de forma segura
-                    await mermaid.run({ nodes: [diagramTarget] });
+                    // Convertimos el div en un nodo oficial de Mermaid insertando la clase y el texto
+                    target.className = "mermaid";
+                    target.textContent = textoRaw;
+                    
+                    // Le decimos a Mermaid que procese el elemento ahora que ya tiene el texto dentro
+                    await mermaid.run();
                 }
             } catch (err) {
-                console.log("Diagrama oculto temporalmente:", err);
-                diagramSection.style.display = 'none';
+                console.log("Esperando archivo separado válido o entorno online.");
+                section.style.display = 'none';
             }
         }
 
