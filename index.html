@@ -6,7 +6,6 @@
     <title>Apps</title>
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
     <script>
-        // Inicialización limpia de Mermaid
         mermaid.initialize({ 
             startOnLoad: false, 
             theme: 'neutral',
@@ -40,7 +39,7 @@
         .app-link:hover { transform: translateX(5px); border-color: #0366d6; box-shadow: 2px 2px 10px rgba(0,0,0,0.1); }
         .icon { margin-right: 15px; font-size: 1.2em; }
 
-        /* Estilos corregidos para el panel del Diagrama */
+        /* Estilos del panel del Diagrama */
         .diagram-container {
             margin-top: 35px;
             padding: 20px;
@@ -88,8 +87,7 @@
     <div id="diagram-section" class="diagram-container">
         <div class="diagram-title">📊 Estructura de Inputs e Outputs</div>
         <div class="mermaid-wrapper">
-            <div id="diagram-target" class="mermaid">
-                </div>
+            <div id="diagram-target" class="mermaid"></div>
         </div>
     </div>
 
@@ -106,7 +104,7 @@
             'default': '📁'
         };
 
-        // --- DATOS DE SIMULACIÓN LOCAL ---
+        // --- DATOS DE SIMULACIÓN LOCAL PARA CARPETAS ---
         const localMockData = [
             { type: 'dir', name: 'al_flash', files: [{ name: 'flashcardscp.html' }, { name: 'flashcardscporder.html' }] },
             { type: 'dir', name: 'al_quiz_gr', files: [{ name: 'quizg.html' }] },
@@ -119,6 +117,20 @@
             { type: 'file', name: 'match0.1.html' },
             { type: 'file', name: 'vrace.html' }
         ];
+
+        // --- MOCK LOCAL DEL DIAGRAMA (Para saltarse la seguridad CORS al probar en PC) ---
+        const localMockJson = {
+            "categorias": [
+                {
+                    "nombre": "DE ALEMÁN",
+                    "inputs": [
+                        { "tipo": "Quiz (6 columns)", "juegos": [{ "nombre": "Group" }, { "nombre": "Indiv" }] },
+                        { "tipo": "Word + Def", "juegos": [{ "nombre": "Flashcard" }, { "nombre": "Vocab Race" }, { "nombre": "Gap" }] },
+                        { "tipo": "Word", "juegos": [{ "nombre": "Roulette" }] }
+                    ]
+                }
+            ]
+        };
 
         async function cargarProyectos() {
             const esLocal = window.location.protocol === 'file:';
@@ -171,8 +183,7 @@
                 if (document.getElementById('tabs-in').children.length === 0) document.getElementById('block-in-container').style.display = 'none';
                 if (document.getElementById('tabs-other').children.length === 0) document.getElementById('block-other-container').style.display = 'none';
 
-                // Llamada inmediata tras renderizar la interfaz principal
-                cargarYGenerarDiagrama();
+                cargarYGenerarDiagrama(esLocal);
 
             } catch (error) {
                 console.error("Error:", error);
@@ -237,18 +248,25 @@
             if(targetBtn) targetBtn.classList.add('active');
         }
 
-        // LÓGICA DE DIAGRAMA REOPTIMIZADA
-        async function cargarYGenerarDiagrama() {
+        // PROCESADOR DE DIAGRAMA CON SOPORTE CORREGIDO PARA LOCAL
+        async function cargarYGenerarDiagrama(esLocal) {
             const diagramTarget = document.getElementById('diagram-target');
             const diagramSection = document.getElementById('diagram-section');
             
             try {
-                const response = await fetch('vault/_input-output.json');
-                if (!response.ok) throw new Error("No se pudo obtener el JSON de la carpeta vault");
+                let data;
+
+                if (esLocal) {
+                    // Si trabajas desde el disco duro, usa los datos directos para evitar el fallo CORS
+                    data = localMockJson;
+                    console.log("Cargando estructura del diagrama desde datos locales integrados.");
+                } else {
+                    // Si está en producción (GitHub Pages), lee el archivo JSON real de forma dinámica
+                    const response = await fetch('vault/_input-output.json');
+                    if (!response.ok) throw new Error("No se pudo obtener el JSON de la carpeta vault");
+                    data = await response.json();
+                }
                 
-                const data = await response.json();
-                
-                // Iniciamos la sintaxis limpia de Mermaid
                 let mermaidSyntax = "graph LR\n";
                 let inputCounter = 0;
                 let gameCounter = 0;
@@ -273,20 +291,17 @@
                     }
                 });
 
-                // Si logramos construir nodos válidos, renderizamos
                 if (inputCounter > 0) {
-                    diagramTarget.removeAttribute('data-processed'); // Resetea estado previo de Mermaid
+                    diagramTarget.removeAttribute('data-processed');
                     diagramTarget.textContent = mermaidSyntax;
                     
-                    // Ejecuta el renderizado asíncrono seguro
                     await mermaid.run({ nodes: [diagramTarget] });
                 } else {
                     diagramSection.style.display = 'none';
                 }
 
             } catch (err) {
-                console.warn("Aviso: No se pudo renderizar el diagrama dinámico.", err);
-                // Si falla el archivo, escondemos la sección elegantemente para no dejar un hueco feo
+                console.warn("Aviso: No se pudo renderizar el diagrama.", err);
                 diagramSection.style.display = 'none';
             }
         }
