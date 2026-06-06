@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Ordenar Palabras - v7</title>
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --success: #10b981;
+            --success-hover: #059669;
+            --danger: #ef4444;
+            --danger-hover: #dc2626;
+            --background: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+            --text-light: #64748b;
+            --border: #e2e8f0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--background);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .brand-badge {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            background-color: transparent;
+            color: #94a3b8;
+            font-size: 14px;
+            font-weight: 600;
+            z-index: 9999;
+            pointer-events: none;
+            letter-spacing: 1px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 850px;
+            background: var(--card);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            padding: 30px;
+            margin-top: 40px;
+            position: relative;
+        }
+
+        h1 {
+            font-size: 24px;
+            color: #0f172a;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        p.subtitle {
+            color: var(--text-light);
+            text-align: center;
+            margin-bottom: 25px;
+            font-size: 14px;
+        }
+
+        #setup-screen {
+            display: block;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 180px;
+            padding: 12px;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            resize: vertical;
+            font-size: 15px;
+            color: var(--text);
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .btn-container {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        button {
+            flex: 1;
+            min-width: 130px;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary { background-color: var(--primary); color: white; }
+        .btn-primary:hover { background-color: var(--primary-hover); }
+        .btn-success { background-color: var(--success); color: white; }
+        .btn-success:hover { background-color: var(--success-hover); }
+        .btn-danger { background-color: var(--danger); color: white; }
+        .btn-danger:hover { background-color: var(--danger-hover); }
+        .btn-secondary { background-color: #64748b; color: white; }
+
+        #game-screen {
+            display: none;
+        }
+
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header-meta-left {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: flex-start;
+        }
+
+        .timer-box {
+            color: #2563eb;
+            font-weight: bold;
+            font-size: 16px;
+            background: #eff6ff;
+            padding: 4px 12px;
+            border-radius: 20px;
+            border: 1px solid #bfdbfe;
+            text-align: center;
+            width: 90px;
+        }
+
+        .progress-box {
+            font-weight: 700;
+            color: #475569;
+            font-size: 16px;
+            background: #f1f5f9;
+            padding: 4px 12px;
+            border-radius: 20px;
+            border: 1px solid #cbd5e1;
+            text-align: center;
+            width: 90px;
+        }
+
+        .instructions-box {
+            font-size: 13px;
+            color: #334155;
+            font-weight: 500;
+            max-width: 450px;
+            line-height: 1.4;
+        }
+
+        .qr-box {
+            background: white;
+            padding: 6px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .qr-box:hover { transform: scale(1.05); }
+        .qr-box img { width: 75px; height: 75px; display: block; }
+
+        .word-pool-container {
+            background: #f1f5f9;
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 15px;
+            min-height: 75px;
+            margin-bottom: 25px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .word-slots-container {
+            background: #f8fafc;
+            border: 2px solid #cbd5e1;
+            border-radius: 12px;
+            padding: 25px 15px;
+            min-height: 85px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px 12px;
+        }
+
+        .slot-wrapper {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100px;
+            min-width: 100px;
+            position: relative;
+        }
+
+        .slot-underline {
+            width: 100%;
+            height: 1px;
+            background-color: #cbd5e1;
+            margin-top: 4px;
+        }
+
+        .slot-wrapper.has-word .slot-underline {
+            background-color: #f1f5f9;
+        }
+
+        .word-token {
+            background: white;
+            border: 1px solid #cbd5e1;
+            padding: 8px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            user-select: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+            text-align: center;
+            width: 100%;
+            transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .word-pool-container .word-token {
+            width: auto;
+            padding: 8px 16px;
+        }
+
+        .word-token.selected-orange {
+            background-color: #ffedd5 !important;
+            border-color: #f97316 !important;
+            color: #ea580c !important;
+            box-shadow: 0 0 0 2px #ffcaa8;
+        }
+
+        .word-token.word-correct {
+            background-color: #d1fae5 !important;
+            border-color: #10b981 !important;
+            color: #065f46 !important;
+        }
+
+        .word-token.word-incorrect {
+            background-color: #fee2e2 !important;
+            border-color: #ef4444 !important;
+            color: #991b1b !important;
+        }
+
+        .feedback-message {
+            text-align: center;
+            font-weight: 600;
+            font-size: 32px;
+            margin: 15px 0;
+            min-height: 38px;
+        }
+
+        @keyframes blink-animation {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.3; transform: scale(1.15); }
+        }
+
+        .correct-blink {
+            display: inline-block;
+            animation: blink-animation 0.4s ease-in-out 2;
+        }
+
+        #results-screen { display: none; }
+
+        .score-display {
+            text-align: center;
+            font-size: 42px;
+            font-weight: 800;
+            margin: 20px 0;
+        }
+
+        .results-list {
+            margin-top: 20px;
+            max-height: 350px;
+            overflow-y: auto;
+        }
+
+        .result-item {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            border-left: 5px solid transparent;
+            background: #f8fafc;
+        }
+
+        .result-item.correct { border-left-color: var(--success); background: #f0fdf4; }
+        .result-item.incorrect { border-left-color: var(--danger); background: #fef2f2; }
+
+        .text-green { color: #16a34a; font-weight: 600; }
+        .text-red { color: #dc2626; text-decoration: line-through; opacity: 0.8; }
+        .text-blue { color: #2563eb; margin-top: 4px; display: block; }
+
+        .qr-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            cursor: pointer;
+        }
+
+        .qr-overlay img {
+            width: 80vmin;
+            height: 80vmin;
+            max-width: 450px;
+            max-height: 450px;
+            background: white;
+            padding: 15px;
+            border-radius: 16px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="brand-badge">Unjumble</div>
+
+    <div class="container">
+        
+        <!-- PANTALLA ENTRADA -->
+        <div id="setup-screen">
+            <h1>Generador de Juegos: Ordenar Palabras</h1>
+            <p class="subtitle">Escribe o pega tus frases (una frase por cada línea de columna).</p>
+            
+            <div class="input-group">
+                <textarea id="sentences-input" placeholder="pegar frase aquí"></textarea>
+            </div>
+
+            <div class="btn-container">
+                <button class="btn-primary" onclick="launchGame(false)">Try</button>
+                <button class="btn-primary" style="background-color:#8b5cf6;" onclick="launchGame(true)">Try (Shuffle)</button>
+                <button class="btn-secondary" style="background-color:#0284c7;" onclick="exportToHTML()">To HTML</button>
+            </div>
+        </div>
+
+        <!-- JUEGO INTERACTIVO -->
+        <div id="game-screen">
+            <div class="game-header">
+                <div class="header-meta-left">
+                    <div class="timer-box" id="game-timer">00:00</div>
+                    <div class="progress-box" id="game-progress">0 / 0</div>
+                </div>
+                
+                <!-- MODIFICADO: Instrucciones literales actualizadas -->
+                <div class="instructions-box">
+                    Toca una palabra e irá al primer hueco libre. Para cambiarla, márcala (pasará a naranja). Toca otra vez para devolverla a la caja o pica en otro hueco para moverla allí.
+                </div>
+
+                <div class="qr-box" onclick="openZoomQR()">
+                    <img id="quizQrImg" src="" alt="QR Code">
+                </div>
+            </div>
+
+            <div id="word-pool" class="word-pool-container"></div>
+            <div id="word-slots" class="word-slots-container"></div>
+
+            <div id="feedback-area" class="feedback-message"></div>
+
+            <div class="btn-container" style="margin-top: 30px;">
+                <button class="btn-success" onclick="checkCurrentAnswer()">OK?</button>
+                <button class="btn-primary" onclick="passQuestion()">PASS</button>
+                <button class="btn-danger" onclick="stopAndScore()">STOP & SCORE</button>
+            </div>
+
+            <div class="btn-container" id="back-button-container" style="margin-top: 15px; border-top: 1px solid var(--border); padding-top: 15px;">
+                <button class="btn-secondary" onclick="returnToSetup()">&larr; Volver Atrás</button>
+            </div>
+        </div>
+
+        <!-- RESULTADOS -->
+        <div id="results-screen">
+            <h1>Resultados del Ejercicio</h1>
+            <div class="score-display" id="final-score-value">0 / 0</div>
+            <div class="results-list" id="results-breakdown"></div>
+
+            <div class="btn-container" style="margin-top: 25px;">
+                <button class="btn-primary" onclick="restartSameGame()">Reiniciar Juego</button>
+                <button class="btn-secondary" onclick="returnToSetup()">Crear Nuevo Juego</button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- MODAL DE ZOOM QR -->
+    <div id="qr-zoom-modal" class="qr-overlay" onclick="closeZoomQR()">
+        <img id="quizQrImgZoom" src="" alt="QR Code Ampliado">
+    </div>
+
+    <script>
+        let originalSentences = []; 
+        let gameSentences = [];     
+        let currentIdx = 0;         
+        let totalQuestionsCount = 0;
+        let userAnswersLog = [];    
+        
+        let timerInterval = null;
+        let totalSeconds = 0;
+        let currentShuffleMode = false;
+        let isTransitioning = false; 
+
+        let orangeSlotIndex = null;
+        let poolWords = [];
+        let slotContents = [];
+        let originalCleanWords = [];
+        let checkedSlotsStatus = []; 
+
+        window.addEventListener('DOMContentLoaded', () => {
+            renderActiveQR();
+        });
+
+        function renderActiveQR() {
+            let currentUrl = window.location.href;
+            if(!currentUrl || currentUrl.startsWith('file:')) {
+                currentUrl = "https://google.com"; 
+            }
+            const qrImgUrl = "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=" + encodeURIComponent(currentUrl);
+            document.getElementById('quizQrImg').src = qrImgUrl;
+            document.getElementById('quizQrImgZoom').src = qrImgUrl;
+        }
+
+        function parseInput(text) {
+            originalSentences = text.split('\n').map(s => s.trim()).filter(s => s.length > 0);
+        }
+
+        function cleanSentenceTokens(sentence) {
+            let clean = sentence.trim();
+            if (clean.endsWith('.')) clean = clean.slice(0, -1).trim();
+            return clean.split(/\s+/).filter(w => w.length > 0);
+        }
+
+        function launchGame(shuffleItems) {
+            const inputText = document.getElementById('sentences-input').value.trim();
+            if (!inputText || inputText === "pegar frase aquí") {
+                alert('Introduce frases válidas primero.');
+                return;
+            }
+            currentShuffleMode = shuffleItems;
+            parseInput(inputText);
+            totalQuestionsCount = originalSentences.length;
+
+            document.getElementById('setup-screen').style.display = 'none';
+            setupGameSession(shuffleItems);
+        }
+
+        function setupGameSession(shuffleItems) {
+            gameSentences = [...originalSentences];
+            if (shuffleItems) {
+                gameSentences.sort(() => Math.random() - 0.5);
+            }
+
+            userAnswersLog = originalSentences.map(s => ({
+                original: s, userOrdered: "", correct: false, wasChecked: false, seen: false
+            }));
+
+            currentIdx = 0;
+            isTransitioning = false;
+            document.getElementById('game-screen').style.display = 'block';
+            document.getElementById('results-screen').style.display = 'none';
+            
+            renderActiveQR();
+            startTimer();
+            loadCurrentSentence();
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            totalSeconds = 0;
+            timerInterval = setInterval(() => {
+                totalSeconds++;
+                const mins = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+                const secs = String(totalSeconds % 60).padStart(2, '0');
+                document.getElementById('game-timer').innerText = mins + ":" + secs;
+            }, 1000);
+        }
+
+        function loadCurrentSentence() {
+            if (currentIdx >= gameSentences.length) {
+                stopAndScore();
+                return;
+            }
+            isTransitioning = false;
+            document.getElementById('game-progress').innerText = (currentIdx + 1) + " / " + gameSentences.length;
+            document.getElementById('feedback-area').innerHTML = ""; 
+
+            const fullSentence = gameSentences[currentIdx];
+            let logItem = userAnswersLog.find(item => item.original === fullSentence);
+            if (logItem) logItem.seen = true;
+
+            originalCleanWords = cleanSentenceTokens(fullSentence);
+            poolWords = [...originalCleanWords];
+            do {
+                poolWords.sort(() => Math.random() - 0.5);
+            } while (poolWords.join(' ') === originalCleanWords.join(' ') && poolWords.length > 1);
+
+            slotContents = Array(originalCleanWords.length).fill(null);
+            checkedSlotsStatus = Array(originalCleanWords.length).fill(null);
+            orangeSlotIndex = null;
+
+            renderBoard();
+        }
+
+        function renderBoard() {
+            const poolContainer = document.getElementById('word-pool');
+            const slotsContainer = document.getElementById('word-slots');
+            poolContainer.innerHTML = "";
+            slotsContainer.innerHTML = "";
+
+            poolWords.forEach((word, index) => {
+                if (word === null) {
+                    const placeholder = document.createElement('div');
+                    placeholder.style.width = "60px"; placeholder.style.height = "38px";
+                    poolContainer.appendChild(placeholder);
+                    return;
+                }
+                const token = document.createElement('div');
+                token.className = 'word-token';
+                token.innerText = word;
+                token.onclick = () => { if (!isTransitioning) handlePoolTokenClick(index); };
+                poolContainer.appendChild(token);
+            });
+
+            slotContents.forEach((word, index) => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'slot-wrapper';
+                if (word !== null) wrapper.className += ' has-word';
+
+                if (word !== null) {
+                    const token = document.createElement('div');
+                    token.className = 'word-token';
+                    token.style.borderColor = '#3b82f6';
+                    token.style.background = '#eff6ff';
+                    
+                    if (orangeSlotIndex === index) {
+                        token.className += ' selected-orange';
+                    }
+                    
+                    if (checkedSlotsStatus[index] === 'correct') {
+                        token.className += ' word-correct';
+                    } else if (checkedSlotsStatus[index] === 'incorrect') {
+                        token.className += ' word-incorrect';
+                    }
+                    
+                    token.innerText = word;
+                    token.onclick = () => { if (!isTransitioning) handleSlotTokenClick(index); };
+                    wrapper.appendChild(token);
+                } else {
+                    const emptySpace = document.createElement('div');
+                    emptySpace.style.height = "38px"; emptySpace.style.width = "100%";
+                    emptySpace.style.cursor = "pointer";
+                    emptySpace.onclick = () => { if (!isTransitioning) handleEmptySlotClick(index); };
+                    wrapper.appendChild(emptySpace);
+                }
+                const underline = document.createElement('div');
+                underline.className = 'slot-underline';
+                wrapper.appendChild(underline);
+                slotsContainer.appendChild(wrapper);
+            });
+        }
+
+        function handlePoolTokenClick(index) {
+            checkedSlotsStatus = Array(originalCleanWords.length).fill(null);
+
+            const firstEmptySlot = slotContents.indexOf(null);
+            if (firstEmptySlot !== -1) {
+                slotContents[firstEmptySlot] = poolWords[index];
+                poolWords[index] = null;
+                orangeSlotIndex = null; 
+                renderBoard();
+            }
+        }
+
+        function handleSlotTokenClick(index) {
+            checkedSlotsStatus = Array(originalCleanWords.length).fill(null);
+
+            if (orangeSlotIndex === index) {
+                const wordToReturn = slotContents[index];
+                const emptyPoolIdx = poolWords.indexOf(null);
+                
+                if (emptyPoolIdx !== -1) {
+                    poolWords[emptyPoolIdx] = wordToReturn;
+                } else {
+                    poolWords.push(wordToReturn);
+                }
+                slotContents[index] = null;
+                orangeSlotIndex = null;
+            } else if (orangeSlotIndex !== null) {
+                const temp = slotContents[index];
+                slotContents[index] = slotContents[orangeSlotIndex];
+                slotContents[orangeSlotIndex] = temp;
+                orangeSlotIndex = null; 
+            } else {
+                orangeSlotIndex = index;
+            }
+            renderBoard();
+        }
+
+        function handleEmptySlotClick(index) {
+            checkedSlotsStatus = Array(originalCleanWords.length).fill(null);
+
+            if (orangeSlotIndex !== null) {
+                slotContents[index] = slotContents[orangeSlotIndex];
+                slotContents[orangeSlotIndex] = null;
+                orangeSlotIndex = null; 
+                renderBoard();
+            }
+        }
+
+        function checkCurrentAnswer() {
+            if (isTransitioning) return;
+            const fullSentence = gameSentences[currentIdx];
+            const currentConstructed = slotContents.map(w => w || "").join(' ').trim();
+            const expectedClean = originalCleanWords.join(' ').trim();
+            const feedbackArea = document.getElementById('feedback-area');
+            let logItem = userAnswersLog.find(item => item.original === fullSentence);
+
+            let isAllCorrect = true;
+            for (let i = 0; i < originalCleanWords.length; i++) {
+                if (slotContents[i] === originalCleanWords[i]) {
+                    checkedSlotsStatus[i] = 'correct';
+                } else {
+                    checkedSlotsStatus[i] = 'incorrect';
+                    isAllCorrect = false;
+                }
+            }
+
+            if (currentConstructed === expectedClean && isAllCorrect) {
+                feedbackArea.innerHTML = '<span class="correct-blink">✅</span>';
+                if (logItem) { logItem.correct = true; logItem.userOrdered = currentConstructed; logItem.wasChecked = true; }
+                
+                isTransitioning = true;
+                renderBoard(); 
+
+                setTimeout(() => {
+                    currentIdx++;
+                    loadCurrentSentence();
+                }, 1000);
+            } else {
+                feedbackArea.innerHTML = '<span class="incorrect-text">❌</span>';
+                if (logItem) { logItem.correct = false; logItem.userOrdered = currentConstructed || "[Incompleta]"; logItem.wasChecked = true; }
+                renderBoard();
+            }
+        }
+
+        function passQuestion() {
+            currentIdx++;
+            loadCurrentSentence();
+        }
+
+        function stopAndScore() {
+            clearInterval(timerInterval);
+            document.getElementById('game-screen').style.display = 'none';
+            document.getElementById('results-screen').style.display = 'block';
+            calculateAndDisplayResults();
+        }
+
+        /* MODIFICADO: Eliminados los textos fijos "tu frase" y "Correcto: " */
+        function calculateAndDisplayResults() {
+            const seenLogs = userAnswersLog.filter(item => item.seen === true);
+            const correctCount = seenLogs.filter(item => item.correct === true).length;
+            document.getElementById('final-score-value').innerText = correctCount + " / " + totalQuestionsCount;
+
+            const breakdownContainer = document.getElementById('results-breakdown');
+            breakdownContainer.innerHTML = "";
+            seenLogs.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = "result-item " + (item.correct ? 'correct' : 'incorrect');
+                if (item.correct) {
+                    card.innerHTML = '<div class="text-green">✓ ' + item.original + '</div>';
+                } else {
+                    card.innerHTML = '<div class="text-red">✗ ' + item.userOrdered + '</div><div class="text-blue">' + item.original + '</div>';
+                }
+                breakdownContainer.appendChild(card);
+            });
+        }
+
+        function returnToSetup() {
+            clearInterval(timerInterval);
+            document.getElementById('game-screen').style.display = 'none';
+            document.getElementById('results-screen').style.display = 'none';
+            document.getElementById('setup-screen').style.display = 'block';
+        }
+
+        function restartSameGame() { setupGameSession(currentShuffleMode); }
+        function openZoomQR() { document.getElementById('qr-zoom-modal').style.display = 'flex'; }
+        function closeZoomQR() { document.getElementById('qr-zoom-modal').style.display = 'none'; }
+
+        function exportToHTML() {
+            const currentHTML = document.documentElement.outerHTML;
+            const blob = new Blob([currentHTML], { type: 'text/html' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'juego_ordenar_palabras.html';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+    </script>
+</body>
+</html>
