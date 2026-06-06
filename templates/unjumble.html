@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generador de Ordenar Palabras - v7</title>
+    <title>Generador de Ordenar Palabras - v9</title>
     <style>
         :root {
             --primary: #3b82f6;
@@ -74,8 +74,8 @@
             font-size: 14px;
         }
 
-        #setup-screen {
-            display: block;
+        #setup-screen, #student-start-screen, #game-screen, #results-screen {
+            display: none;
         }
 
         .input-group {
@@ -129,9 +129,24 @@
         .btn-danger:hover { background-color: var(--danger-hover); }
         .btn-secondary { background-color: #64748b; color: white; }
 
-        #game-screen {
-            display: none;
+        /* PANTALLA GO PARA ALUMNOS */
+        .start-card {
+            text-align: center;
+            padding: 20px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 25px;
         }
+
+        .start-qr {
+            background: white;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        .start-qr img { width: 160px; height: 160px; display: block; }
 
         .game-header {
             display: flex;
@@ -223,8 +238,8 @@
             display: inline-flex;
             flex-direction: column;
             align-items: center;
-            width: 100px;
-            min-width: 100px;
+            width: auto;
+            min-width: 75px;
             position: relative;
         }
 
@@ -242,23 +257,17 @@
         .word-token {
             background: white;
             border: 1px solid #cbd5e1;
-            padding: 8px 0;
+            padding: 8px 14px;
             border-radius: 8px;
             cursor: pointer;
             font-weight: 500;
             user-select: none;
             box-shadow: 0 2px 4px rgba(0,0,0,0.04);
             text-align: center;
-            width: 100%;
+            min-width: 75px;
+            width: auto;
             transition: background-color 0.15s, border-color 0.15s, color 0.15s;
             white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .word-pool-container .word-token {
-            width: auto;
-            padding: 8px 16px;
         }
 
         .word-token.selected-orange {
@@ -297,8 +306,6 @@
             display: inline-block;
             animation: blink-animation 0.4s ease-in-out 2;
         }
-
-        #results-screen { display: none; }
 
         .score-display {
             text-align: center;
@@ -357,7 +364,6 @@
 
     <div class="container">
         
-        <!-- PANTALLA ENTRADA -->
         <div id="setup-screen">
             <h1>Generador de Juegos: Ordenar Palabras</h1>
             <p class="subtitle">Escribe o pega tus frases (una frase por cada línea de columna).</p>
@@ -373,7 +379,18 @@
             </div>
         </div>
 
-        <!-- JUEGO INTERACTIVO -->
+        <div id="student-start-screen">
+            <h1>Unjumble: ordena la frase</h1>
+            <div class="start-card">
+                <div class="start-qr">
+                    <img id="studentStartQr" src="" alt="Código QR del Ejercicio">
+                </div>
+                <div class="btn-container" style="width: 100%; max-width: 200px; margin-top: 5px;">
+                    <button class="btn-success" style="font-size: 18px; padding: 15px;" onclick="startPreloadedGame()">GO!</button>
+                </div>
+            </div>
+        </div>
+
         <div id="game-screen">
             <div class="game-header">
                 <div class="header-meta-left">
@@ -381,7 +398,6 @@
                     <div class="progress-box" id="game-progress">0 / 0</div>
                 </div>
                 
-                <!-- MODIFICADO: Instrucciones literales actualizadas -->
                 <div class="instructions-box">
                     Toca una palabra e irá al primer hueco libre. Para cambiarla, márcala (pasará a naranja). Toca otra vez para devolverla a la caja o pica en otro hueco para moverla allí.
                 </div>
@@ -407,7 +423,6 @@
             </div>
         </div>
 
-        <!-- RESULTADOS -->
         <div id="results-screen">
             <h1>Resultados del Ejercicio</h1>
             <div class="score-display" id="final-score-value">0 / 0</div>
@@ -415,18 +430,19 @@
 
             <div class="btn-container" style="margin-top: 25px;">
                 <button class="btn-primary" onclick="restartSameGame()">Reiniciar Juego</button>
-                <button class="btn-secondary" onclick="returnToSetup()">Crear Nuevo Juego</button>
+                <button class="btn-secondary" id="creation-reset-btn" onclick="returnToSetup()">Crear Nuevo Juego</button>
             </div>
         </div>
 
     </div>
 
-    <!-- MODAL DE ZOOM QR -->
     <div id="qr-zoom-modal" class="qr-overlay" onclick="closeZoomQR()">
         <img id="quizQrImgZoom" src="" alt="QR Code Ampliado">
     </div>
 
     <script>
+        const PRELOADED_SENTENCES = [];
+
         let originalSentences = []; 
         let gameSentences = [];     
         let currentIdx = 0;         
@@ -445,17 +461,33 @@
         let checkedSlotsStatus = []; 
 
         window.addEventListener('DOMContentLoaded', () => {
-            renderActiveQR();
+            if (Array.isArray(PRELOADED_SENTENCES) && PRELOADED_SENTENCES.length > 0) {
+                originalSentences = [...PRELOADED_SENTENCES];
+                document.getElementById('setup-screen').style.display = 'none';
+                document.getElementById('creation-reset-btn').style.display = 'none'; 
+                document.getElementById('back-button-container').style.display = 'none';
+                
+                document.getElementById('student-start-screen').style.display = 'block';
+                renderQRForSelector('studentStartQr');
+            } else {
+                document.getElementById('setup-screen').style.display = 'block';
+            }
         });
 
-        function renderActiveQR() {
+        function renderQRForSelector(elementId) {
             let currentUrl = window.location.href;
             if(!currentUrl || currentUrl.startsWith('file:')) {
                 currentUrl = "https://google.com"; 
             }
             const qrImgUrl = "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=" + encodeURIComponent(currentUrl);
-            document.getElementById('quizQrImg').src = qrImgUrl;
-            document.getElementById('quizQrImgZoom').src = qrImgUrl;
+            const element = document.getElementById(elementId);
+            if(element) element.src = qrImgUrl;
+        }
+
+        function startPreloadedGame() {
+            document.getElementById('student-start-screen').style.display = 'none';
+            totalQuestionsCount = originalSentences.length;
+            setupGameSession(false);
         }
 
         function parseInput(text) {
@@ -497,7 +529,8 @@
             document.getElementById('game-screen').style.display = 'block';
             document.getElementById('results-screen').style.display = 'none';
             
-            renderActiveQR();
+            renderQRForSelector('quizQrImg');
+            renderQRForSelector('quizQrImgZoom');
             startTimer();
             loadCurrentSentence();
         }
@@ -548,7 +581,7 @@
             poolWords.forEach((word, index) => {
                 if (word === null) {
                     const placeholder = document.createElement('div');
-                    placeholder.style.width = "60px"; placeholder.style.height = "38px";
+                    placeholder.style.width = "75px"; placeholder.style.height = "38px";
                     poolContainer.appendChild(placeholder);
                     return;
                 }
@@ -693,7 +726,6 @@
             calculateAndDisplayResults();
         }
 
-        /* MODIFICADO: Eliminados los textos fijos "tu frase" y "Correcto: " */
         function calculateAndDisplayResults() {
             const seenLogs = userAnswersLog.filter(item => item.seen === true);
             const correctCount = seenLogs.filter(item => item.correct === true).length;
@@ -717,19 +749,42 @@
             clearInterval(timerInterval);
             document.getElementById('game-screen').style.display = 'none';
             document.getElementById('results-screen').style.display = 'none';
+            document.getElementById('student-start-screen').style.display = 'none';
             document.getElementById('setup-screen').style.display = 'block';
         }
 
-        function restartSameGame() { setupGameSession(currentShuffleMode); }
+        function restartSameGame() { 
+            if (Array.isArray(PRELOADED_SENTENCES) && PRELOADED_SENTENCES.length > 0) {
+                setupGameSession(false);
+            } else {
+                setupGameSession(currentShuffleMode); 
+            }
+        }
+        
         function openZoomQR() { document.getElementById('qr-zoom-modal').style.display = 'flex'; }
         function closeZoomQR() { document.getElementById('qr-zoom-modal').style.display = 'none'; }
 
         function exportToHTML() {
-            const currentHTML = document.documentElement.outerHTML;
+            const inputText = document.getElementById('sentences-input').value.trim();
+            if (!inputText || inputText === "pegar frase aquí") {
+                alert('Escribe algunas frases en el cuadro de texto antes de exportar.');
+                return;
+            }
+
+            const sentencesArray = inputText.split('\n').map(s => s.trim()).filter(s => s.length > 0);
+            const jsonSentences = JSON.stringify(sentencesArray);
+
+            let currentHTML = document.documentElement.outerHTML;
+
+            const targetString = "const PRELOADED_SENTENCES = [];";
+            const replacementString = `const PRELOADED_SENTENCES = ${jsonSentences};`;
+            
+            currentHTML = currentHTML.replace(targetString, replacementString);
+
             const blob = new Blob([currentHTML], { type: 'text/html' });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = 'juego_ordenar_palabras.html';
+            a.download = 'ejercicio_ordenar_palabras.html';
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
