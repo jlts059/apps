@@ -418,11 +418,17 @@
             const setupView = document.getElementById('setup');
             const startView = document.getElementById('start-container');
             const titleInput = document.getElementById('quiz-title-input');
+            const backBtn = document.getElementById('back-to-setup-btn');
 
             if (dataBox.value && dataBox.value.trim() !== "") {
                 setupView.classList.add('hidden');
                 startView.style.display = 'block';
-                document.getElementById('back-to-setup-btn').style.display = 'flex';
+                
+                // Solo mostramos el botón si existe físicamente en el documento (no estará en el descargado)
+                if (backBtn) {
+                    backBtn.style.display = 'flex';
+                }
+                
                 if(titleInput && titleInput.value) {
                     document.getElementById('final-title-display').innerText = titleInput.value.toUpperCase();
                 }
@@ -442,7 +448,9 @@
             document.getElementById('start-container').style.display = 'none';
             document.getElementById('quiz-area').style.display = 'none';
             document.getElementById('global-qr-area').style.display = 'none';
-            document.getElementById('back-to-setup-btn').style.display = 'none';
+            
+            const backBtn = document.getElementById('back-to-setup-btn');
+            if (backBtn) backBtn.style.display = 'none';
             
             document.getElementById('quiz-area').innerHTML = `
                 <div id="timer-bar-container"><div id="timer-bar"></div></div>
@@ -506,7 +514,9 @@
 
             document.getElementById('setup').classList.add('hidden');
             document.getElementById('start-container').style.display = 'block';
-            document.getElementById('back-to-setup-btn').style.display = 'flex';
+            
+            const backBtn = document.getElementById('back-to-setup-btn');
+            if (backBtn) backBtn.style.display = 'flex';
             
             const titleVal = document.getElementById('quiz-title-input').value;
             document.getElementById('final-title-display').innerText = titleVal.toUpperCase() || "QUIZ";
@@ -683,7 +693,6 @@
                         </div>
                     </div>`;
             } else {
-                // AL DESPAUSAR: Restauramos estados lógicos y reiniciamos el flujo del render()
                 isPaused = false; 
                 render(); 
             }
@@ -700,6 +709,12 @@
 
             doc.querySelector('#quiz-title-input').setAttribute('value', title);
             doc.querySelector('#data-input').textContent = data;
+
+            // SOLUCIÓN AQUÍ: Buscamos el botón de configuración en la copia virtual y lo destruimos
+            const targetedBtn = doc.querySelector('#back-to-setup-btn');
+            if (targetedBtn) {
+                targetedBtn.remove();
+            }
             
             const blob = new Blob([doc.documentElement.outerHTML], { type: 'text/html' });
             const a = document.createElement('a');

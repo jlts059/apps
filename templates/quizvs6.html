@@ -239,11 +239,10 @@
         
         .btn-score:hover { transform: scale(1.05); box-shadow: 0 6px 12px rgba(0,0,0,0.1); }
         
-        /* Contenedor e iconos de estrellas protegidos contra desborde */
         .btn-score .star-container {
             display: inline-flex;
             align-items: center;
-            margin-right: 6px; /* Asegura separación limpia con las letras */
+            margin-right: 6px; 
             flex-shrink: 0;
         }
 
@@ -252,13 +251,11 @@
             display: inline-block;
         }
 
-        /* Escala reducida para múltiples estrellas para que nunca desborden */
         .btn-score .multiple-stars .star-icon {
             font-size: 0.85rem; 
             letter-spacing: -2px;
         }
 
-        /* Clases CSS de color dinámico según su nueva configuración */
         .btn-purple { background-color: var(--color-morado); color: white; }
         .btn-dark { background-color: var(--color-oscuro); color: white; }
         .btn-orange-light { background-color: var(--color-naranja-claro); color: white; }
@@ -357,7 +354,7 @@
 
     <button id="back-to-setup-btn" class="btn-back-setup" style="display: none;" onclick="returnToSetup()">⚙ Configuración</button>
     
-    <div class="brand-badge">⚔️Quiz VSx6</div>
+    <div class="brand-badge">⚔️Quiz VS</div>
 
     <div class="container" id="setup">
         <div id="live-title-badge" class="title-badge">NUEVO QUIZ</div>
@@ -425,12 +422,14 @@
             const setupView = document.getElementById('setup');
             const startView = document.getElementById('start-container');
             const titleInput = document.getElementById('quiz-title-input');
+            const backBtn = document.getElementById('back-to-setup-btn');
 
-            // Solo salta a la pantalla de inicio si los datos se cargaron y NO estamos en la fase de edición inicial
             if (dataBox.value && dataBox.value.trim() !== "") {
                 setupView.classList.add('hidden');
                 startView.style.display = 'block';
-                document.getElementById('back-to-setup-btn').style.display = 'flex';
+                if (backBtn) {
+                    backBtn.style.display = 'flex';
+                }
                 if(titleInput && titleInput.value) {
                     document.getElementById('final-title-display').innerText = titleInput.value.toUpperCase();
                 }
@@ -450,7 +449,9 @@
             document.getElementById('start-container').style.display = 'none';
             document.getElementById('quiz-area').style.display = 'none';
             document.getElementById('global-qr-area').style.display = 'none';
-            document.getElementById('back-to-setup-btn').style.display = 'none';
+            
+            const backBtn = document.getElementById('back-to-setup-btn');
+            if (backBtn) backBtn.style.display = 'none';
             
             document.getElementById('card-target').innerHTML = '';
             const mainBtn = document.getElementById('main-action-btn');
@@ -516,7 +517,9 @@
             
             document.getElementById('setup').classList.add('hidden');
             document.getElementById('start-container').style.display = 'block';
-            document.getElementById('back-to-setup-btn').style.display = 'flex';
+            
+            const backBtn = document.getElementById('back-to-setup-btn');
+            if (backBtn) backBtn.style.display = 'flex';
             
             const titleVal = document.getElementById('quiz-title-input').value;
             document.getElementById('final-title-display').innerText = titleVal.toUpperCase() || "QUIZ";
@@ -575,7 +578,6 @@
             const item = questions[currentIdx];
             const titleText = document.getElementById('quiz-title-input').value || "QUIZ";
             
-            // Re-inyectamos el botón STOP en su contenedor original limpio
             document.getElementById('quiz-controls-area').innerHTML = '<button id="main-action-btn" class="btn btn-stop" onclick="togglePause()">STOP & SCORE</button>';
             
             document.getElementById('card-target').innerHTML = 
@@ -727,7 +729,7 @@
                     </div>`;
             } else {
                 isPaused = false; 
-                render(); // Al despausar, redibujamos el flujo normal de la pregunta actual
+                render();
             }
         }
 
@@ -736,31 +738,18 @@
             const data = document.getElementById('data-input').value;
             if(!data.trim()) return alert("¡Por favor, añade preguntas antes de guardar!");
 
-            // En lugar de capturar el DOM alterado por la ejecución, creamos una copia limpia
             let currentHtml = document.documentElement.outerHTML;
             const parser = new DOMParser();
             const doc = parser.parseFromString(currentHtml, 'text/html');
 
-            // Seteamos los valores iniciales limpios dentro del nuevo archivo descargable
             doc.querySelector('#quiz-title-input').setAttribute('value', title);
             doc.querySelector('#data-input').textContent = data;
-            
-            // Reseteamos las vistas para que empiece desde la pantalla de bienvenida/START limpia
-            const setupSec = doc.querySelector('#setup');
-            const startSec = doc.querySelector('#start-container');
-            const quizSec = doc.querySelector('#quiz-area');
-            const backBtn = doc.querySelector('#back-to-setup-btn');
-            const qrArea = doc.querySelector('#global-qr-area');
 
-            if(setupSec) setupSec.classList.add('hidden');
-            if(startSec) startSec.style.display = 'block';
-            if(quizSec) quizSec.style.display = 'none';
-            if(backBtn) backBtn.style.display = 'flex';
-            if(qrArea) qrArea.style.display = 'flex';
-
-            // Limpiamos los paneles de juego dinámicos que pudieran haberse descargado sucios
-            const cardTarget = doc.querySelector('#card-target');
-            if(cardTarget) cardTarget.innerHTML = '';
+            // ELIMINACIÓN: Destruir por completo el botón de engranaje en el archivo clonado
+            const targetedBtn = doc.querySelector('#back-to-setup-btn');
+            if (targetedBtn) {
+                targetedBtn.remove();
+            }
 
             const blob = new Blob([doc.documentElement.outerHTML], { type: 'text/html' });
             const a = document.createElement('a');
