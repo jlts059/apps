@@ -1,11 +1,9 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
+<html lang="es"><head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quiz Interactive Pro</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: #2c3e50;
@@ -348,20 +346,40 @@
 </head>
 <body>
 
-    <button id="back-to-setup-btn" class="btn-back-setup" style="display: none;" onclick="returnToSetup()">⚙ Configuración</button>
+    <button class="btn-back-setup" style="display: none;" onclick="returnToSetup()">⚙ Configuración</button>
     
     <div class="brand-badge">⚔️Quiz VS</div>
 
-    <div class="container" id="setup">
-        <div id="live-title-badge" class="title-badge">NUEVO QUIZ</div>
+    <div class="container hidden" id="setup">
+        <div id="live-title-badge" class="title-badge">KOERPER</div>
         <div class="input-group">
             <label for="quiz-title-input">TÍTULO DEL QUIZ</label>
-            <input type="text" id="quiz-title-input" placeholder="Ej: Las Partes del Cuerpo" oninput="updateLiveTitle()">
+            <input type="text" id="quiz-title-input" placeholder="Ej: Las Partes del Cuerpo" oninput="updateLiveTitle()" value="Koerper">
         </div>
 
         <div class="input-group">
             <label>DATOS (Pegar desde Excel)</label>
-            <textarea id="data-input" placeholder="Pregunta	Respuesta"></textarea>
+            <textarea id="data-input" placeholder="Pregunta	Respuesta">Hals	der 
+Zahn	der 
+Auge	das 
+Haar	das 
+Mund	der 
+Kopf	der 
+Gesicht	das 
+Nase	die 
+Ohr	das 
+Bauch	der 
+Arm	der 
+Rücken	der 
+Hand	die 
+Finger	der 
+Fuß	der 
+Körperteil	der 
+Bein	das 
+Ellenbogen	der 
+Knie	das 
+Schulter	die 
+Körper	der </textarea>
         </div>
         <div class="controls">
             <button class="btn btn-generate" onclick="startQuiz(false)">Probar Quiz</button>
@@ -372,16 +390,16 @@
 
     <div id="global-qr-area" class="qr-header-container" style="display: none;">
         <div class="qr-box" onclick="openZoomQR()">
-            <img id="quizQrImg" src="" alt="QR Code">
+            <img id="quizQrImg" src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&amp;data=https%3A%2F%2Fgithub.com" alt="QR Code">
         </div>
     </div>
 
-    <div id="qr-zoom-modal" class="qr-overlay" onclick="closeZoomQR()">
-        <img id="quizQrImgZoom" src="" alt="QR Code Ampliado">
+    <div id="qr-zoom-modal" class="qr-overlay" onclick="closeZoomQR()" style="display: none;">
+        <img id="quizQrImgZoom" src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&amp;data=https%3A%2F%2Fgithub.com" alt="QR Code Ampliado">
     </div>
 
-    <div id="start-container" style="display:none; text-align: center; margin-top: 5vh; width: 100%; max-width: 600px;">
-        <h1 id="final-title-display" style="font-size: 2.5rem; color: var(--primary); margin-bottom: 30px; word-wrap: break-word; text-transform: uppercase;">QUIZ</h1>
+    <div id="start-container" style="display: block; text-align: center; margin-top: 5vh; width: 100%; max-width: 600px;">
+        <h1 id="final-title-display" style="font-size: 2.5rem; color: var(--primary); margin-bottom: 30px; word-wrap: break-word; text-transform: uppercase;">KOERPER</h1>
         <div style="display: flex; flex-direction: column; align-items: center; gap: 15px; width: 100%;">
             <button class="btn btn-generate" style="font-size: 2rem; padding: 20px 50px; border-radius: 50px; width: 80%;" onclick="realStart(false)">START</button>
             <button class="btn btn-generate" style="font-size: 1.5rem; padding: 15px 35px; border-radius: 50px; background-color: #8e44ad; width: 80%;" onclick="realStart(true)">SHUFFLE</button>
@@ -393,13 +411,12 @@
         </div>
     </div>
 
-    <div id="quiz-area">
-        <div id="timer-bar-container"><div id="timer-bar"></div></div>
-        <div id="card-target"></div>
-        <div class="controls">
-            <button id="main-action-btn" class="btn btn-stop" onclick="togglePause()">STOP & SCORE</button>
-        </div>
-    </div>
+    <div id="quiz-area" style="display: none;">
+                <div id="timer-bar-container"><div id="timer-bar"></div></div>
+                <div id="card-target"></div>
+                <div class="controls">
+                    <button id="main-action-btn" class="btn btn-stop" onclick="togglePause()">STOP &amp; SCORE</button>
+                </div></div>
 
     <script>
         let questions = [];
@@ -712,5 +729,5 @@
             a.click();
         }
     </script>
-</body>
-</html>
+
+</body></html>

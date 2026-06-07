@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generador de Ordenar Palabras - v9</title>
+    <title>Generador de Ordenar Palabras - v9.1</title>
     <style>
         :root {
             --primary: #3b82f6;
@@ -572,6 +572,16 @@
             renderBoard();
         }
 
+        // Función auxiliar para formatear la palabra subrayando su primera letra si coincide con el inicio real de la frase.
+        function getWordHTML(word) {
+            if (!word) return "";
+            const firstOriginalWord = originalCleanWords[0];
+            if (word === firstOriginalWord) {
+                return `<span style="text-decoration: underline;">${word.charAt(0)}</span>${word.slice(1)}`;
+            }
+            return word;
+        }
+
         function renderBoard() {
             const poolContainer = document.getElementById('word-pool');
             const slotsContainer = document.getElementById('word-slots');
@@ -587,7 +597,7 @@
                 }
                 const token = document.createElement('div');
                 token.className = 'word-token';
-                token.innerText = word;
+                token.innerHTML = getWordHTML(word);
                 token.onclick = () => { if (!isTransitioning) handlePoolTokenClick(index); };
                 poolContainer.appendChild(token);
             });
@@ -613,7 +623,7 @@
                         token.className += ' word-incorrect';
                     }
                     
-                    token.innerText = word;
+                    token.innerHTML = getWordHTML(word);
                     token.onclick = () => { if (!isTransitioning) handleSlotTokenClick(index); };
                     wrapper.appendChild(token);
                 } else {
