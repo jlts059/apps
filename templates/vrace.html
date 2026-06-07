@@ -21,6 +21,64 @@
             margin: 0; 
             padding: 20px;
             box-sizing: border-box;
+            position: relative;
+        }
+
+        .header-widgets {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 8px;
+            z-index: 10;
+        }
+
+        .watermark {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #a0aec0;
+            opacity: 0.6;
+            user-select: none;
+            letter-spacing: 0.5px;
+        }
+
+        .qr-code {
+            width: 60px;
+            height: 60px;
+            background: white;
+            padding: 4px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .qr-code:hover { transform: scale(1.05); }
+
+        .qr-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+        }
+        .qr-modal {
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            position: relative;
+        }
+        .qr-modal img { width: 250px; height: 250px; }
+        .qr-close {
+            position: absolute;
+            top: 10px; right: 15px;
+            font-size: 1.5rem; font-weight: bold; color: #666;
+            cursor: pointer;
         }
 
         .container { 
@@ -32,6 +90,7 @@
             max-width: 600px; 
             text-align: center; 
             margin-bottom: 20px;
+            z-index: 1;
         }
 
         textarea { 
@@ -69,18 +128,27 @@
         .btn-preview:hover { background: #2b6cb0; }
         .btn-download { background: var(--success); }
         .btn-download:hover { background: #2f855a; }
-        .btn-go { background: var(--primary); padding: 15px 50px; font-size: 1.8rem; border-radius: 15px; }
+        .btn-go { background: var(--primary); padding: 25px 70px; font-size: 2.2rem; border-radius: 20px; margin: 20px 0; }
         .btn-go:hover { background: #2b6cb0; }
-        .btn-next { background: var(--success); width: 100%; padding: 15px; font-size: 1.3rem; margin-bottom: 10px; }
+        
+        /* Controles de juego en la misma línea */
+        .game-actions {
+            display: flex;
+            gap: 12px;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        .btn-next { background: var(--success); flex: 2; padding: 15px; font-size: 1.6rem; }
         .btn-next:hover { background: #2f855a; }
-        .btn-finish { background: var(--danger); width: 100%; padding: 12px; font-size: 1.1rem; }
+        .btn-finish { background: var(--danger); flex: 1; padding: 15px; font-size: 1.6rem; }
         .btn-finish:hover { background: #c53030; }
-        .btn-list { background: #805ad5; margin-top: 15px; }
-        .btn-list:hover { background: #6b46c1; }
+        
+        /* Botón CHECK estilo plano */
+        .btn-list { background: var(--success); font-size: 1.1rem; padding: 12px 35px; letter-spacing: 1px; margin-top: 15px; text-transform: uppercase; }
+        .btn-list:hover { background: #2f855a; }
 
         p { color: #666; font-size: 0.9rem; margin: 5px 0; }
 
-        /* Estilos del área de juego / Box */
         .box { 
             background: white; 
             padding: 2rem; 
@@ -91,12 +159,13 @@
             text-align: center; 
             display: none; 
             margin-top: 10px;
+            z-index: 1;
         }
 
         .timer { font-size: 2rem; color: var(--primary); font-weight: bold; margin-bottom: 10px; }
+        .big-timer { font-size: 3.5rem; color: var(--primary); font-weight: 900; margin: 20px 0; }
         .progress-text { color: #718096; font-size: 0.95rem; margin-bottom: 15px; }
         
-        /* Layout con Número Grande */
         .game-layout {
             display: flex;
             align-items: center;
@@ -125,9 +194,12 @@
             word-break: break-word;
         }
 
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; text-align: left; }
-        th, td { padding: 10px; border-bottom: 1px solid #eee; font-size: 0.95rem; }
-        th { background: #f7fafc; color: #4a5568; }
+        /* Tabla compacta: Columnas juntas sin anchos forzados al extremo */
+        table { margin: 15px auto; border-collapse: collapse; text-align: left; width: auto; }
+        td { padding: 12px 18px; border-bottom: 1px solid #edf2f7; font-size: 1.05rem; white-space: nowrap; }
+        .td-num { color: #a0aec0; font-weight: bold; width: 30px; padding-x: 5px; }
+        .td-def { color: #4a5568; }
+        .td-word { color: #2d3748; font-weight: 600; padding-left: 40px; }
         
         .scroll-container {
             max-height: 300px; 
@@ -142,6 +214,18 @@
 </head>
 <body>
 
+    <div class="header-widgets">
+        <div class="watermark">Vocab Race</div>
+        <img id="qr-display" class="qr-code hidden" onclick="openQRModal()" alt="QR Link">
+    </div>
+
+    <div id="qr-overlay" class="qr-overlay" onclick="closeQRModal()">
+        <div class="qr-modal" onclick="event.stopPropagation()">
+            <span class="qr-close" onclick="closeQRModal()">&times;</span>
+            <img id="qr-large" alt="QR Large">
+        </div>
+    </div>
+
     <div class="container" id="creator-panel">
         <h2>Vocab Race Master</h2>
         <p>Paste your data (Definition [TAB] Word) from Excel or text.</p>
@@ -154,8 +238,6 @@
 
     <div class="box" id="game-box">
         <div id="s1">
-            <h2 style="margin-top:0">Ready?</h2>
-            <p style="color:#718096">The timer starts when you click GO.</p>
             <button class="btn-go" onclick="startRace()">GO!</button>
         </div>
 
@@ -168,41 +250,48 @@
                 <div class="def" id="d"></div>
             </div>
             
-            <button class="btn-next" onclick="nextWord()">Next ➡️</button>
-            <button class="btn-finish" onclick="endRace()">Finish 🛑</button>
+            <div class="game-actions">
+                <button class="btn-next" onclick="nextWord()">➡️</button>
+                <button class="btn-finish" onclick="endRace()">🛑</button>
+            </div>
         </div>
 
         <div id="s3" style="display:none">
-            <h2 style="margin-top:0">Race Complete!</h2>
-            <div id="sc" style="font-weight:bold; font-size:1.3rem; color: var(--primary);"></div>
+            <div id="sc" class="big-timer"></div>
             
-            <button id="show-list-btn" class="btn-list hidden" onclick="toggleVocabularyList()">Mostrar Lista 📋</button>
+            <button id="show-list-btn" class="btn-list hidden" onclick="toggleVocabularyList()">Check</button>
             
             <div id="vocab-list-wrapper" class="scroll-container hidden">
                 <table>
-                    <thead><tr><th style="width: 60px;">N°</th><th>Palabra (Columna 1)</th></tr></thead>
                     <tbody id="vocab-tb"></tbody>
                 </table>
             </div>
-
-            <div class="scroll-container" style="margin-top: 20px;">
-                <table>
-                    <thead><tr><th>N°</th><th>Definition</th><th>Your Race Path</th></tr></thead>
-                    <tbody id="tb"></tbody>
-                </table>
-            </div>
-            <br>
+            <br><br>
             <button onclick="resetApp()" style="background:#4299e1; padding:10px 20px;">Back to Editor</button>
         </div>
     </div>
 
     <script>
-        // Variables globales para la ejecución de la vista previa
         let deck = [];
         let idx = 0;
         let timeStart;
         let timerTicker;
         let logs = [];
+
+        function initQRCode() {
+            const currentUrl = window.location.href;
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(currentUrl)}`;
+            const miniQR = document.getElementById('qr-display');
+            const largeQR = document.getElementById('qr-large');
+            if(miniQR && largeQR) {
+                miniQR.src = qrUrl;
+                largeQR.src = qrUrl;
+                miniQR.classList.remove('hidden');
+            }
+        }
+
+        function openQRModal() { document.getElementById('qr-overlay').style.display = 'flex'; }
+        function closeQRModal() { document.getElementById('qr-overlay').style.display = 'none'; }
 
         function parseTextData(text) {
             return text.trim().split('\n').map(line => {
@@ -223,10 +312,10 @@
             if (shouldDownload) {
                 buildAndDownloadHTML(parsedDeck);
             } else {
-                // Lanzar Vista Previa en Vivo
                 deck = parsedDeck;
                 document.getElementById('creator-panel').classList.add('hidden');
                 document.getElementById('game-box').style.display = 'block';
+                initQRCode();
                 resetRaceState();
             }
         }
@@ -259,18 +348,13 @@
                 endRace();
                 return;
             }
-            // En el juego original o modificado, deck[idx].w es el item de la segunda columna
-            document.getElementById('d').innerText = deck[idx].w; 
+            document.getElementById('d').innerText = deck[idx].d; 
             document.getElementById('num-display').innerText = (idx + 1);
             document.getElementById('p').innerText = "Item " + (idx + 1) + " of " + deck.length;
         }
 
         function nextWord() {
-            logs.push({
-                num: idx + 1,
-                d: deck[idx].d, 
-                w: deck[idx].w
-            });
+            logs.push({ num: idx + 1, d: deck[idx].d, w: deck[idx].w });
             idx++;
             renderWord();
         }
@@ -280,29 +364,15 @@
             document.getElementById('s2').style.display = 'none';
             document.getElementById('s3').style.display = 'block';
             
-            document.getElementById('sc').innerText = "Total Items Tracked: " + logs.length + " | Time: " + document.getElementById('t').innerText;
-            
-            // Mostrar de forma condicional el botón solicitado
+            document.getElementById('sc').innerText = "⏱️ " + document.getElementById('t').innerText;
             document.getElementById('show-list-btn').classList.remove('hidden');
 
-            let rows = "";
             let vocabRows = "";
-            
-            // Generar tabla de logs recorridos
-            logs.forEach(l => {
-                rows += `<tr>
-                    <td><b>${l.num}</b></td>
-                    <td>${l.w}</td>
-                    <td style="color:#4a5568;">➡️ Passed</td>
-                </tr>`;
-            });
-            document.getElementById('tb').innerHTML = rows;
-
-            // Generar tabla alternativa de Palabras de la columna 1 claramente numeradas
             deck.forEach((item, index) => {
                 vocabRows += `<tr>
-                    <td><b>${index + 1}</b></td>
-                    <td style="color:#2d3748; font-weight:600;">${item.d}</td>
+                    <td class="td-num">${index + 1}</td>
+                    <td class="td-def">${item.d}</td>
+                    <td class="td-word">${item.w}</td>
                 </tr>`;
             });
             document.getElementById('vocab-tb').innerHTML = vocabRows;
@@ -312,19 +382,17 @@
             const list = document.getElementById('vocab-list-wrapper');
             if(list.classList.contains('hidden')) {
                 list.classList.remove('hidden');
-                document.getElementById('show-list-btn').innerText = "Ocultar Lista 📋";
             } else {
                 list.classList.add('hidden');
-                document.getElementById('show-list-btn').innerText = "Mostrar Lista 📋";
             }
         }
 
         function resetApp() {
             document.getElementById('game-box').style.display = 'none';
             document.getElementById('creator-panel').classList.remove('hidden');
+            document.getElementById('qr-display').classList.add('hidden');
         }
 
-        // Inyección dinámica para construir el archivo autónomo del alumno
         function buildAndDownloadHTML(deckData) {
             const htmlContent = `<!DOCTYPE html>
 <html>
@@ -337,9 +405,21 @@
             --success: #38a169;
             --danger: #e53e3e;
         }
-        body { font-family: sans-serif; background: #f0f4f8; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 15px; box-sizing: border-box; }
-        .box { background: white; padding: 2rem; border-radius: 24px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); width: 90%; max-width: 500px; text-align: center; }
+        body { font-family: sans-serif; background: #f0f4f8; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 15px; box-sizing: border-box; position: relative; }
+        
+        .header-widgets { position: absolute; top: 20px; right: 20px; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; z-index: 10; }
+        .watermark { font-size: 0.95rem; font-weight: 700; color: #a0aec0; opacity: 0.6; user-select: none; letter-spacing: 0.5px; }
+        
+        .qr-code { width: 60px; height: 60px; background: white; padding: 4px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); cursor: pointer; transition: transform 0.2s; }
+        .qr-code:hover { transform: scale(1.05); }
+        .qr-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 999; }
+        .qr-modal { background: white; padding: 20px; border-radius: 20px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.3); position: relative; }
+        .qr-modal img { width: 250px; height: 250px; }
+        .qr-close { position: absolute; top: 10px; right: 15px; font-size: 1.5rem; font-weight: bold; color: #666; cursor: pointer; }
+
+        .box { background: white; padding: 2rem; border-radius: 24px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); width: 90%; max-width: 500px; text-align: center; z-index: 1; }
         .timer { font-size: 2rem; color: var(--primary); font-weight: bold; margin-bottom: 10px; }
+        .big-timer { font-size: 3.5rem; color: var(--primary); font-weight: 900; margin: 20px 0; }
         .progress-text { color: #718096; font-size: 0.95rem; margin-bottom: 15px; }
         
         .game-layout { display: flex; align-items: center; justify-content: center; gap: 25px; margin: 25px 0; min-height: 100px; }
@@ -347,27 +427,44 @@
         .def { font-size: 1.8rem; font-weight: 600; color: #2d3748; text-align: left; flex: 1; word-break: break-word; }
         
         button { color: white; border: none; padding: 12px 24px; font-weight: bold; border-radius: 10px; cursor: pointer; transition: background 0.2s; }
-        .btn-go { background: var(--primary); padding: 20px 60px; font-size: 2rem; border-radius: 15px; }
+        .btn-go { background: var(--primary); padding: 25px 70px; font-size: 2.2rem; border-radius: 20px; margin: 25px 0; }
         .btn-go:hover { background: #2b6cb0; }
-        .btn-next { background: var(--success); width: 100%; padding: 15px; font-size: 1.3rem; margin-bottom: 10px; }
-        .btn-next:hover { background: #2f855a; }
-        .btn-finish { background: var(--danger); width: 100%; padding: 12px; font-size: 1.1rem; }
-        .btn-finish:hover { background: #c53030; }
-        .btn-list { background: #805ad5; margin-top: 15px; }
-        .btn-list:hover { background: #6b46c1; }
         
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; text-align: left; }
-        th, td { padding: 10px; border-bottom: 1px solid #eee; font-size: 0.95rem; }
-        th { background: #f7fafc; }
+        .game-actions { display: flex; gap: 12px; width: 100%; margin-bottom: 10px; }
+        .btn-next { background: var(--success); flex: 2; padding: 15px; font-size: 1.6rem; }
+        .btn-next:hover { background: #2f855a; }
+        .btn-finish { background: var(--danger); flex: 1; padding: 15px; font-size: 1.6rem; }
+        .btn-finish:hover { background: #c53030; }
+        
+        .btn-list { background: var(--success); font-size: 1.1rem; padding: 12px 35px; letter-spacing: 1px; margin-top: 15px; text-transform: uppercase; }
+        .btn-list:hover { background: #2f855a; }
+        
+        table { margin: 15px auto; border-collapse: collapse; text-align: left; width: auto; }
+        td { padding: 12px 18px; border-bottom: 1px solid #edf2f7; font-size: 1.05rem; white-space: nowrap; }
+        .td-num { color: #a0aec0; font-weight: bold; width: 30px; }
+        .td-def { color: #4a5568; }
+        .td-word { color: #2d3748; font-weight: 600; padding-left: 40px; }
+        
         .scroll-container { max-height: 300px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 10px; margin-top: 15px; }
         .hidden { display: none !important; }
     </style>
 </head>
 <body>
+    <div class="header-widgets">
+        <div class="watermark">Vocab Race</div>
+        <img id="qr-display" class="qr-code" onclick="openQRModal()" alt="QR Link">
+    </div>
+
+    <div id="qr-overlay" class="qr-overlay" onclick="closeQRModal()">
+        <div class="qr-modal" onclick="event.stopPropagation()">
+            <span class="qr-close" onclick="closeQRModal()">&times;</span>
+            <img id="qr-large" alt="QR Large">
+            <p style="margin-top:10px; font-weight:bold; color:#4a5568;">Scan to join race</p>
+        </div>
+    </div>
+
     <div class="box">
         <div id="s1">
-            <h2 style="margin-top:0">Ready?</h2>
-            <p style="color:#718096">The timer starts when you click GO.</p>
             <button class="btn-go" onclick="start()">GO!</button>
         </div>
 
@@ -378,30 +475,23 @@
                 <div class="huge-number" id="num-display">1</div>
                 <div class="def" id="d"></div>
             </div>
-            <button class="btn-next" onclick="next()">Next ➡️</button>
-            <button class="btn-finish" onclick="end()">Finish 🛑</button>
+            <div class="game-actions">
+                <button class="btn-next" onclick="next()">➡️</button>
+                <button class="btn-finish" onclick="end()">🛑</button>
+            </div>
         </div>
 
         <div id="s3" style="display:none">
-            <h2 style="margin-top:0">Race Complete!</h2>
-            <div id="sc" style="font-weight:bold; font-size:1.3rem; color: var(--primary);"></div>
+            <div id="sc" class="big-timer"></div>
             
-            <button id="show-list-btn" class="btn-list hidden" onclick="toggleList()">Mostrar Lista 📋</button>
+            <button id="show-list-btn" class="btn-list hidden" onclick="toggleList()">Check</button>
             
             <div id="vocab-list-wrapper" class="scroll-container hidden">
                 <table>
-                    <thead><tr><th style="width: 60px;">N°</th><th>Palabra (Columna 1)</th></tr></thead>
                     <tbody id="vocab-tb"></tbody>
                 </table>
             </div>
-
-            <div class="scroll-container">
-                <table>
-                    <thead><tr><th>N°</th><th>Definition</th><th>Your Race Path</th></tr></thead>
-                    <tbody id="tb"></tbody>
-                </table>
-            </div>
-            <br>
+            <br><br>
             <button onclick="location.reload()" style="background:#4299e1;">Try Again</button>
         </div>
     </div>
@@ -410,6 +500,17 @@
         const deck = ${JSON.stringify(deckData)};
         let idx = 0, timeStart, timerTicker, logs = [];
         
+        function initQR() {
+            const currentUrl = window.location.href;
+            const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(currentUrl);
+            document.getElementById('qr-display').src = qrUrl;
+            document.getElementById('qr-large').src = qrUrl;
+        }
+        window.onload = initQR;
+
+        function openQRModal() { document.getElementById('qr-overlay').style.display = 'flex'; }
+        function closeQRModal() { document.getElementById('qr-overlay').style.display = 'none'; }
+
         function start() {
             document.getElementById('s1').style.display = 'none';
             document.getElementById('s2').style.display = 'block';
@@ -422,7 +523,7 @@
 
         function render() {
             if (idx >= deck.length) { end(); return; }
-            document.getElementById('d').innerText = deck[idx].w;
+            document.getElementById('d').innerText = deck[idx].d;
             document.getElementById('num-display').innerText = (idx + 1);
             document.getElementById('p').innerText = "Item " + (idx + 1) + " of " + deck.length;
         }
@@ -437,30 +538,22 @@
             clearInterval(timerTicker);
             document.getElementById('s2').style.display = 'none';
             document.getElementById('s3').style.display = 'block';
-            document.getElementById('sc').innerText = "Total Items Tracked: " + logs.length + " | Time: " + document.getElementById('t').innerText;
+            document.getElementById('sc').innerText = "⏱️ " + document.getElementById('t').innerText;
             document.getElementById('show-list-btn').classList.remove('hidden');
             
-            let rows = "", vocabRows = "";
-            logs.forEach(l => {
-                rows += '<tr><td><b>'+l.num+'</b></td><td>'+l.w+'</td><td style="color:#4a5568;">➡️ Passed</td></tr>';
-            });
-            document.getElementById('tb').innerHTML = rows;
-
+            let vocabRows = "";
             deck.forEach((item, index) => {
-                vocabRows += '<tr><td><b>'+(index + 1)+'</b></td><td style="color:#2d3748; font-weight:600;">'+item.d+'</td></tr>';
+                vocabRows += '<tr><td class="td-num">' + (index + 1) + '</td><td class="td-def">' + item.d + '</td><td class="td-word">' + item.w + '</td></tr>';
             });
             document.getElementById('vocab-tb').innerHTML = vocabRows;
         }
 
         function toggleList() {
             const list = document.getElementById('vocab-list-wrapper');
-            const btn = document.getElementById('show-list-btn');
             if(list.classList.contains('hidden')) {
                 list.classList.remove('hidden');
-                btn.innerText = "Ocultar Lista 📋";
             } else {
                 list.classList.add('hidden');
-                btn.innerText = "Mostrar Lista 📋";
             }
         }
     <\/script>
