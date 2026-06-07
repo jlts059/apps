@@ -311,8 +311,6 @@
         .lineup-2-3 { font-size: 1.9rem; color: #475569; margin-bottom: 30px; display: flex; justify-content: center; gap: 50px; }
         .lineup-rest { font-size: 1.3rem; color: #64748b; display: flex; flex-direction: column; gap: 8px; }
         .lineup-shifted { color: #cbd5e1; text-decoration: line-through; font-size: 1.1rem; }
-
-        .helper-text { text-align: center; color: #94a3b8; font-size: 0.85rem; margin-top: 8px; display:none; }
     </style>
 </head>
 <body>
@@ -323,7 +321,7 @@
     
     <div id="input-section" class="section">
         <div class="label-container">
-            <label class="main-label" for="inputData">Lista de nombres o nº</label>
+            <label class="main-label" for="inputData">Lista de nombre o nº</label>
             <span id="student-counter" class="counter-badge"></span>
         </div>
         <textarea id="inputData" oninput="actualizarAnalisisInterfaz()"></textarea>
@@ -380,7 +378,6 @@
     </div>
 
     <div id="output" class="output-container" onclick="toggleFullscreen(event)"></div>
-    <div id="helper" class="helper-text">💡 Haz clic en el fondo blanco para ampliar. En Line-up, haz clic en el 1º nombre para moverlo al final.</div>
 </div>
 
 <script>
@@ -402,11 +399,9 @@
         return rawInput.split('\n').map(n => n.trim()).filter(n => n.length > 0);
     }
 
-    // Ejecuta el conteo en tiempo real del badge y calcula la ayuda de la Opción 1
     function actualizarAnalisisInterfaz() {
         const total = obtenerAlumnos().length;
         
-        // 1. Actualizar contador junto al título principal
         const counterBadge = document.getElementById('student-counter');
         if (total > 0) {
             counterBadge.innerHTML = `(${total} alumnos)`;
@@ -414,7 +409,6 @@
             counterBadge.innerHTML = '';
         }
 
-        // 2. Calcular desglose de reparto equilibrado matemático (3, 4, 5, 6)
         if (total <= 1) {
             document.getElementById('sug-opt1').innerText = "";
             return;
@@ -461,7 +455,6 @@
         document.getElementById('input-section').style.display = 'none';
         document.getElementById('options-panel').style.display = 'none';
         document.getElementById('btn-back').style.display = 'inline-block';
-        document.getElementById('helper').style.display = 'block';
         document.getElementById('output').classList.add('active');
         
         funcionGeneradora(alumnos);
@@ -471,7 +464,6 @@
         document.getElementById('input-section').style.display = 'block';
         document.getElementById('options-panel').style.display = 'flex';
         document.getElementById('btn-back').style.display = 'none';
-        document.getElementById('helper').style.display = 'none';
         
         const out = document.getElementById('output');
         out.classList.remove('fullscreen', 'active');
@@ -494,7 +486,7 @@
     }
 
     // ==========================================
-    // OPCIÓN 1: GRUPOS EQUILIBRADOS (CORREGIDO)
+    // OPCIÓN 1: GRUPOS EQUILIBRADOS
     // ==========================================
     function generarOpcion1(alumnos) {
         const tamanoMax = parseInt(document.getElementById('opt1-val').value) || 3;
@@ -639,7 +631,7 @@
         cachePoolAlumnosRotacion = poolAlumnos;
         datosRotacionRondas = [];
 
-        // Ronda 1: Letras
+        // Ronda 1
         let r1 = [];
         for (let i = 0; i < totalGrupos; i++) {
             let letraActual = letters[i];
@@ -648,7 +640,7 @@
         }
         datosRotacionRondas.push(r1);
 
-        // Ronda 2: Números
+        // Ronda 2
         let r2 = [];
         for (let i = 1; i <= totalGrupos; i++) {
             let miembros = poolAlumnos.filter(al => al.numId === i);
@@ -656,7 +648,7 @@
         }
         datosRotacionRondas.push(r2);
 
-        // Ronda 3: Mix Desplazado
+        // Ronda 3
         let r3 = [];
         for (let i = 0; i < totalGrupos; i++) {
             r3.push({ titulo: `Grupo`, miembros: [] });
