@@ -346,11 +346,11 @@
 </head>
 <body>
 
-    <button class="btn-back-setup" style="display: none;" onclick="returnToSetup()">⚙ Configuración</button>
+    <button id="back-to-setup-btn" class="btn-back-setup" style="display: none;" onclick="returnToSetup()">⚙ Configuración</button>
     
     <div class="brand-badge">⚔️Quiz VS</div>
 
-    <div class="container hidden" id="setup">
+    <div class="container" id="setup">
         <div id="live-title-badge" class="title-badge">LEBENSMITTEL</div>
         <div class="input-group">
             <label for="quiz-title-input">TÍTULO DEL QUIZ</label>
@@ -414,9 +414,7 @@ la salchicha #1 (die)	die Wurst
 la sopa	die Suppe
 la verdura	das Gemüse
 las comidas (horas de comer)	die Mahlzeiten
-los alimentos	die Lebensmittel
-el cuello	der Hals
-el diente	der Zahn</textarea>
+los alimentos	die Lebensmittel</textarea>
         </div>
         <div class="controls">
             <button class="btn btn-generate" onclick="startQuiz(false)">Probar Quiz</button>
@@ -435,7 +433,7 @@ el diente	der Zahn</textarea>
         <img id="quizQrImgZoom" src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&amp;data=https%3A%2F%2Fgithub.com" alt="QR Code Ampliado">
     </div>
 
-    <div id="start-container" style="display: block; text-align: center; margin-top: 5vh; width: 100%; max-width: 600px;">
+    <div id="start-container" style="display: none; text-align: center; margin-top: 5vh; width: 100%; max-width: 600px;">
         <h1 id="final-title-display" style="font-size: 2.5rem; color: var(--primary); margin-bottom: 30px; word-wrap: break-word; text-transform: uppercase;">LEBENSMITTEL</h1>
         <div style="display: flex; flex-direction: column; align-items: center; gap: 15px; width: 100%;">
             <button class="btn btn-generate" style="font-size: 2rem; padding: 20px 50px; border-radius: 50px; width: 80%;" onclick="realStart(false)">START</button>
@@ -554,6 +552,10 @@ el diente	der Zahn</textarea>
             questions = parseData(raw);
             if(questions.length === 0) return alert("Introduce datos válidos.");
             
+            if(shouldShuffle) {
+                questions = shuffleArray(questions);
+            }
+
             document.getElementById('setup').classList.add('hidden');
             document.getElementById('start-container').style.display = 'block';
             document.getElementById('back-to-setup-btn').style.display = 'flex';
@@ -576,6 +578,8 @@ el diente	der Zahn</textarea>
             document.getElementById('quiz-area').style.display = 'block';
             
             scoreA = 0; scoreB = 0; scoreC = 0;
+            currentIdx = 0;
+            isPaused = false;
             render();
         }
 
@@ -731,8 +735,9 @@ el diente	der Zahn</textarea>
                         </div>
                     </div>`;
             } else {
+                // AL DESPAUSAR: Restauramos estados lógicos y reiniciamos el flujo del render()
                 isPaused = false; 
-                revealAnswer();
+                render(); 
             }
         }
 
@@ -741,22 +746,13 @@ el diente	der Zahn</textarea>
             const data = document.getElementById('data-input').value;
             if(!data.trim()) return alert("¡Por favor, añade preguntas antes de guardar!");
 
-            let currentHtml = document.documentElement.outerHTML;
-            
+            let cleanHtml = document.documentElement.outerHTML;
             const parser = new DOMParser();
-            const doc = parser.parseFromString(currentHtml, 'text/html');
+            const doc = parser.parseFromString(cleanHtml, 'text/html');
 
             doc.querySelector('#quiz-title-input').setAttribute('value', title);
             doc.querySelector('#data-input').textContent = data;
             
-            doc.querySelector('#has-player-c-input').removeAttribute('checked');
-            
-            doc.querySelector('#back-to-setup-btn').style.display = 'none';
-            doc.querySelector('#back-to-setup-btn').removeAttribute('id');
-
-            doc.querySelector('#setup').classList.add('hidden');
-            doc.querySelector('#start-container').style.display = 'block';
-
             const blob = new Blob([doc.documentElement.outerHTML], { type: 'text/html' });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);

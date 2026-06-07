@@ -419,6 +419,7 @@
             const startView = document.getElementById('start-container');
             const titleInput = document.getElementById('quiz-title-input');
 
+            // Si hay datos ya cargados en el HTML descargado, salta directamente a la pantalla de START
             if (dataBox.value && dataBox.value.trim() !== "") {
                 setupView.classList.add('hidden');
                 startView.style.display = 'block';
@@ -526,8 +527,6 @@
             document.getElementById('quiz-area').style.display = 'block';
             
             scoreA = 0; scoreB = 0; scoreC = 0;
-            currentIdx = 0;
-            isPaused = false;
             render();
         }
 
@@ -683,9 +682,8 @@
                         </div>
                     </div>`;
             } else {
-                // AL DESPAUSAR: Restauramos estados lógicos y reiniciamos el flujo del render()
                 isPaused = false; 
-                render(); 
+                revealAnswer();
             }
         }
 
@@ -694,12 +692,17 @@
             const data = document.getElementById('data-input').value;
             if(!data.trim()) return alert("¡Por favor, añade preguntas antes de guardar!");
 
+            // En lugar de usar outerHTML modificando el DOM en vivo destructivamente, creamos una copia limpia:
             let cleanHtml = document.documentElement.outerHTML;
             const parser = new DOMParser();
             const doc = parser.parseFromString(cleanHtml, 'text/html');
 
+            // Inyectamos de forma segura los valores por defecto que se leerán al abrir el archivo
             doc.querySelector('#quiz-title-input').setAttribute('value', title);
             doc.querySelector('#data-input').textContent = data;
+
+            // IMPORTANTE: NO rompemos las clases CSS ni eliminamos los IDs críticos
+            // Dejamos que el window.onload del nuevo archivo decida qué renderizar
             
             const blob = new Blob([doc.documentElement.outerHTML], { type: 'text/html' });
             const a = document.createElement('a');
