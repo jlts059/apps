@@ -12,7 +12,7 @@
             --card-bg: #ffffff;
             --text: #1e293b;
             --border: #e2e8f0;
-            --sitio-libre: #0284c7; /* Azul agradable */
+            --sitio-libre: #0284c7;
         }
 
         body {
@@ -24,28 +24,17 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            position: relative;
-        }
-
-        .watermark {
-            position: absolute;
-            top: 15px;
-            right: 20px;
-            font-size: 0.85rem;
-            color: #cbd5e1;
-            font-weight: 600;
-            letter-spacing: 0.05em;
-            user-select: none;
         }
 
         .container {
-            max-width: 850px;
+            max-width: 900px;
             width: 100%;
             background: var(--card-bg);
             padding: 30px;
             border-radius: 12px;
             box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
             margin-top: 20px;
+            box-sizing: border-box;
         }
 
         .section { margin-bottom: 25px; }
@@ -55,6 +44,7 @@
             align-items: center;
             gap: 8px;
             margin-bottom: 8px;
+            flex-wrap: wrap;
         }
 
         label.main-label { 
@@ -65,12 +55,20 @@
         .counter-badge {
             color: var(--sitio-libre);
             font-weight: bold;
+            font-size: 1rem;
+        }
+
+        .combos-preview-text {
+            color: #64748b;
+            font-size: 1rem;
+            font-weight: normal;
+            margin-left: 4px;
         }
         
         textarea {
             width: 100%;
-            height: 34px;
-            padding: 6px 10px;
+            height: 38px;
+            padding: 8px 10px;
             border: 1px solid var(--border);
             border-radius: 6px;
             resize: vertical;
@@ -102,16 +100,14 @@
             align-items: center;
             gap: 15px;
             flex-grow: 1;
+            flex-wrap: wrap;
         }
 
         .option-card-row h3 { 
             margin: 0; 
             color: #334155; 
             font-size: 1.05rem; 
-            min-width: 160px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
+            min-width: 140px;
         }
 
         .input-inline-label {
@@ -121,12 +117,7 @@
             align-items: center;
             gap: 6px;
             font-size: 0.95rem;
-        }
-
-        .suggestion-inline-text {
-            font-size: 0.85rem;
-            color: #64748b;
-            margin-left: 10px;
+            white-space: nowrap;
         }
 
         input[type="number"] {
@@ -134,6 +125,7 @@
             padding: 5px;
             border: 1px solid var(--border);
             border-radius: 4px;
+            box-sizing: border-box;
         }
 
         button {
@@ -161,12 +153,8 @@
             flex: 1;
             margin-top: 0;
         }
-        button.btn-back-step {
-            background: #94a3b8;
-        }
-        button.btn-back-step:hover {
-            background: #64748b;
-        }
+        button.btn-back-step { background: #94a3b8; }
+        button.btn-back-step:hover { background: #64748b; }
 
         #btn-back {
             background: #0ea5e9;
@@ -180,79 +168,9 @@
         .free-slot {
             color: var(--sitio-libre);
             font-style: italic;
-            font-weight: 500;
-        }
-
-        /* Pop-up de Información (Tooltip) */
-        .info-container {
-            position: relative;
-            display: inline-flex;
-            align-items: center;
-            cursor: help;
-        }
-
-        .info-icon {
-            background: #cbd5e1;
-            color: #475569;
-            border-radius: 50%;
-            width: 16px;
-            height: 16px;
-            font-size: 0.75rem;
             font-weight: bold;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
 
-        .info-container:hover .info-icon {
-            background: #94a3b8;
-            color: #1e293b;
-        }
-
-        .info-tooltip {
-            visibility: hidden;
-            width: 320px;
-            background-color: #1e293b;
-            color: #fff;
-            text-align: left;
-            border-radius: 8px;
-            padding: 12px;
-            position: absolute;
-            z-index: 10;
-            bottom: 125%;
-            left: 50%;
-            transform: translateX(-50%);
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
-            font-size: 0.85rem;
-            line-height: 1.4;
-            opacity: 0;
-            transition: opacity 0.2s ease-in-out;
-        }
-
-        .info-tooltip::after {
-            content: "";
-            position: absolute;
-            top: 100%;
-            left: 50%;
-            margin-left: -5px;
-            border-width: 5px;
-            border-style: solid;
-            border-color: #1e293b transparent transparent transparent;
-        }
-
-        .info-container:hover .info-tooltip {
-            visibility: visible;
-            opacity: 1;
-        }
-
-        .tooltip-example {
-            margin-top: 6px;
-            border-top: 1px solid #475569;
-            padding-top: 6px;
-            color: #94a3b8;
-        }
-
-        /* Zonas de Output */
         .output-container {
             margin-top: 15px;
             padding: 0px;
@@ -282,7 +200,7 @@
 
         .grid-output {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
             gap: 15px;
             margin-top: 15px;
         }
@@ -303,19 +221,25 @@
         }
 
         .group-box ul { list-style: none; padding: 0; margin: 0; }
-        .group-box li { padding: 4px 0; border-bottom: 1px dashed #f1f5f9; }
+        .group-box li { padding: 4px 0; border-bottom: 1px dashed #f1f5f9; font-size: 0.95rem; }
 
-        /* Line-up */
         .lineup-container { text-align: center; }
         .lineup-1 { font-size: 3rem; font-weight: bold; color: var(--primary); margin-bottom: 20px; cursor: pointer; }
         .lineup-2-3 { font-size: 1.9rem; color: #475569; margin-bottom: 30px; display: flex; justify-content: center; gap: 50px; }
         .lineup-rest { font-size: 1.3rem; color: #64748b; display: flex; flex-direction: column; gap: 8px; }
         .lineup-shifted { color: #cbd5e1; text-decoration: line-through; font-size: 1.1rem; }
+        
+        .output-header-info {
+            color: var(--text);
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f1f5f9;
+        }
     </style>
 </head>
 <body>
-
-<div class="watermark">Agrupaciones</div>
 
 <div class="container">
     
@@ -323,6 +247,7 @@
         <div class="label-container">
             <label class="main-label" for="inputData">Lista de nombre o nº</label>
             <span id="student-counter" class="counter-badge"></span>
+            <span id="combos-preview" class="combos-preview-text"></span>
         </div>
         <textarea id="inputData" oninput="actualizarAnalisisInterfaz()"></textarea>
     </div>
@@ -334,8 +259,7 @@
         <div class="option-card-row">
             <div class="option-left">
                 <h3>Grupos</h3>
-                <label class="input-inline-label">Alumnos: <input type="number" id="opt1-val" value="3" min="2" max="6" oninput="actualizarAnalisisInterfaz()"></label>
-                <div class="suggestion-inline-text" id="sug-opt1"></div>
+                <label class="input-inline-label">Tamaño: <input type="number" id="opt1-val" value="3" min="2" max="10" oninput="actualizarAnalisisInterfaz()"></label>
             </div>
             <button onclick="ejecutarOpcion(1, generarOpcion1)">Generar / Re-mezclar</button>
         </div>
@@ -357,21 +281,8 @@
 
         <div class="option-card-row">
             <div class="option-left">
-                <h3>
-                    Grupos Rotativos
-                    <div class="info-container">
-                        <span class="info-icon">ⓘ</span>
-                        <div class="info-tooltip">
-                            Ideal para presentaciones en rotación. Las presentaciones se pueden hacer individualmente o en parejas. Los alumnos que no preparen se sacan de la lista y se colocan como espectadores, se pueden unir al grupo que quieran.
-                            <div class="tooltip-example">
-                                <strong>Ejemplo:</strong><br>
-                                6 alumnos = 2 grupos de 3, 2 rondas / grupos de 2, 3 rondas<br>
-                                9 alumnos = 3 grupos de 3 rondas (o 2, si no quiero que se haga pesado)
-                            </div>
-                        </div>
-                    </div>
-                </h3>
-                <label class="input-inline-label">Alumnos: <input type="number" id="opt4-val" value="3" min="2"></label>
+                <h3>Grupos Rotativos</h3>
+                <label class="input-inline-label">Tamaño: <input type="number" id="opt4-val" value="3" min="2" max="10"></label>
             </div>
             <button onclick="ejecutarOpcion(4, generarOpcion4)">Iniciar Rotación</button>
         </div>
@@ -399,42 +310,51 @@
         return rawInput.split('\n').map(n => n.trim()).filter(n => n.length > 0);
     }
 
+    // PANTALLA PRINCIPAL: Conteo de alumnos + Listado sutil de combinaciones al lado
     function actualizarAnalisisInterfaz() {
         const total = obtenerAlumnos().length;
-        
         const counterBadge = document.getElementById('student-counter');
-        if (total > 0) {
-            counterBadge.innerHTML = `(${total} alumnos)`;
-        } else {
+        const combosPreview = document.getElementById('combos-preview');
+        
+        if (total === 0) {
             counterBadge.innerHTML = '';
-        }
-
-        if (total <= 1) {
-            document.getElementById('sug-opt1').innerText = "";
+            combosPreview.innerText = '';
             return;
         }
+        
+        counterBadge.innerHTML = `(${total} alumnos)`;
 
         let partes = [];
         for (let t = 3; t <= 6; t++) {
-            let numGrupos = Math.ceil(total / t);
-            let tamanoBase = Math.floor(total / numGrupos);
-            let alumnosSobrantes = total % numGrupos;
-
-            let nGruposGrandes = alumnosSobrantes;
-            let nGruposBase = numGrupos - alumnosSobrantes;
-
-            let stringEstructura = "";
-            if (nGruposGrandes > 0 && nGruposBase > 0) {
-                stringEstructura = `${nGruposGrandes}x${tamanoBase + 1}+${nGruposBase}x${tamanoBase}`;
-            } else if (nGruposGrandes > 0) {
-                stringEstructura = `${nGruposGrandes}x${tamanoBase + 1}`;
-            } else {
-                stringEstructura = `${nGruposBase}x${tamanoBase}`;
-            }
-            partes.push(stringEstructura);
+            let nG = Math.ceil(total / t);
+            let tB = Math.floor(total / nG);
+            let aS = total % nG;
+            if (aS > 0 && (nG - aS) > 0) partes.push(`${aS}x${tB + 1}+${nG - aS}x${tB}`);
+            else if (aS > 0) partes.push(`${aS}x${tB + 1}`);
+            else partes.push(`${nG}x${tB}`);
         }
+        combosPreview.innerText = " " + partes.join(', ');
+    }
 
-        document.getElementById('sug-opt1').innerText = partes.join(', ');
+    // CÁLCULO DINÁMICO: Formato exacto "X grupos: Y de W y Z de K"
+    function obtenerTextoResumenGrupos(totalAlumnos, tamanoMax) {
+        if (totalAlumnos === 0) return "";
+        let numGrupos = Math.ceil(totalAlumnos / tamanoMax);
+        let tamanoBase = Math.floor(totalAlumnos / numGrupos);
+        let alumnosSobrantes = totalAlumnos % numGrupos;
+
+        let nGruposGrandes = alumnosSobrantes;
+        let nGruposBase = numGrupos - alumnosSobrantes;
+
+        let fragmentoTexto = "";
+        if (nGruposGrandes > 0 && nGruposBase > 0) {
+            fragmentoTexto = `${nGruposGrandes} de ${tamanoBase + 1} y ${nGruposBase} de ${tamanoBase}`;
+        } else if (nGruposGrandes > 0) {
+            fragmentoTexto = `${nGruposGrandes} de ${tamanoBase + 1}`;
+        } else {
+            fragmentoTexto = `${nGruposBase} de ${tamanoBase}`;
+        }
+        return `(${totalAlumnos} alumnos) - ${numGrupos} ${numGrupos === 1 ? 'grupo' : 'grupos'}: ${fragmentoTexto}`;
     }
 
     function mezclar(array) {
@@ -443,6 +363,10 @@
             [array[i], array[j]] = [array[j], array[i]];
         }
         return array;
+    }
+
+    function obtenerCabeceraPersistente(textoEspecifico) {
+        return `<div class="output-header-info">Lista de nombre o nº <span class="counter-badge">${textoEspecifico}</span></div>`;
     }
 
     function ejecutarOpcion(idOpcion, funcionGeneradora) {
@@ -492,6 +416,7 @@
         const tamanoMax = parseInt(document.getElementById('opt1-val').value) || 3;
         let mejoresGrupos = [];
         let menosRepeticiones = Infinity;
+        
         const numGrupos = Math.ceil(alumnos.length / tamanoMax);
         const tamanoBase = Math.floor(alumnos.length / numGrupos);
         let alumnosSobrantes = alumnos.length % numGrupos;
@@ -508,7 +433,7 @@
             gruposTemporales.forEach(grupo => {
                 for(let i=0; i<grupo.length; i++) {
                     for(let j=i+1; j<grupo.length; j++) {
-                        if (historialParejas.has([grupo[i], grupo[j]].sort().join('|'))) repeticionesIntento++;
+                        if (historialParejas.has([grupo[i], group[j]].sort().join('|'))) repeticionesIntento++;
                     }
                 }
             });
@@ -528,7 +453,8 @@
             }
         });
 
-        let html = `<h3>Grupos Aleatorios</h3><div class="grid-output">`;
+        let resumen = obtenerTextoResumenGrupos(alumnos.length, tamanoMax);
+        let html = obtenerCabeceraPersistente(resumen) + `<h3>Grupos Aleatorios</h3><div class="grid-output">`;
         mejoresGrupos.forEach((g, index) => {
             html += `<div class="group-box"><h4>Grupo ${index+1}</h4><ul>`;
             g.forEach(al => html += `<li>${al}</li>`);
@@ -551,7 +477,10 @@
             grupos[index % numGrupos].push(alumno);
         });
 
-        let html = `<div class="grid-output">`;
+        let tamanoMaxEquivalente = Math.ceil(alumnos.length / numGrupos);
+        let resumen = obtenerTextoResumenGrupos(alumnos.length, tamanoMaxEquivalente);
+
+        let html = obtenerCabeceraPersistente(resumen) + `<div class="grid-output">`;
         grupos.forEach((g, index) => {
             html += `<div class="group-box"><h4>Grupo ${index+1}</h4><ul>`;
             g.forEach(al => html += `<li>${al}</li>`);
@@ -562,7 +491,7 @@
     }
 
     // ==========================================
-    // OPCIÓN 3: LINE-UP INTERACTIVO
+    // OPCIÓN 3: LINE-UP (Solo cuenta alumnos)
     // ==========================================
     function generarOpcion3(alumnos) {
         listaLineUpActual = mezclar([...alumnos]);
@@ -578,7 +507,8 @@
     }
 
     function renderLineUp() {
-        let html = `<div class="lineup-container"><h3>Orden Aleatorio (Line-up)</h3>`;
+        let totalAlumnos = obtenerAlumnos().length;
+        let html = obtenerCabeceraPersistente(`(${totalAlumnos} alumnos)`) + `<div class="lineup-container"><h3>Orden Aleatorio (Line-up)</h3>`;
         if (listaLineUpActual.length > 0) {
             html += `<div class="lineup-1" onclick="desplazarLineUp()" title="Haga clic para mover al final">${listaLineUpActual[0]}</div>`;
         } else {
@@ -600,72 +530,80 @@
     }
 
     // ==========================================
-    // OPCIÓN 4: GRUPOS ROTATIVOS
+    // OPCIÓN 4: GRUPOS ROTATIVOS (ESTRUCTURA DE MESAS FIJA)
     // ==========================================
     function generarOpcion4(alumnos) {
         let copiaAlumnos = mezclar([...alumnos]);
-        const tamanoGrupo = parseInt(document.getElementById('opt4-val').value) || 3;
+        const tamanoDeseado = parseInt(document.getElementById('opt4-val').value) || 3;
         
-        const totalGrupos = Math.ceil(copiaAlumnos.length / tamanoGrupo); 
-        const totalSlots = totalGrupos * tamanoGrupo;
+        const numGruposFijos = Math.ceil(copiaAlumnos.length / tamanoDeseado);
+        const totalSlots = numGruposFijos * tamanoDeseado;
 
         while(copiaAlumnos.length < totalSlots) {
             copiaAlumnos.push("[Sitio Libre]");
         }
 
         let letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        let poolAlumnos = [];
-
-        for (let i = 0; i < totalSlots; i++) {
-            let numId = Math.floor(i / tamanoGrupo) + 1; 
-            let letraId = letters[i % totalGrupos];       
-            
-            poolAlumnos.push({
-                nombre: copiaAlumnos[i],
-                numId: numId,
-                letraId: letraId,
-                codigo: `${numId}${letraId}`
-            });
+        let cuadriculaBase = Array.from({ length: tamanoDeseado }, () => Array(numGruposFijos).fill(null));
+        
+        let pointer = 0;
+        for (let r = 0; r < tamanoDeseado; r++) {
+            for (let c = 0; c < numGruposFijos; c++) {
+                let numId = r + 1;
+                let letraId = letters[c];
+                cuadriculaBase[r][c] = {
+                    nombre: copiaAlumnos[pointer++],
+                    numId: numId,
+                    letraId: letraId,
+                    codigo: `${numId}${letraId}`
+                };
+            }
         }
 
-        cachePoolAlumnosRotacion = poolAlumnos;
+        cachePoolAlumnosRotacion = cuadriculaBase.flat();
         datosRotacionRondas = [];
 
-        // Ronda 1
-        let r1 = [];
-        for (let i = 0; i < totalGrupos; i++) {
-            let letraActual = letters[i];
-            let miembros = poolAlumnos.filter(al => al.letraId === letraActual);
-            r1.push({ titulo: `Grupo ${letraActual}`, miembros: miembros });
+        // RONDA 1
+        let ronda1 = [];
+        for (let c = 0; c < numGruposFijos; c++) {
+            let miembros = [];
+            for (let r = 0; r < tamanoDeseado; r++) {
+                miembros.push(cuadriculaBase[r][c]);
+            }
+            ronda1.push({ titulo: `Grupo ${letters[c]}`, miembros: miembros });
         }
-        datosRotacionRondas.push(r1);
+        datosRotacionRondas.push(ronda1);
 
-        // Ronda 2
-        let r2 = [];
-        for (let i = 1; i <= totalGrupos; i++) {
-            let miembros = poolAlumnos.filter(al => al.numId === i);
-            r2.push({ titulo: `Grupo ${i}`, miembros: miembros });
+        // RONDA 2
+        let ronda2 = [];
+        for (let c = 0; c < numGruposFijos; c++) {
+            let miembros = [];
+            for (let r = 0; r < tamanoDeseado; r++) {
+                let shiftCol = (c + r) % numGruposFijos;
+                miembros.push(cuadriculaBase[r][shiftCol]);
+            }
+            ronda2.push({ titulo: `Grupo ${c + 1}`, miembros: miembros });
         }
-        datosRotacionRondas.push(r2);
+        datosRotacionRondas.push(ronda2);
 
-        // Ronda 3
-        let r3 = [];
-        for (let i = 0; i < totalGrupos; i++) {
-            r3.push({ titulo: `Grupo`, miembros: [] });
+        // RONDA 3
+        let ronda3 = [];
+        for (let c = 0; c < numGruposFijos; c++) {
+            let miembros = [];
+            for (let r = 0; r < tamanoDeseado; r++) {
+                let shiftCol = (c + (r * 2)) % numGruposFijos;
+                miembros.push(cuadriculaBase[r][shiftCol]);
+            }
+            ronda3.push({ titulo: `Grupo ${c + 1}`, miembros: miembros });
         }
-        poolAlumnos.forEach(al => {
-            let itemFila = al.numId - 1;
-            let itemCol = letters.indexOf(al.letraId);
-            let salaDestino = (itemFila + itemCol) % totalGrupos;
-            r3[salaDestino].miembros.push(al);
-        });
-        datosRotacionRondas.push(r3);
+        datosRotacionRondas.push(ronda3);
 
         mostrarPantallaIds();
     }
 
     function mostrarPantallaIds() {
-        let html = `<h3>IDs Asignados</h3><div class="grid-output">`;
+        let totalAlumnos = obtenerAlumnos().length;
+        let html = obtenerCabeceraPersistente(`(${totalAlumnos} alumnos)`) + `<h3>IDs Asignados</h3><div class="grid-output">`;
         cachePoolAlumnosRotacion.forEach(m => {
             html += `<div class="group-box" style="padding:10px; text-align:center;">
                         <strong>${m.codigo}</strong><br><span style="font-size:0.9rem;">${formatearNombreConEstilo(m.nombre)}</span>
@@ -681,8 +619,13 @@
     function mostrarRondaRotacion(indexRonda) {
         const rondasTitulos = ["Ronda 1", "Ronda 2", "Ronda 3: Mix"];
         let datosRonda = datosRotacionRondas[indexRonda];
-
-        let html = `<h3>${rondasTitulos[indexRonda]}</h3><div class="grid-output">`;
+        
+        let alumnosReales = obtenerAlumnos().length;
+        let tamanoDeseado = parseInt(document.getElementById('opt4-val').value) || 3;
+        
+        let resumen = obtenerTextoResumenGrupos(alumnosReales, tamanoDeseado);
+        let html = obtenerCabeceraPersistente(resumen) + `<h3>${rondasTitulos[indexRonda]}</h3><div class="grid-output">`;
+        
         datosRonda.forEach((sala) => {
             html += `<div class="group-box"><h4>${sala.titulo}</h4><ul>`;
             sala.miembros.forEach(m => {
