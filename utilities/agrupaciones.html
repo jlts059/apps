@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Grupos</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --border: #e2e8f0;
+            --sitio-libre: #0284c7; /* Azul agradable */
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        .watermark {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 0.85rem;
+            color: #cbd5e1;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            user-select: none;
+        }
+
+        .container {
+            max-width: 850px;
+            width: 100%;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+
+        .section { margin-bottom: 25px; }
+        
+        .label-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        label.main-label { 
+            font-weight: bold; 
+            display: block; 
+        }
+        
+        .counter-badge {
+            color: var(--sitio-libre);
+            font-weight: bold;
+        }
+        
+        textarea {
+            width: 100%;
+            height: 34px;
+            padding: 6px 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            resize: vertical;
+            box-sizing: border-box;
+            font-family: inherit;
+            line-height: 20px;
+        }
+
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .option-card-row {
+            border: 1px solid var(--border);
+            padding: 12px 20px;
+            border-radius: 8px;
+            background: #f1f5f9;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+        }
+
+        .option-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-grow: 1;
+        }
+
+        .option-card-row h3 { 
+            margin: 0; 
+            color: #334155; 
+            font-size: 1.05rem; 
+            min-width: 160px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .input-inline-label {
+            margin: 0;
+            font-weight: normal;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.95rem;
+        }
+
+        .suggestion-inline-text {
+            font-size: 0.85rem;
+            color: #64748b;
+            margin-left: 10px;
+        }
+
+        input[type="number"] {
+            width: 60px;
+            padding: 5px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+        }
+
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+
+        button:hover { background: var(--primary-hover); }
+        button.secondary { background: #64748b; margin-top: 15px; width: 100%; }
+        button.secondary:hover { background: #475569; }
+        
+        .nav-buttons-container {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .nav-buttons-container button {
+            flex: 1;
+            margin-top: 0;
+        }
+        button.btn-back-step {
+            background: #94a3b8;
+        }
+        button.btn-back-step:hover {
+            background: #64748b;
+        }
+
+        #btn-back {
+            background: #0ea5e9;
+            margin-bottom: 20px;
+            display: none;
+            padding: 8px 14px;
+            font-size: 0.9rem;
+        }
+        #btn-back:hover { background: #0284c7; }
+
+        .free-slot {
+            color: var(--sitio-libre);
+            font-style: italic;
+            font-weight: 500;
+        }
+
+        /* Pop-up de Información (Tooltip) */
+        .info-container {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            cursor: help;
+        }
+
+        .info-icon {
+            background: #cbd5e1;
+            color: #475569;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .info-container:hover .info-icon {
+            background: #94a3b8;
+            color: #1e293b;
+        }
+
+        .info-tooltip {
+            visibility: hidden;
+            width: 320px;
+            background-color: #1e293b;
+            color: #fff;
+            text-align: left;
+            border-radius: 8px;
+            padding: 12px;
+            position: absolute;
+            z-index: 10;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
+            font-size: 0.85rem;
+            line-height: 1.4;
+            opacity: 0;
+            transition: opacity 0.2s ease-in-out;
+        }
+
+        .info-tooltip::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #1e293b transparent transparent transparent;
+        }
+
+        .info-container:hover .info-tooltip {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .tooltip-example {
+            margin-top: 6px;
+            border-top: 1px solid #475569;
+            padding-top: 6px;
+            color: #94a3b8;
+        }
+
+        /* Zonas de Output */
+        .output-container {
+            margin-top: 15px;
+            padding: 0px;
+            cursor: zoom-in;
+            transition: all 0.3s ease;
+        }
+
+        .output-container.active {
+            border: 2px dashed var(--border);
+            border-radius: 8px;
+            padding: 25px;
+            background: #fff;
+        }
+
+        .output-container.fullscreen {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 9999;
+            margin: 0;
+            border: none;
+            border-radius: 0;
+            overflow-y: auto;
+            cursor: zoom-out;
+            background: #ffffff;
+            padding: 40px;
+        }
+
+        .grid-output {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .group-box {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .group-box h4 {
+            margin: 0 0 10px 0;
+            color: var(--primary);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 5px;
+        }
+
+        .group-box ul { list-style: none; padding: 0; margin: 0; }
+        .group-box li { padding: 4px 0; border-bottom: 1px dashed #f1f5f9; }
+
+        /* Line-up */
+        .lineup-container { text-align: center; }
+        .lineup-1 { font-size: 3rem; font-weight: bold; color: var(--primary); margin-bottom: 20px; cursor: pointer; }
+        .lineup-2-3 { font-size: 1.9rem; color: #475569; margin-bottom: 30px; display: flex; justify-content: center; gap: 50px; }
+        .lineup-rest { font-size: 1.3rem; color: #64748b; display: flex; flex-direction: column; gap: 8px; }
+        .lineup-shifted { color: #cbd5e1; text-decoration: line-through; font-size: 1.1rem; }
+
+        .helper-text { text-align: center; color: #94a3b8; font-size: 0.85rem; margin-top: 8px; display:none; }
+    </style>
+</head>
+<body>
+
+<div class="watermark">Agrupaciones</div>
+
+<div class="container">
+    
+    <div id="input-section" class="section">
+        <div class="label-container">
+            <label class="main-label" for="inputData">Lista de nombres o nº</label>
+            <span id="student-counter" class="counter-badge"></span>
+        </div>
+        <textarea id="inputData" oninput="actualizarAnalisisInterfaz()"></textarea>
+    </div>
+
+    <button id="btn-back" onclick="restaurarOpciones()">← Volver a cambiar lista u opciones</button>
+
+    <div id="options-panel" class="options-list">
+        
+        <div class="option-card-row">
+            <div class="option-left">
+                <h3>Grupos</h3>
+                <label class="input-inline-label">Alumnos: <input type="number" id="opt1-val" value="3" min="2" max="6" oninput="actualizarAnalisisInterfaz()"></label>
+                <div class="suggestion-inline-text" id="sug-opt1"></div>
+            </div>
+            <button onclick="ejecutarOpcion(1, generarOpcion1)">Generar / Re-mezclar</button>
+        </div>
+
+        <div class="option-card-row">
+            <div class="option-left">
+                <h3>Dividir en X Grupos</h3>
+                <label class="input-inline-label">Grupos: <input type="number" id="opt2-val" value="4" min="1"></label>
+            </div>
+            <button onclick="ejecutarOpcion(2, generarOpcion2)">Dividir</button>
+        </div>
+
+        <div class="option-card-row">
+            <div class="option-left">
+                <h3>Line-up</h3>
+            </div>
+            <button onclick="ejecutarOpcion(3, generarOpcion3)">Crear Lista</button>
+        </div>
+
+        <div class="option-card-row">
+            <div class="option-left">
+                <h3>
+                    Grupos Rotativos
+                    <div class="info-container">
+                        <span class="info-icon">ⓘ</span>
+                        <div class="info-tooltip">
+                            Ideal para presentaciones en rotación. Las presentaciones se pueden hacer individualmente o en parejas. Los alumnos que no preparen se sacan de la lista y se colocan como espectadores, se pueden unir al grupo que quieran.
+                            <div class="tooltip-example">
+                                <strong>Ejemplo:</strong><br>
+                                6 alumnos = 2 grupos de 3, 2 rondas / grupos de 2, 3 rondas<br>
+                                9 alumnos = 3 grupos de 3 rondas (o 2, si no quiero que se haga pesado)
+                            </div>
+                        </div>
+                    </div>
+                </h3>
+                <label class="input-inline-label">Alumnos: <input type="number" id="opt4-val" value="3" min="2"></label>
+            </div>
+            <button onclick="ejecutarOpcion(4, generarOpcion4)">Iniciar Rotación</button>
+        </div>
+    </div>
+
+    <div id="output" class="output-container" onclick="toggleFullscreen(event)"></div>
+    <div id="helper" class="helper-text">💡 Haz clic en el fondo blanco para ampliar. En Line-up, haz clic en el 1º nombre para moverlo al final.</div>
+</div>
+
+<script>
+    let historialParejas = new Set(); 
+    let datosRotacionRondas = []; 
+    let cachePoolAlumnosRotacion = []; 
+    let listaLineUpActual = [];
+    let alumnosPasadosLineUp = [];
+
+    function obtenerAlumnos() {
+        const rawInput = document.getElementById('inputData').value.trim();
+        if (!rawInput) return [];
+        if (!isNaN(rawInput)) {
+            const num = parseInt(rawInput);
+            let lista = [];
+            for(let i = 1; i <= num; i++) lista.push(`Alumno ${i}`);
+            return lista;
+        }
+        return rawInput.split('\n').map(n => n.trim()).filter(n => n.length > 0);
+    }
+
+    // Ejecuta el conteo en tiempo real del badge y calcula la ayuda de la Opción 1
+    function actualizarAnalisisInterfaz() {
+        const total = obtenerAlumnos().length;
+        
+        // 1. Actualizar contador junto al título principal
+        const counterBadge = document.getElementById('student-counter');
+        if (total > 0) {
+            counterBadge.innerHTML = `(${total} alumnos)`;
+        } else {
+            counterBadge.innerHTML = '';
+        }
+
+        // 2. Calcular desglose de reparto equilibrado matemático (3, 4, 5, 6)
+        if (total <= 1) {
+            document.getElementById('sug-opt1').innerText = "";
+            return;
+        }
+
+        let partes = [];
+        for (let t = 3; t <= 6; t++) {
+            let numGrupos = Math.ceil(total / t);
+            let tamanoBase = Math.floor(total / numGrupos);
+            let alumnosSobrantes = total % numGrupos;
+
+            let nGruposGrandes = alumnosSobrantes;
+            let nGruposBase = numGrupos - alumnosSobrantes;
+
+            let stringEstructura = "";
+            if (nGruposGrandes > 0 && nGruposBase > 0) {
+                stringEstructura = `${nGruposGrandes}x${tamanoBase + 1}+${nGruposBase}x${tamanoBase}`;
+            } else if (nGruposGrandes > 0) {
+                stringEstructura = `${nGruposGrandes}x${tamanoBase + 1}`;
+            } else {
+                stringEstructura = `${nGruposBase}x${tamanoBase}`;
+            }
+            partes.push(stringEstructura);
+        }
+
+        document.getElementById('sug-opt1').innerText = partes.join(', ');
+    }
+
+    function mezclar(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    function ejecutarOpcion(idOpcion, funcionGeneradora) {
+        let alumnos = obtenerAlumnos();
+        if (alumnos.length === 0) {
+            alert("Por favor, introduce nombres o un número.");
+            return;
+        }
+
+        document.getElementById('input-section').style.display = 'none';
+        document.getElementById('options-panel').style.display = 'none';
+        document.getElementById('btn-back').style.display = 'inline-block';
+        document.getElementById('helper').style.display = 'block';
+        document.getElementById('output').classList.add('active');
+        
+        funcionGeneradora(alumnos);
+    }
+
+    function restaurarOpciones() {
+        document.getElementById('input-section').style.display = 'block';
+        document.getElementById('options-panel').style.display = 'flex';
+        document.getElementById('btn-back').style.display = 'none';
+        document.getElementById('helper').style.display = 'none';
+        
+        const out = document.getElementById('output');
+        out.classList.remove('fullscreen', 'active');
+        out.innerHTML = '';
+        actualizarAnalisisInterfaz();
+    }
+
+    function toggleFullscreen(e) {
+        if (e.target.tagName === 'BUTTON' || e.target.classList.contains('lineup-1')) return;
+        const out = document.getElementById('output');
+        if (!out.classList.contains('active')) return;
+        out.classList.toggle('fullscreen');
+    }
+
+    function formatearNombreConEstilo(nombre) {
+        if (nombre === "[Sitio Libre]") {
+            return `<span class="free-slot">[Sitio Libre]</span>`;
+        }
+        return nombre;
+    }
+
+    // ==========================================
+    // OPCIÓN 1: GRUPOS EQUILIBRADOS (CORREGIDO)
+    // ==========================================
+    function generarOpcion1(alumnos) {
+        const tamanoMax = parseInt(document.getElementById('opt1-val').value) || 3;
+        let mejoresGrupos = [];
+        let menosRepeticiones = Infinity;
+        const numGrupos = Math.ceil(alumnos.length / tamanoMax);
+        const tamanoBase = Math.floor(alumnos.length / numGrupos);
+        let alumnosSobrantes = alumnos.length % numGrupos;
+
+        for (let intento = 0; intento < 50; intento++) {
+            let copiaAlumnos = mezclar([...alumnos]);
+            let gruposTemporales = [];
+            for (let g = 0; g < numGrupos; g++) {
+                let miembrosAAsignar = tamanoBase + (g < alumnosSobrantes ? 1 : 0);
+                gruposTemporales.push(copiaAlumnos.splice(0, miembrosAAsignar));
+            }
+
+            let repeticionesIntento = 0;
+            gruposTemporales.forEach(grupo => {
+                for(let i=0; i<grupo.length; i++) {
+                    for(let j=i+1; j<grupo.length; j++) {
+                        if (historialParejas.has([grupo[i], grupo[j]].sort().join('|'))) repeticionesIntento++;
+                    }
+                }
+            });
+
+            if (repeticionesIntento < menosRepeticiones) {
+                menosRepeticiones = repeticionesIntento;
+                mejoresGrupos = gruposTemporales;
+                if (menosRepeticiones === 0) break; 
+            }
+        }
+
+        mejoresGrupos.forEach(grupo => {
+            for(let i=0; i<grupo.length; i++) {
+                for(let j=i+1; j<grupo.length; j++) {
+                    historialParejas.add([grupo[i], grupo[j]].sort().join('|'));
+                }
+            }
+        });
+
+        let html = `<h3>Grupos Aleatorios</h3><div class="grid-output">`;
+        mejoresGrupos.forEach((g, index) => {
+            html += `<div class="group-box"><h4>Grupo ${index+1}</h4><ul>`;
+            g.forEach(al => html += `<li>${al}</li>`);
+            html += `</ul></div>`;
+        });
+        html += `</div>`;
+        html += `<button class="secondary" onclick="generarOpcion1(obtenerAlumnos())">Volver a mezclar esta opción</button>`;
+        document.getElementById('output').innerHTML = html;
+    }
+
+    // ==========================================
+    // OPCIÓN 2: DIVIDIR EN X GRUPOS
+    // ==========================================
+    function generarOpcion2(alumnos) {
+        let alumnosMezclados = mezclar([...alumnos]);
+        const numGrupos = parseInt(document.getElementById('opt2-val').value) || 4;
+        let grupos = Array.from({ length: numGrupos }, () => []);
+
+        alumnosMezclados.forEach((alumno, index) => {
+            grupos[index % numGrupos].push(alumno);
+        });
+
+        let html = `<div class="grid-output">`;
+        grupos.forEach((g, index) => {
+            html += `<div class="group-box"><h4>Grupo ${index+1}</h4><ul>`;
+            g.forEach(al => html += `<li>${al}</li>`);
+            html += `</ul></div>`;
+        });
+        html += `</div>`;
+        document.getElementById('output').innerHTML = html;
+    }
+
+    // ==========================================
+    // OPCIÓN 3: LINE-UP INTERACTIVO
+    // ==========================================
+    function generarOpcion3(alumnos) {
+        listaLineUpActual = mezclar([...alumnos]);
+        alumnosPasadosLineUp = [];
+        renderLineUp();
+    }
+
+    function desplazarLineUp() {
+        if (listaLineUpActual.length === 0) return;
+        let removido = listaLineUpActual.shift();
+        alumnosPasadosLineUp.push(removido);
+        renderLineUp();
+    }
+
+    function renderLineUp() {
+        let html = `<div class="lineup-container"><h3>Orden Aleatorio (Line-up)</h3>`;
+        if (listaLineUpActual.length > 0) {
+            html += `<div class="lineup-1" onclick="desplazarLineUp()" title="Haga clic para mover al final">${listaLineUpActual[0]}</div>`;
+        } else {
+            html += `<div class="lineup-1" style="color:#cbd5e1; cursor:default;">Fin de la lista</div>`;
+        }
+        html += `<div class="lineup-2-3">`;
+        html += `<div>${listaLineUpActual[1] ? '2. ' + listaLineUpActual[1] : ''}</div>`;
+        html += `<div>${listaLineUpActual[2] ? '3. ' + listaLineUpActual[2] : ''}</div>`;
+        html += `</div>`;
+        html += `<div class="lineup-rest">`;
+        for (let i = 3; i < listaLineUpActual.length; i++) {
+            html += `<div>${i + 1}. ${listaLineUpActual[i]}</div>`;
+        }
+        alumnosPasadosLineUp.forEach(al => {
+            html += `<div class="lineup-shifted">${al}</div>`;
+        });
+        html += `</div></div>`;
+        document.getElementById('output').innerHTML = html;
+    }
+
+    // ==========================================
+    // OPCIÓN 4: GRUPOS ROTATIVOS
+    // ==========================================
+    function generarOpcion4(alumnos) {
+        let copiaAlumnos = mezclar([...alumnos]);
+        const tamanoGrupo = parseInt(document.getElementById('opt4-val').value) || 3;
+        
+        const totalGrupos = Math.ceil(copiaAlumnos.length / tamanoGrupo); 
+        const totalSlots = totalGrupos * tamanoGrupo;
+
+        while(copiaAlumnos.length < totalSlots) {
+            copiaAlumnos.push("[Sitio Libre]");
+        }
+
+        let letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        let poolAlumnos = [];
+
+        for (let i = 0; i < totalSlots; i++) {
+            let numId = Math.floor(i / tamanoGrupo) + 1; 
+            let letraId = letters[i % totalGrupos];       
+            
+            poolAlumnos.push({
+                nombre: copiaAlumnos[i],
+                numId: numId,
+                letraId: letraId,
+                codigo: `${numId}${letraId}`
+            });
+        }
+
+        cachePoolAlumnosRotacion = poolAlumnos;
+        datosRotacionRondas = [];
+
+        // Ronda 1: Letras
+        let r1 = [];
+        for (let i = 0; i < totalGrupos; i++) {
+            let letraActual = letters[i];
+            let miembros = poolAlumnos.filter(al => al.letraId === letraActual);
+            r1.push({ titulo: `Grupo ${letraActual}`, miembros: miembros });
+        }
+        datosRotacionRondas.push(r1);
+
+        // Ronda 2: Números
+        let r2 = [];
+        for (let i = 1; i <= totalGrupos; i++) {
+            let miembros = poolAlumnos.filter(al => al.numId === i);
+            r2.push({ titulo: `Grupo ${i}`, miembros: miembros });
+        }
+        datosRotacionRondas.push(r2);
+
+        // Ronda 3: Mix Desplazado
+        let r3 = [];
+        for (let i = 0; i < totalGrupos; i++) {
+            r3.push({ titulo: `Grupo`, miembros: [] });
+        }
+        poolAlumnos.forEach(al => {
+            let itemFila = al.numId - 1;
+            let itemCol = letters.indexOf(al.letraId);
+            let salaDestino = (itemFila + itemCol) % totalGrupos;
+            r3[salaDestino].miembros.push(al);
+        });
+        datosRotacionRondas.push(r3);
+
+        mostrarPantallaIds();
+    }
+
+    function mostrarPantallaIds() {
+        let html = `<h3>IDs Asignados</h3><div class="grid-output">`;
+        cachePoolAlumnosRotacion.forEach(m => {
+            html += `<div class="group-box" style="padding:10px; text-align:center;">
+                        <strong>${m.codigo}</strong><br><span style="font-size:0.9rem;">${formatearNombreConEstilo(m.nombre)}</span>
+                     </div>`;
+        });
+        html += `</div>
+                 <div class="nav-buttons-container">
+                    <button class="secondary" onclick="mostrarRondaRotacion(0)">Ver Ronda 1</button>
+                 </div>`;
+        document.getElementById('output').innerHTML = html;
+    }
+
+    function mostrarRondaRotacion(indexRonda) {
+        const rondasTitulos = ["Ronda 1", "Ronda 2", "Ronda 3: Mix"];
+        let datosRonda = datosRotacionRondas[indexRonda];
+
+        let html = `<h3>${rondasTitulos[indexRonda]}</h3><div class="grid-output">`;
+        datosRonda.forEach((sala) => {
+            html += `<div class="group-box"><h4>${sala.titulo}</h4><ul>`;
+            sala.miembros.forEach(m => {
+                html += `<li><strong>${m.codigo}</strong> - ${formatearNombreConEstilo(m.nombre)}</li>`;
+            });
+            html += `</ul></div>`;
+        });
+        html += `</div>`;
+
+        html += `<div class="nav-buttons-container">`;
+        if (indexRonda === 0) {
+            html += `<button class="secondary btn-back-step" onclick="mostrarPantallaIds()">← Volver a IDs</button>`;
+            html += `<button class="secondary" onclick="mostrarRondaRotacion(1)">Ver Ronda 2</button>`;
+        } else if (indexRonda === 1) {
+            html += `<button class="secondary btn-back-step" onclick="mostrarRondaRotacion(0)">← Volver a Ronda 1</button>`;
+            html += `<button class="secondary" onclick="mostrarRondaRotacion(2)">Ver Ronda 3</button>`;
+        } else if (indexRonda === 2) {
+            html += `<button class="secondary btn-back-step" onclick="mostrarRondaRotacion(1)">← Volver a Ronda 2</button>`;
+            html += `<button class="secondary" onclick="restaurarOpciones()">Finalizar Rotación</button>`;
+        }
+        html += `</div>`;
+        document.getElementById('output').innerHTML = html;
+    }
+</script>
+
+</body>
+</html>
