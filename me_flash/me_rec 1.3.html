@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phrasen-Filter Pro</title>
+    <style>
+        :root {
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-color: #212529;
+            --primary-color: #4a90e2;
+            --accent-blue: #1a73e8;
+            --pinned-color: #ff9800;
+            --border-radius: 12px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 16px;
+            padding-bottom: 90px; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #setupContainer, #appContainer {
+            width: 100%;
+            max-width: 500px;
+        }
+
+        #appContainer {
+            display: none;
+        }
+
+        .input-group {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            margin-bottom: 25px;
+        }
+
+        label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+
+        textarea {
+            width: 100%;
+            height: 180px;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            box-sizing: border-box;
+            resize: vertical;
+            font-family: inherit;
+            font-size: 1rem;
+        }
+
+        .generate-btn {
+            width: 100%;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 15px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(74, 144, 226, 0.2);
+        }
+
+        .menu-container {
+            width: 100%;
+            margin-bottom: 20px;
+            background-color: #ffffff;
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+
+        .menu-summary {
+            display: none;
+            padding: 10px 14px;
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
+            border-radius: var(--border-radius);
+            align-items: center;
+            justify-content: space-between;
+            box-sizing: border-box;
+            gap: 8px;
+        }
+
+        .menu-summary-text {
+            cursor: pointer;
+            flex: 1;
+            padding: 4px 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .header-btn {
+            border: none;
+            padding: 8px 12px;
+            font-size: 0.95rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            white-space: nowrap;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+        }
+
+        .header-back-btn {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .header-unpin-btn {
+            display: none; 
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .header-unpin-btn span {
+            color: #ffffff;
+            font-weight: bold;
+            margin-right: 2px;
+        }
+
+        .button-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 12px;
+            justify-content: center;
+        }
+
+        .category-btn {
+            flex: 1 1 calc(50% - 10px);
+            padding: 14px 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border: 2px solid var(--primary-color);
+            border-radius: var(--border-radius);
+            background-color: transparent;
+            color: var(--primary-color);
+            cursor: pointer;
+            text-align: center;
+        }
+
+        /* The Prominent Top Pinned Button style */
+        .category-btn.pinned-cat-btn {
+            flex: 1 1 100%; /* Spans the full width at the top */
+            border-color: var(--pinned-color);
+            color: var(--pinned-color);
+            background-color: rgba(255, 152, 0, 0.05);
+            margin-bottom: 4px;
+        }
+
+        .phrases-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .phrase-card {
+            position: relative;
+            background-color: var(--card-bg);
+            padding: 20px;
+            padding-right: 50px; 
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border-left: 5px solid var(--primary-color);
+            font-size: 1.3rem;
+            line-height: 1.5;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .phrase-card.is-pinned {
+            border-left-color: var(--pinned-color);
+        }
+
+        .phrase-card b {
+            color: var(--accent-blue);
+            font-weight: 700;
+        }
+
+        .pin-toggle {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 1.3rem;
+            cursor: pointer;
+            opacity: 0.3;
+            transition: opacity 0.2s, transform 0.2s;
+            user-select: none;
+        }
+
+        .phrase-card.is-pinned .pin-toggle, 
+        .pin-toggle:hover {
+            opacity: 1;
+        }
+
+        .download-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 14px 22px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 1000;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="setupContainer">
+        <div class="input-group">
+            <label for="htmlInput">Paste your HTML code snippet here:</label>
+            <textarea id="htmlInput" placeholder="<div class=&quot;menu-container&quot;>..."></textarea>
+        </div>
+        <button class="generate-btn" onclick="buildAppFromInput()">Anwendung generieren</button>
+    </div>
+
+    <div id="appContainer">
+        <div class="menu-container" id="menuWrapper">
+            <div class="menu-summary" id="menuSummary">
+                <div class="menu-summary-text" id="menuSummaryText" onclick="expandMenu()"></div>
+                <div class="header-actions">
+                    <button class="header-btn header-unpin-btn" id="headerUnpinBtn" onclick="unpinAllItems()"><span>X</span> Pins entfernen</button>
+                    <button class="header-btn header-back-btn" onclick="resetView()">↩ Zurück</button>
+                </div>
+            </div>
+            
+            <div class="button-container" id="actualButtons">
+                <button class="category-btn pinned-cat-btn" onclick="filterPinnedOnly()">📌 Angepinnt</button>
+                
+                </div>
+        </div>
+
+        <div class="phrases-container" id="phrasesList">
+            </div>
+    </div>
+
+    <button class="download-btn" id="downloadBtn" onclick="downloadCurrentHTML()">💾 to HTML</button>
+
+    <script>
+        let currentMode = 'category'; 
+        let currentActiveCategory = '';
+
+        function buildAppFromInput() {
+            const inputData = document.getElementById('htmlInput').value.trim();
+            if(!inputData) {
+                alert("Bitte füge zuerst valides HTML ein!");
+                return;
+            }
+
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = inputData;
+
+            const targetButtonsContainer = document.getElementById('actualButtons');
+            const targetPhrasesContainer = document.getElementById('phrasesList');
+
+            // Parse buttons (excluding duplicates or existing pinned buttons)
+            const importedButtons = tempDiv.querySelectorAll('.category-btn');
+            importedButtons.forEach(btn => {
+                if(!btn.classList.contains('pinned-cat-btn')) {
+                    const clonedBtn = btn.cloneNode(true);
+                    targetButtonsContainer.appendChild(clonedBtn);
+                }
+            });
+
+            // Parse cards and programmatically insert pin utilities
+            const importedCards = tempDiv.querySelectorAll('.phrase-card');
+            importedCards.forEach(card => {
+                const clonedCard = card.cloneNode(true);
+                clonedCard.style.display = 'none';
+
+                const pinBtn = document.createElement('button');
+                pinBtn.className = 'pin-toggle';
+                pinBtn.innerHTML = '📌';
+                pinBtn.title = 'Anpinnen';
+                pinBtn.onclick = function(e) {
+                    e.stopPropagation();
+                    togglePinItem(clonedCard);
+                };
+                clonedCard.appendChild(pinBtn);
+                targetPhrasesContainer.appendChild(clonedCard);
+            });
+
+            document.getElementById('setupContainer').style.display = 'none';
+            document.getElementById('appContainer').style.display = 'block';
+        }
+
+        function togglePinItem(cardElement) {
+            cardElement.classList.toggle('is-pinned');
+            if (currentMode === 'pinned' && !cardElement.classList.contains('is-pinned')) {
+                cardElement.style.display = 'none';
+                checkPinnedCountOrReset();
+            }
+        }
+
+        function filterPhrases(category, labelText) {
+            currentMode = 'category';
+            currentActiveCategory = category;
+            const cards = document.querySelectorAll('.phrase-card');
+            
+            cards.forEach(card => {
+                if (card.getAttribute('data-category') === category) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            updateMenuUI(labelText + " ▾");
+            document.getElementById('headerUnpinBtn').style.display = 'none';
+        }
+
+        function filterPinnedOnly() {
+            currentMode = 'pinned';
+            const cards = document.querySelectorAll('.phrase-card');
+            let pinnedCount = 0;
+
+            cards.forEach(card => {
+                if (card.classList.contains('is-pinned')) {
+                    card.style.display = 'block';
+                    pinnedCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            if(pinnedCount === 0) {
+                alert("Du hast noch keine Elemente angepinnt! Klicke auf das 📌 Symbol in den Karten.");
+                resetView();
+                return;
+            }
+
+            updateMenuUI("📌 Clipboard ▾");
+            document.getElementById('headerUnpinBtn').style.display = 'block'; 
+        }
+
+        function checkPinnedCountOrReset() {
+            const visibleCards = Array.from(document.querySelectorAll('.phrase-card')).filter(c => c.style.display === 'block');
+            if (visibleCards.length === 0) {
+                resetView();
+            }
+        }
+
+        function unpinAllItems() {
+            if(confirm("Möchtest du alle Fixierungen aufheben?")) {
+                const cards = document.querySelectorAll('.phrase-card');
+                cards.forEach(card => card.classList.remove('is-pinned'));
+                resetView();
+            }
+        }
+
+        function updateMenuUI(summaryText) {
+            document.getElementById('actualButtons').style.display = 'none';
+            document.getElementById('menuSummaryText').innerText = summaryText;
+            document.getElementById('menuSummary').style.display = 'flex';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function expandMenu() {
+            document.getElementById('actualButtons').style.display = 'flex';
+            document.getElementById('menuSummary').style.display = 'none';
+        }
+
+        function resetView() {
+            const cards = document.querySelectorAll('.phrase-card');
+            cards.forEach(card => card.style.display = 'none');
+            expandMenu();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function downloadCurrentHTML() {
+            const docClone = document.documentElement.cloneNode(true);
+            
+            const dlBtn = docClone.querySelector('#downloadBtn');
+            if (dlBtn) dlBtn.remove();
+            
+            const summaryBlock = docClone.querySelector('#menuSummary');
+            if (summaryBlock) summaryBlock.style.display = 'none';
+            
+            const summaryTextBlock = docClone.querySelector('#menuSummaryText');
+            if (summaryTextBlock) summaryTextBlock.innerText = '';
+
+            const headerUnpinBlock = docClone.querySelector('#headerUnpinBtn');
+            if (headerUnpinBlock) headerUnpinBlock.style.display = 'none';
+
+            const actualBtnsWrapper = docClone.querySelector('#actualButtons');
+            if (actualBtnsWrapper) actualBtnsWrapper.style.display = 'flex';
+
+            const cleanCards = docClone.querySelectorAll('.phrase-card');
+            cleanCards.forEach(card => {
+                card.style.display = 'none';
+                card.classList.remove('is-pinned');
+                const freshPins = card.querySelectorAll('.pin-toggle');
+                freshPins.forEach(p => p.remove());
+            });
+
+            const totalSource = "<!DOCTYPE html>\n" + docClone.outerHTML;
+            const blob = new Blob([totalSource], { type: "text/html;charset=utf-8" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "phrases_app_template.html";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>

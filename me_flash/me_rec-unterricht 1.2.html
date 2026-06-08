@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phrasen-Filter Pro</title>
+    <style>
+        :root {
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-color: #212529;
+            --primary-color: #4a90e2;
+            --accent-blue: #1a73e8;
+            --pinned-color: #ff9800;
+            --border-radius: 12px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 16px;
+            padding-bottom: 90px; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #appContainer {
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .menu-container {
+            width: 100%;
+            margin-bottom: 20px;
+            background-color: #ffffff;
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+
+        /* Top Action Bar wrapper (Combines Category Label, Unpin, and Back buttons in 1 row) */
+        .menu-summary {
+            display: none;
+            padding: 10px 14px;
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
+            border-radius: var(--border-radius);
+            align-items: center;
+            justify-content: space-between;
+            box-sizing: border-box;
+            gap: 8px;
+        }
+
+        .menu-summary-text {
+            cursor: pointer;
+            flex: 1;
+            padding: 4px 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .header-btn {
+            border: none;
+            padding: 8px 12px;
+            font-size: 0.95rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            white-space: nowrap;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+        }
+
+        .header-back-btn {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .header-back-btn:hover {
+            background-color: #5a6268;
+        }
+
+        .header-unpin-btn {
+            display: none; 
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .header-unpin-btn:hover {
+            background-color: #bd2130;
+        }
+
+        .header-unpin-btn span {
+            color: #ffffff;
+            font-weight: bold;
+            margin-right: 2px;
+        }
+
+        .button-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 12px;
+            justify-content: center;
+        }
+
+        .category-btn {
+            flex: 1 1 calc(50% - 10px);
+            padding: 14px 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border: 2px solid var(--primary-color);
+            border-radius: var(--border-radius);
+            background-color: transparent;
+            color: var(--primary-color);
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .category-btn.pinned-cat-btn {
+            border-color: var(--pinned-color);
+            color: var(--pinned-color);
+        }
+
+        .phrases-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .phrase-card {
+            position: relative;
+            background-color: var(--card-bg);
+            padding: 20px;
+            padding-right: 50px; 
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border-left: 5px solid var(--primary-color);
+            font-size: 1.3rem;
+            line-height: 1.5;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .phrase-card.is-pinned {
+            border-left-color: var(--pinned-color);
+        }
+
+        .phrase-card b {
+            color: var(--accent-blue);
+            font-weight: 700;
+        }
+
+        .pin-toggle {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 1.3rem;
+            cursor: pointer;
+            opacity: 0.3;
+            transition: opacity 0.2s, transform 0.2s;
+            user-select: none;
+        }
+
+        .phrase-card.is-pinned .pin-toggle, 
+        .pin-toggle:hover {
+            opacity: 1;
+        }
+
+        .phrase-card.is-pinned .pin-toggle {
+            transform: scale(1.1);
+        }
+
+        .download-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 14px 22px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 1000;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="appContainer">
+        <div class="menu-container" id="menuWrapper">
+            <div class="menu-summary" id="menuSummary">
+                <div class="menu-summary-text" id="menuSummaryText" onclick="expandMenu()"></div>
+                <div class="header-actions">
+                    <button class="header-btn header-unpin-btn" id="headerUnpinBtn" onclick="unpinAllItems()"><span>X</span> Pins entfernen</button>
+                    <button class="header-btn header-back-btn" onclick="resetView()">↩ Zurück</button>
+                </div>
+            </div>
+            
+            <div class="button-container" id="actualButtons">
+                <button class="category-btn" onclick="filterPhrases('🎤Referat / FSA', '🎤Referat / FSA')">🎤Referat / FSA</button>
+                <button class="category-btn" onclick="filterPhrases('🔢➡️Weiter', '🔢➡️Weiter')">🔢➡️Weiter</button>
+                <button class="category-btn" onclick="filterPhrases('🔥Motivation', '🔥Motivation')">🔥Motivation</button>
+                <button class="category-btn" onclick="filterPhrases('🚀Los!', '🚀Los!')">🚀Los!</button>
+                <button class="category-btn" onclick="filterPhrases('🛑Schluss', '🛑Schluss')">🛑Schluss</button>
+                <button class="category-btn" onclick="filterPhrases('FSA: Vorbereitung', 'FSA: Vorbereitung')">FSA: Vorbereitung</button>
+                <button class="category-btn" onclick="filterPhrases('🎲Spiele', '🎲Spiele')">🎲Spiele</button>
+                <button class="category-btn" onclick="filterPhrases('🎲Brettspiele', '🎲Brettspiele')">🎲Brettspiele</button>
+                <button class="category-btn" onclick="filterPhrases('🎲Kennenlern Bingo', '🎲Kennenlern Bingo')">🎲Kennenlern Bingo</button>
+                <button class="category-btn" onclick="filterPhrases('🎓Lehrerkram', '🎓Lehrerkram')">🎓Lehrerkram</button>
+                <button class="category-btn" onclick="filterPhrases('🧺Suchen', '🧺Suchen')">🧺Suchen</button>
+                <button class="category-btn" onclick="filterPhrases('🛠️Materialen erstellen', '🛠️Materialen erstellen')">🛠️Materialen erstellen</button>
+                <button class="category-btn" onclick="filterPhrases('🤔Denkt', '🤔Denkt')">🤔Denkt</button>
+                <button class="category-btn" onclick="filterPhrases('🔢🚪Einführung (Thema)', '🔢🚪Einführung (Thema)')">🔢🚪Einführung (Thema)</button>
+                <button class="category-btn" onclick="filterPhrases('❌Fehler', '❌Fehler')">❌Fehler</button>
+                <button class="category-btn" onclick="filterPhrases('❓Äh?', '❓Äh?')">❓Äh?</button>
+                <button class="category-btn" onclick="filterPhrases('❓Fragen?', '❓Fragen?')">❓Fragen?</button>
+                <button class="category-btn" onclick="filterPhrases('➡️Weiter', '➡️Weiter')">➡️Weiter</button>
+                <button class="category-btn" onclick="filterPhrases('🌍Übersetzung', '🌍Übersetzung')">🌍Übersetzung</button>
+                <button class="category-btn" onclick="filterPhrases('🎭Pantomime', '🎭Pantomime')">🎭Pantomime</button>
+                <button class="category-btn" onclick="filterPhrases('👂Hört mal', '👂Hört mal')">👂Hört mal</button>
+                <button class="category-btn" onclick="filterPhrases('👌Gut', '👌Gut')">👌Gut</button>
+                <button class="category-btn" onclick="filterPhrases('👌Ok?', '👌Ok?')">👌Ok?</button>
+                <button class="category-btn" onclick="filterPhrases('👨‍👩‍👧‍👦Plenum', '👨‍👩‍👧‍👦Plenum')">👨‍👩‍👧‍👦Plenum</button>
+                <button class="category-btn" onclick="filterPhrases('📚Seite', '📚Seite')">📚Seite</button>
+                <button class="category-btn" onclick="filterPhrases('📚Übungen', '📚Übungen')">📚Übungen</button>
+                <button class="category-btn" onclick="filterPhrases('📝Notieren / Schreiben', '📝Notieren / Schreiben')">📝Notieren / Schreiben</button>
+                <button class="category-btn" onclick="filterPhrases('🔄Bewegung', '🔄Bewegung')">🔄Bewegung</button>
+                <button class="category-btn" onclick="filterPhrases('🔍Kontrollieren', '🔍Kontrollieren')">🔍Kontrollieren</button>
+                <button class="category-btn" onclick="filterPhrases('🔢Sequenz', '🔢Sequenz')">🔢Sequenz</button>
+                <button class="category-btn" onclick="filterPhrases('🗣️Erzählt', '🗣️Erzählt')">🗣️Erzählt</button>
+                <button class="category-btn" onclick="filterPhrases('🤓Prüfung', '🤓Prüfung')">🤓Prüfung</button>
+                <button class="category-btn" onclick="filterPhrases('🤝Zusammenarbeit', '🤝Zusammenarbeit')">🤝Zusammenarbeit</button>
+                <button class="category-btn" onclick="filterPhrases('🧑‍🏫Tafel', '🧑‍🏫Tafel')">🧑‍🏫Tafel</button>
+                <button class="category-btn" onclick="filterPhrases('🧠Lernt', '🧠Lernt')">🧠Lernt</button>
+                <button class="category-btn" onclick="filterPhrases('🧺Zählen', '🧺Zählen')">🧺Zählen</button>
+                <button class="category-btn" onclick="filterPhrases('🔢🚀Los!', '🔢🚀Los!')">🔢🚀Los!</button>
+                <button class="category-btn" onclick="filterPhrases('🚪1. Lektion', '🚪1. Lektion')">🚪1. Lektion</button>
+                <button class="category-btn" onclick="filterPhrases('🚪Einführung (Thema)', '🚪Einführung (Thema)')">🚪Einführung (Thema)</button>
+                <button class="category-btn" onclick="filterPhrases('Aufgabe 🗣️Sprechen', 'Aufgabe 🗣️Sprechen')">Aufgabe 🗣️Sprechen</button>
+                <button class="category-btn" onclick="filterPhrases('Aufgabe🎧HV', 'Aufgabe🎧HV')">Aufgabe🎧HV</button>
+                <button class="category-btn" onclick="filterPhrases('Aufgabe📚LV', 'Aufgabe📚LV')">Aufgabe📚LV</button>
+                <button class="category-btn" onclick="filterPhrases('Bewertung✔️Richtig/Gut', 'Bewertung✔️Richtig/Gut')">Bewertung✔️Richtig/Gut</button>
+                <button class="category-btn" onclick="filterPhrases('comparad respuestas', 'comparad respuestas')">comparad respuestas</button>
+                <button class="category-btn" onclick="filterPhrases('ℹ️Erklärung', 'ℹ️Erklärung')">ℹ️Erklärung</button>
+                <button class="category-btn" onclick="filterPhrases('🔡Grammatik &amp; Wortschatz', '🔡Grammatik &amp; Wortschatz')">🔡Grammatik &amp; Wortschatz</button>
+                <button class="category-btn" onclick="filterPhrases('🪜Stufe', '🪜Stufe')">🪜Stufe</button>
+                <button class="category-btn" onclick="filterPhrases('🤓Prüfung PEC05', '🤓Prüfung PEC05')">🤓Prüfung PEC05</button>
+                <button class="category-btn" onclick="filterPhrases('🧺Abwesenheit', '🧺Abwesenheit')">🧺Abwesenheit</button>
+                <button class="category-btn" onclick="filterPhrases('🧺Arbeits-E-mails', '🧺Arbeits-E-mails')">🧺Arbeits-E-mails</button>
+                <button class="category-btn" onclick="filterPhrases('🔍Hausaufgabe', '🔍Hausaufgabe')">🔍Hausaufgabe</button>
+                <button class="category-btn" onclick="filterPhrases('🔢🛑Schluss', '🔢🛑Schluss')">🔢🛑Schluss</button>
+                <button class="category-btn" onclick="filterPhrases('Aufgabe: Rangliste', 'Aufgabe: Rangliste')">Aufgabe: Rangliste</button>
+                <button class="category-btn" onclick="filterPhrases('Smalltalk: Wochenende', 'Smalltalk: Wochenende')">Smalltalk: Wochenende</button>
+                <button class="category-btn pinned-cat-btn" onclick="filterPinnedOnly()">📌 Angepinnt</button>
+            </div>
+        </div>
+
+        <div class="phrases-container" id="phrasesList">
+            <!-- Part 1 Content -->
+            <div class="phrase-card" data-category="🎤Referat / FSA"><b>Fragen an</b> die Zuhörenden  / • den Referent(in) / Sprecher(in) / Redner(in) / • die ~</div>
+            <div class="phrase-card" data-category="🎤Referat / FSA">Wähle einen Umschlag AUS diesen drei</div>
+            <div class="phrase-card" data-category="🔢➡️Weiter">Die Bühne gehört dir!</div>
+            <div class="phrase-card" data-category="🔢➡️Weiter">und jetzt kommt auf die Bühne...</div>
+            <div class="phrase-card" data-category="🔢➡️Weiter">du hast das Wort</div>
+            <div class="phrase-card" data-category="🔢➡️Weiter">ich lasse C das Ruder übernehmen</div>
+            <div class="phrase-card" data-category="🔢➡️Weiter">Ich sage immer: „Ich übergebe an José“ oder „ich gebe das Wort an José“ :)</div>
+            <div class="phrase-card" data-category="🔢➡️Weiter">jetzt gebe ich C das Wort weiter/über</div>
+            <div class="phrase-card" data-category="🔢➡️Weiter">jetzt lernt ihr weiter mit Martina!</div>
+            <div class="phrase-card" data-category="🔥Motivation">herzlichen Glückwunsch, iht habt den Test ALLE erfolgreich absolviert!</div>
+            <div class="phrase-card" data-category="🔥Motivation"><b>Weiter so!</b> (keep it up) / <b>bleib fleißig und bleib daran</b></div>
+            <div class="phrase-card" data-category="🔥Motivation">Du bist <b>auf dem richtigen Weg</b>!</div>
+            <div class="phrase-card" data-category="🔥Motivation">du bist der <b>Hammer</b>!</div>
+            <div class="phrase-card" data-category="🔥Motivation">du bist einen Schritt weiter, Gratulation!</div>
+            <div class="phrase-card" data-category="🔥Motivation"><b>du schaffst das</b>! Ihr schafft das! das schaffst du!</div>
+            <div class="phrase-card" data-category="🔥Motivation"><b>gib dein Bestes!</b> / gebt euer Bestes! / rock das Ding!</div>
+            <div class="phrase-card" data-category="🔥Motivation">Halt die Ohren steif - das wird schon wieder! (venga que no pasa nada)</div>
+            <div class="phrase-card" data-category="🔥Motivation">halte durch! (stay strong, aguanta, dale palante!)</div>
+            <div class="phrase-card" data-category="🔥Motivation">ich glaube an dich!</div>
+            <div class="phrase-card" data-category="🔥Motivation">ich wünsche euch allen viel Glück! / viel Erfolg! / Viel Glückchen</div>
+            <div class="phrase-card" data-category="🔥Motivation">komm, das schaffst du!!</div>
+            <div class="phrase-card" data-category="🔥Motivation">Kopf hoch! (Brust raus!)</div>
+            <div class="phrase-card" data-category="🔥Motivation">toi toi toi! (break a leg) / ich drücke dir die Daumen</div>
+            <div class="phrase-card" data-category="🔥Motivation">viel Erfolg! / alles Gute!</div>
+            <div class="phrase-card" data-category="🚀Los!">(hier) bitte (schön)</div>
+            <div class="phrase-card" data-category="🚀Los!">(na) los! (geht’s) / auf geht's! / ab geht er der Peter!</div>
+            <div class="phrase-card" data-category="🚀Los!">erzähl mal!</div>
+            <div class="phrase-card" data-category="🚀Los!">fang an!</div>
+            <div class="phrase-card" data-category="🚀Los!">komm (schon)!</div>
+            <div class="phrase-card" data-category="🚀Los!">mach schon!</div>
+            <div class="phrase-card" data-category="🚀Los!">nur zu! (just go)</div>
+            <div class="phrase-card" data-category="🛑Schluss">Das war es schon…? (Yastá??) Das war es schon für heute. Bis morgen! Du hast das Meeting in nur zehn Minuten beendet? Das war es schon?</div>
+            <div class="phrase-card" data-category="FSA: Vorbereitung">magst du deine Dinge fertig machen?</div>
+            <div class="phrase-card" data-category="FSA: Vorbereitung">magst du dich bereit machen?</div>
+            <div class="phrase-card" data-category="FSA: Vorbereitung">magst du dich vorbereiten?</div>
+            <div class="phrase-card" data-category="FSA: Vorbereitung">das ist X, unsere Sprachassistentin; sie bleibt bei uns das ganze Schuljahr, von Oktober vis … Im Moment sitzt sie ruhig hier und schaut sie an, wie alles läuft / funktioniert</div>
+            <div class="phrase-card" data-category="FSA: Vorbereitung">die sind eine tolle Truppe / ein toller Haufen</div>
+            <div class="phrase-card" data-category="FSA: Vorbereitung">heute (und jeden Dienstag) wird C die Stunde einleiten/beginnen</div>
+            <div class="phrase-card" data-category="🎲Spiele">Letzter Versuch! / Es ist so knapp!</div>
+            <div class="phrase-card" data-category="🎲Spiele">rQR Code /KU ER COD/</div>
+            <div class="phrase-card" data-category="🎲Spiele">haha, das war ein rTrick!</div>
+            <div class="phrase-card" data-category="🎲Spiele">und dann <b>drehen wir das Spiel ein bisschen um</b>, und zwar…</div>
+            <div class="phrase-card" data-category="🎲Brettspiele">schummelt ihr? kein Schummeln! nicht gucken!</div>
+            <div class="phrase-card" data-category="🎲Brettspiele">hier sind die Regeln des Spiel(e)s</div>
+            <div class="phrase-card" data-category="🎲Brettspiele"><b>auf</b> dem Spielfeld <b>vorrücken</b> (advance), X sFelder vorrücken / weitergehen / zurückgehen</div>
+            <div class="phrase-card" data-category="🎲Brettspiele">Spielfigur / <b>Spielsteine</b>, <b>rWürfel</b>, <b>das Feld</b>, das <b>Kästchen</b>, Mitspieler / Teilnehmer</div>
+            <div class="phrase-card" data-category="🎲Brettspiele">die Lernenden darauf hinweisen, dass sie <b>passend würfeln</b> müssen, um ins Ziel zu gelangen.</div>
+            <div class="phrase-card" data-category="🎲Brettspiele">Spielanleitung</div>
+            <div class="phrase-card" data-category="🎲Brettspiele">Spiele: Kartensatz, Karten(-chen) / eine Karte aufdecken / umdrehen / die Karten <b>liegen</b> verdeckt / die Karte <b>verdeckt</b> hinlegen</div>
+            <div class="phrase-card" data-category="🎲Brettspiele">eine <b>Runde aussetzen</b></div>
+            <div class="phrase-card" data-category="🎲Brettspiele">rStapel Konnektoren-Kärtchen</div>
+            <div class="phrase-card" data-category="🎲Brettspiele">als Erste(r) im Ziel sein / • <b>ins ~ kommen</b> / • gelangen</div>
+            <div class="phrase-card" data-category="🎲Brettspiele">(noch einmal) <b>würfeln</b> würfle! würfelt!</div>
+            <div class="phrase-card" data-category="🎲Brettspiele">eine Kopie des <b>Spielfeldes</b></div>
+            <div class="phrase-card" data-category="🎲Kennenlern Bingo">entweder spielt man richtig oder gar nicht!</div>
+            <div class="phrase-card" data-category="🎲Kennenlern Bingo">dein Zug! / du bist <b>an der Reihe</b>! / du mal / du bist dran</div>
+            <div class="phrase-card" data-category="🎲Kennenlern Bingo">gehen Sie durch den Kursraum/Klassenzimmer</div>
+            <div class="phrase-card" data-category="🎲Kennenlern Bingo">ein Spiel machen, spielen</div>
+            <div class="phrase-card" data-category="🎲Kennenlern Bingo">wer zuerst alle Felder ausgefüllt hat, ist der Sieger, nicht nur eine Reihe senkrecht oder waagrecht</div>
+            <div class="phrase-card" data-category="🎲Kennenlern Bingo">breitet euch aus!</div>
+            <div class="phrase-card" data-category="🎲Kennenlern Bingo">den Raum nutzen!</div>
+            <div class="phrase-card" data-category="🎓Lehrerkram">Besprechung</div>
+            <div class="phrase-card" data-category="🎓Lehrerkram">eLandeskunde</div>
+            <div class="phrase-card" data-category="🎓Lehrerkram">Empfang der Schüler</div>
+            <div class="phrase-card" data-category="🎓Lehrerkram">Erstellung des Stundenplans</div>
+            <div class="phrase-card" data-category="🎓Lehrerkram">Fächer</div>
+            <div class="phrase-card" data-category="🎓Lehrerkram">Fortbildung, Training, Workshop</div>
+            <div class="phrase-card" data-category="🎓Lehrerkram">ich habe eine / meine Deutschstunde</div>
+            <div class="phrase-card" data-category="🎓Lehrerkram">ich muss meine Notizen konsultieren</div>
+            <div class="phrase-card" data-category="🎓Lehrerkram">ich muss zu meinem Deutschunterricht / -Kurs</div>
+            <div class="phrase-card" data-category="🎓Lehrerkram">laufende Berurteilung</div>
+            <div class="phrase-card" data-category="🎓Lehrerkram">rAbsentismus</div>
+            <div class="phrase-card" data-category="🎓Lehrerkram">rLehrplan, -Stoff (programación)</div>
+            <div class="phrase-card" data-category="🎓Lehrerkram">Rückmeldung / Feedback geben</div>
+            <div class="phrase-card" data-category="🎓Lehrerkram">Unterricht, rKurs</div>
+            <div class="phrase-card" data-category="🎓Lehrerkram">Vor-, Aus-, Weiter-, Fortbildung</div>
+            <div class="phrase-card" data-category="🎓Lehrerkram">Zusatzaktivitäten</div>
+            <div class="phrase-card" data-category="🧺Suchen">Ich habe aber gesehen, dass das in Lektion 4 schon vorkam.</div>
+            <div class="phrase-card" data-category="🧺Suchen">Ich habe eine Frage, bevor ich mich auf die Suche nach Spielen etc. mache:</div>
+            <div class="phrase-card" data-category="🧺Suchen">Passt perfekt. Habe schon nach Materialien geschaut</div>
+            <div class="phrase-card" data-category="🛠️Materialen erstellen">Davor würde ich noch ein AB (AB2 Wechsel Präpositionen) bearbeiten.</div>
+            <div class="phrase-card" data-category="🛠️Materialen erstellen">ich habe nun für die SuS eine Übung entworfen. Sie bekommen jeder ein Blatt und sollen die SuS im Kurs dann interviewen (Ähnlich wie bei der Autogrammjagd).</div>
+            <div class="phrase-card" data-category="🛠️Materialen erstellen">Ich würde auch noch ein AB zu „ich mag“ und „gern“ abwandeln (modify (?)) und durchführen (put in execution)</div>
+            <div class="phrase-card" data-category="🛠️Materialen erstellen">Übungen dazu gemacht, die ich auch in deinem Kurs einsetzen könnte</div>
+            <div class="phrase-card" data-category="🤔Denkt"><b>merk euch</b> aber einfach, dass... (remember, keep in mind)</div>
+            <div class="phrase-card" data-category="🤔Denkt"><b>wisst ihr noch...?</b> / erinnert ihr euch noch an...?</div>
+            <div class="phrase-card" data-category="🔢🚪Einführung (Thema)">Hmmm.. wo fängt man am besten an?</div>
+            <div class="phrase-card" data-category="❌Fehler">(bei X) einen Fehler machen / X falsch machen / nen F. begehen (gehob.)</div>
+            <div class="phrase-card" data-category="❌Fehler">sorry, ich war <b>verwirrt</b> und ich hab mich <b>geirrt</b></div>
+            <div class="phrase-card" data-category="❌Fehler">ach, falsch! ich habe's falsch gemacht</div>
+            <div class="phrase-card" data-category="❓Äh?">(entschuldigung) (noch (ein) mal) bitte</div>
+            <div class="phrase-card" data-category="❓Äh?">bitte ein bisschen langsamer</div>
+            <div class="phrase-card" data-category="❓Fragen?">kennt ihr? wißt ihr?</div>
+            <div class="phrase-card" data-category="❓Fragen?">eine letzte Frage hätte ich noch!</div>
+            <div class="phrase-card" data-category="❓Fragen?">habt ihr <b>noch Fragen bisher</b>? / was hast du denn für Fragen?</div>
+            <div class="phrase-card" data-category="❓Fragen?">wenn ihr noch Fragen habt…</div>
+            <div class="phrase-card" data-category="❓Fragen?">wollt ihr <b>etwas dazu fragen? fragt ruhig!</b></div>
+            <div class="phrase-card" data-category="❓Fragen?">Fragen <b>an</b> unsere Referenten/-in?</div>
+            <div class="phrase-card" data-category="❓Fragen?">Moment, ich hab da noch was!</div>
+            <div class="phrase-card" data-category="➡️Weiter">(geh) weiter bitte / bitte weiter machen/gehen / fortfahren</div>
+            <div class="phrase-card" data-category="➡️Weiter">bitte den Nächsten</div>
+            <div class="phrase-card" data-category="➡️Weiter">frag den Nächsten</div>
+            <div class="phrase-card" data-category="➡️Weiter">gib das Mikrofon weiter</div>
+            <div class="phrase-card" data-category="➡️Weiter">gib das Wort an den Nächsten</div>
+            <div class="phrase-card" data-category="➡️Weiter">lass den Nächsten sprechen</div>
+            <div class="phrase-card" data-category="➡️Weiter">wähle jemanden aus und gib es weiter!</div>
+            <div class="phrase-card" data-category="🌍Übersetzung">wie <b>heißen</b> diese Wörter in Spanisch?</div>
+            <div class="phrase-card" data-category="🌍Übersetzung">wie <b>• sagt • lautet • nennt man</b> das auf D? was bedeutet das? wie wird X gesagt? übersetzt man X ins Spanische? könnte jemand es auf S sagen?</div>
+            <div class="phrase-card" data-category="🎭Pantomime">habt ihr <b>Ideen dafür?</b> / <b>fällt euch eine Geste ein?</b> / könnt ihr <b>euch eine Geste vorstelle</b>?</div>
+            <div class="phrase-card" data-category="🎭Pantomime"><b>hier sind die Regeln des Spiele</b>: es handelt sich von einem Wettbewerb!</div>
+            <div class="phrase-card" data-category="🎭Pantomime">ich mache eine Geste / ich mime oder <b>gestikuliere</b>/ wir machen Pantomime!</div>
+            <div class="phrase-card" data-category="🎭Pantomime">ich <b>stelle es mit Gesten dar</b> // Ich sage/nenne das Wort und mache es gleichzeitig vor / <b>spiele … vor</b></div>
+            <div class="phrase-card" data-category="🎭Pantomime">ich <b>rufe ein Wort aus und mime es dazu</b></div>
+            <div class="phrase-card" data-category="🎭Pantomime">ihr bekommt ein Zettel von mir / jetzt ein paar Minuten Zeit</div>
+            <div class="phrase-card" data-category="🎭Pantomime">ihr braucht ein leeres Blatt papier / einen leeren Zettel</div>
+            <div class="phrase-card" data-category="🎭Pantomime">ihr habt drei Minuten, um aufzuschreiben, so viele Wörter zum Essen wie ihr kennt</div>
+            <div class="phrase-card" data-category="🎭Pantomime">Jetzt -schauen wir uns- Kasus genauer -an- / also, schauen wir mal!</div>
+            <div class="phrase-card" data-category="🎭Pantomime">kannst du bitte mir BEI etwas hilfen?</div>
+            <div class="phrase-card" data-category="👂Hört mal"><b>alle mal ganz kurz</b> / <b>ganz kurz ma eben!</b></div>
+            <div class="phrase-card" data-category="👂Hört mal"><b>alle mal herhören!!</b> / alle Achtung!</div>
+            <div class="phrase-card" data-category="👂Hört mal">bitte hört mich an / <b>hört mir zu</b></div>
+            <div class="phrase-card" data-category="👂Hört mal">Einmal…</div>
+            <div class="phrase-card" data-category="👌Gut">(ganz) toll, (sehr) schön, (richtig) gut, (echt) Klasse, gut gemacht, großartig, prima, <b>tipp(i)-topp(i)</b></div>
+            <div class="phrase-card" data-category="👌Gut">geeeenaau, <b>stimmt voll!</b> voll richtig! <b>du hast voll recht!</b></div>
+            <div class="phrase-card" data-category="👌Ok?">geht in Ordnung? / geht schon? vielleicht wird es jetzt ein bisschen klarer</div>
+            <div class="phrase-card" data-category="👌Ok?">ist (das) klar / okay? alles klar / gut / in Ordnung? <b>geht das so /s/? passt das?</b> / verstanden?</div>
+            <div class="phrase-card" data-category="👌Ok?"><b>versteht man das?</b></div>
+            <div class="phrase-card" data-category="👌Ok?">stimmt das? ist das richtig? geht das? / stimmt das genau?</div>
+            <div class="phrase-card" data-category="👨‍👩‍👧‍👦Plenum">komm runter (ugs)</div>
+            <div class="phrase-card" data-category="👨‍👩‍👧‍👦Plenum">melde dich bitte / meldet euch bitte / heb(t) die Hand</div>
+            <div class="phrase-card" data-category="👨‍👩‍👧‍👦Plenum">Moment, nicht alle durcheinander! jeder "nacheinander", Leute / einer-es nach dem anderen!</div>
+            <div class="phrase-card" data-category="👨‍👩‍👧‍👦Plenum">noch Ana? es könnte auch jemand anderes sein!</div>
+            <div class="phrase-card" data-category="👨‍👩‍👧‍👦Plenum">reg dich nicht auf! / regt euch nicht auf, es ist nur ein Test!</div>
+            <div class="phrase-card" data-category="👨‍👩‍👧‍👦Plenum">Ruhe / sei ruhig / beruhige dich / Klappe / Fresse halten / halt’s Maul</div>
+            <div class="phrase-card" data-category="👨‍👩‍👧‍👦Plenum">Ruhe!</div>
+            <div class="phrase-card" data-category="👨‍👩‍👧‍👦Plenum">Sei / seid still, bitte Ruhe, Bitte ruhig bleiben / regt euch ab (ugs) / beruhigt euch</div>
+            <div class="phrase-card" data-category="📚Seite">hat <b>jeder</b> diese Seite gefunden?</div>
+            <div class="phrase-card" data-category="📚Seite">wir <b>schlagen</b> die Bücher <b>auf</b>, Seite XY / schlagt das Buch <b>auf</b> Seite 54 auf / schlagt bitte Seite X auf, Üb Y</div>
+            <div class="phrase-card" data-category="📚Seite">wir braucht das Buch, Seite... / wir schauen <b>ins Buch</b> auf die Seite ...</div>
+            <div class="phrase-card" data-category="📚Seite">wir <b>gehen auf</b> Seite X, genauer gesagt <b>zu</b> Übung Y / <b>alle mal</b> auf Seite 40</div>
+            <div class="phrase-card" data-category="📚Seite">die Übung Y <b>besteht aus</b> fünf Bildern</div>
+            <div class="phrase-card" data-category="📚Seite">wir <b>machen</b> auf Seite 40 <b>weiter</b> / weiter auf Seite 40</div>
+            <div class="phrase-card" data-category="📚Seite"><b>suchen</b> wir uns mal die Seite 40 raus / <b>springen</b> wir kurz auf Seite 20</div>
+            <div class="phrase-card" data-category="📚Seite">auf Seite X, und <b>zwar</b> Üb Y,  • haben wir • findet ihr  • gibt es</div>
+            <div class="phrase-card" data-category="📚Seite">auf Seite X <b>ist</b> Üb Y / sind 5 Bilder / in Übung Y <b>seht</b> ihr fünf Bildern</div>
+            <div class="phrase-card" data-category="📚Seite"><b>Seht euch bitte</b> die Bilder in Übung YY <b>a</b>.</div>
+            <div class="phrase-card" data-category="📚Seite"><b>schauen</b> wir <b>uns</b> (die) Seite/Üb XX <b>an</b> / <b>werfen</b> wir einen <b>Blick</b> auf...</div>
+            <div class="phrase-card" data-category="📚Seite">In Übung YY <b>schauen wir uns</b> five Bilder <b>an</b>.</div>
+            <div class="phrase-card" data-category="📚Übungen">was gehört / passt zusammen? / Welche Dinge passen zusammen?</div>
+            <div class="phrase-card" data-category="📚Übungen">was verstehen wir unter diesem Bild?</div>
+            <div class="phrase-card" data-category="📚Übungen">weiß niemand, was das ist? Kennt niemand das? weißt das jemand?</div>
+            <div class="phrase-card" data-category="📚Übungen">welche Angaben / Informationen fehlen?</div>
+            <div class="phrase-card" data-category="📚Übungen">welche Überschrift passt zu welchem Bild?</div>
+            <div class="phrase-card" data-category="📚Übungen">welcher Aspekt von Achtung thematisiert dieses B?</div>
+            <div class="phrase-card" data-category="📚Übungen">wenn sie nicht zusammen passen, müsst ihr schweigen</div>
+            <div class="phrase-card" data-category="📝Notieren / Schreiben">unterstreichen Sie alle Zahlen</div>
+            <div class="phrase-card" data-category="📝Notieren / Schreiben"><b>von etw Notiz(en) nehmen</b></div>
+            <div class="phrase-card" data-category="📝Notieren / Schreiben">Notizen in kurzer Form / etwas abkürzen</div>
+            <div class="phrase-card" data-category="🔄Bewegung">Kommt bitte zu mir, wenn ihr damit fertig seid; Ihr könnt gehen, sobald ihr das gelöst habt</div>
+            <div class="phrase-card" data-category="🔄Bewegung">Setzt euch / nehmt bitte Platz / setz dich / nimm bitte Platz</div>
+            <div class="phrase-card" data-category="🔄Bewegung">sitzen(bleiben) und ruhig bleiben</div>
+            <div class="phrase-card" data-category="🔍Kontrollieren">ich habe… was hast du?</div>
+            <div class="phrase-card" data-category="🔍Kontrollieren">Stimmt ihr <b>allen Antworten zu?</b> / Stimmt ihr <b>mit allen Antworten überein?</b> / <b>Seid</b> ihr mit allen Antworten <b>einverstanden?</b></div>
+            <div class="phrase-card" data-category="🔍Kontrollieren">möchtest du deine <b>Antwort zur nächsten Aufgabe</b> sagen?</div>
+            <div class="phrase-card" data-category="🔍Kontrollieren">möchtest du die nächste Aufgabe <b>übernehmen</b>?</div>
+            <div class="phrase-card" data-category="🔍Kontrollieren">möchtest du <b>die nächste</b> machen?</div>
+            <div class="phrase-card" data-category="🔍Kontrollieren">wir -kontrollieren / <b>-sehen uns …an</b> / -überprüfen / korrigieren jetzt die Übung</div>
+            <div class="phrase-card" data-category="🔢➡️Weiter">weiter geht's mit ...</div>
+            <div class="phrase-card" data-category="🔢Sequenz">etw auf Eis legen für den Moment / Augenblick</div>
+            <div class="phrase-card" data-category="🔢Sequenz">wollen wir <b>zur Sache kommen</b>? / da habt ihr <b>mich auf eine Idee gebracht</b></div>
+            <div class="phrase-card" data-category="🔥Motivation">komm, <b>so schwierig ist es nicht! nicht ZU viel denken</b></div>
+            <div class="phrase-card" data-category="🔥Motivation">Lass dich Zeit!</div>
+            <div class="phrase-card" data-category="🔥Motivation">das hört sich kompliziert an! schaffen wir aber!</div>
+            <div class="phrase-card" data-category="🗣️Erzählt">kannst du bitte uns davon erzählen, was…</div>
+            <div class="phrase-card" data-category="🗣️Erzählt"><b>weißt du noch</b> was X dir erzählt hat?</div>
+            <div class="phrase-card" data-category="🤓Prüfung">eine Prüfung machen / <b>ablegen</b> / sich einer ~ <b>unterziehen</b> / <b>bestehen</b> / <b>durchfallen</b></div>
+            <div class="phrase-card" data-category="🤔Denkt"><b>denk(t) darüber nach</b> / <b>überleg (es) DIR</b>/euch, …</div>
+            <div class="phrase-card" data-category="🤔Denkt"><b>wann war noch mal</b> das Datum deiner Prüfung?</div>
+            <div class="phrase-card" data-category="🤝Zusammenarbeit">(bitte) einigt euch (auf eine Lösung) / kommt zu einer Einigung über eine Lösung</div>
+            <div class="phrase-card" data-category="🤝Zusammenarbeit">und jetzt <b>tauscht</b> ihr!</div>
+            <div class="phrase-card" data-category="🤝Zusammenarbeit">Bitte <b>bildet Gruppen</b> zu zweit/dritt/viert / Arbeitsgruppen</div>
+            <div class="phrase-card" data-category="🤝Zusammenarbeit">Die Gruppenarbeit beginnt jetzt / Jetzt arbeitet ihr in Gruppen zusammen.</div>
+            <div class="phrase-card" data-category="🤝Zusammenarbeit">einmal (insgesamt) drei Gruppen</div>
+            <div class="phrase-card" data-category="🤝Zusammenarbeit"><b>Einzelarbeit</b>, jeder für sich, nur für sich allein, einzeln arbeiten...</div>
+            <div class="phrase-card" data-category="🤝Zusammenarbeit">Frontalunterricht, Plenum(sdiskussion) / Klassengespräch</div>
+            <div class="phrase-card" data-category="🤝Zusammenarbeit">in Gruppen, Gruppenarbeit, Vierergruppen / bildet Kleingruppen</div>
+            <div class="phrase-card" data-category="🤝Zusammenarbeit">Jeder soll sich einer Gruppe anschließen.</div>
+            <div class="phrase-card" data-category="🤝Zusammenarbeit">Macht Partnerarbeit, mit einem Partner / in Zweiergruppen / zu zweit</div>
+            <div class="phrase-card" data-category="🤝Zusammenarbeit">und jetzt sammeln wir die Wörter / unsere Ideen</div>
+            <div class="phrase-card" data-category="🤝Zusammenarbeit">Wir bilden 3 Gruppen, ich nenne ein Nomen...</div>
+            <div class="phrase-card" data-category="🤝Zusammenarbeit">Wir teilen uns in Gruppen auf, ich teile euch in ~ ein.</div>
+            <div class="phrase-card" data-category="🤝Zusammenarbeit">ihr könnt einmal tauschen / dann könnt ihr gegenseiting fragen!</div>
+            <div class="phrase-card" data-category="🤝Zusammenarbeit"><b>zu 2 mit der Person</b> neben euch • vor euch • hinter euch</div>
+            <div class="phrase-card" data-category="🧑‍🏫Tafel">ich schreibe's an die Tafel auf, und ich füge die Aussprache hinzu/bei</div>
+            <div class="phrase-card" data-category="🧑‍🏫Tafel">schaut - guckt - seht mal! / schaut euch das an!</div>
+            <div class="phrase-card" data-category="🧑‍🏫Tafel">schaut auf die Tafel / schaut euch die Tafel an</div>
+            <div class="phrase-card" data-category="🧑‍🏫Tafel"><b> Schaut mal hier</b> / <b>Schauen</b> wir uns noch ein Beispiel an</div>
+            <div class="phrase-card" data-category="🧑‍🏫Tafel">schaut-guckt euch die Tafel an / schaut auf die Tafel</div>
+            <div class="phrase-card" data-category="🧑‍🏫Tafel">seht die Beispiele an / sieht euch an</div>
+            <div class="phrase-card" data-category="🧠Lernt">merkt euch X- mit Hilfe von Farben (sich merken)</div>
+            <div class="phrase-card" data-category="🧺Zählen">ich zähle bis drei (und dann ruft ihr alle zusammen die Antwort an)</div>
+            <div class="phrase-card" data-category="🧺Zählen">ich zähle von drei (he)runter</div>
+            <div class="phrase-card" data-category="🔢🚀Los!">seid ihr bereit? • X, für dich geht's jetzt los! • <b>auf die Plätze, fertig, los!</b></div>
+            <div class="phrase-card" data-category="🚪1. Lektion">aufstehen, jemanden in der Klasse auswählen, nach Namen fragen...</div>
+            <div class="phrase-card" data-category="🚪1. Lektion">du siehst traumatisiert aus! :)</div>
+            <div class="phrase-card" data-category="🚪1. Lektion">habt ihr verstanden? fertig / bereit? los!</div>
+            <div class="phrase-card" data-category="🚪1. Lektion">ich brauche Freiwillige. Wer möchte? jemand dabei?</div>
+            <div class="phrase-card" data-category="🚪1. Lektion">Redezeit / Sprechzeit/runde/turn (speaking turn)</div>
+            <div class="phrase-card" data-category="🚪1. Lektion">willkommen im A1 D, komm bitte rein - da ist noch frei!</div>
+            <div class="phrase-card" data-category="🚪1. Lektion">wir laufen durch den Kursraum / jetzt könnt ihr zurück an euren Platz</div>
+            <div class="phrase-card" data-category="🚪1. Lektion">zBS: Schaut mal! Schaut auf die Tafel und schaut euch dieses Beispiel an.</div>
+            <div class="phrase-card" data-category="🚪1. Lektion">ich zeige euch, wie es geht / ich mache's vor / schaut, so macht man das</div>
+            <div class="phrase-card" data-category="🚪Einführung (Thema)">heute <b>sprechen wir darüber</b>, was ihr ... / wir haben heute <b>nämlich</b> das Thema "Wetter"</div>
+            <div class="phrase-card" data-category="🚪Einführung (Thema)">wir fangen an, mit ... / wir kommen jetzt zum ...</div>
+            <div class="phrase-card" data-category="🚪Einführung (Thema)">wir bleiben ein bisschen beim Thema...</div>
+
+            <!-- Part 2 Content -->
+            <div class="phrase-card" data-category="🛑Schluss">Moment, <b>wir sind noch nicht durch</b></div>
+            <div class="phrase-card" data-category="🛑Schluss">so viel für heute! (that's all for today)</div>
+            <div class="phrase-card" data-category="🛑Schluss">• es ist schon vorbei! / • Zeit <b>vorbei</b>!</div>
+            <div class="phrase-card" data-category="🛑Schluss">Bitte beendet eure Arbeit, die Aktivität ist zu Ende / bitte bringt es zum Abschluss</div>
+            <div class="phrase-card" data-category="🛑Schluss">Heute <b>bringen</b> wir Einheit 3 <b>zu Ende</b> / <b>geben wir den letzten Schliff</b> / <b>machen wir den Endspurt</b></div>
+            <div class="phrase-card" data-category="🛑Schluss">die Stunde der Wahrheit ist gekommen!</div>
+            <div class="phrase-card" data-category="🛑Schluss">die Zeit ist um! Zeit (ist) abgelaufen! / Wir haben keine Z mehr</div>
+            <div class="phrase-card" data-category="🛑Schluss">es kommt halb sieben gleich!</div>
+            <div class="phrase-card" data-category="🛑Schluss">Lass uns zur nächsten Aufgabe übergehen</div>
+            <div class="phrase-card" data-category="🛑Schluss">Lasst uns zur nächsten Aufgabe übergehen</div>
+            <div class="phrase-card" data-category="🛑Schluss">Pause ist um</div>
+            <div class="phrase-card" data-category="🛑Schluss">Schluss jetzt! / Das war’s! / Stoppt! / Ende! / Reicht!</div>
+            <div class="phrase-card" data-category="🛑Schluss">seid ihr damit fertig/durch? Habt ihr das gelöst?</div>
+            <div class="phrase-card" data-category="🛑Schluss">Uhh, es kommt halb sieben/neun gleich!</div>
+            <div class="phrase-card" data-category="🛑Schluss">und damit kommen wir zu Ende / sind wir am Ende</div>
+            <div class="phrase-card" data-category="🛑Schluss">Zeit für eine Pause!</div>
+            <div class="phrase-card" data-category="🛑Schluss">zu spät! es lohnt sich nicht mehr, etw anzufangen</div>
+            <div class="phrase-card" data-category="🛑Schluss">die Uhr tickt</div>
+            <div class="phrase-card" data-category="🛑Schluss">beeilt euch!</div>
+            <div class="phrase-card" data-category="Aufgabe 🗣️Sprechen">Den Dialog spielen / proben / variieren / wir machen einen Dialog -gemeinsam-</div>
+            <div class="phrase-card" data-category="Aufgabe 🗣️Sprechen">Diskussionspunkte, rChatroom, rChat, chatten</div>
+            <div class="phrase-card" data-category="Aufgabe 🗣️Sprechen">Macht den Dialog auswendig/aus dem Kopf/aus dem Gedächtnis...</div>
+            <div class="phrase-card" data-category="Aufgabe🎧HV">achtet auf die Melodie</div>
+            <div class="phrase-card" data-category="Aufgabe🎧HV">alles klar, hier kommt das <b>zweite Hören!</b></div>
+            <div class="phrase-card" data-category="Aufgabe🎧HV">braucht ihr noch eine Runde zum Hören? war das in Ordnung oder <b>lieber ein zweites mal</b></div>
+            <div class="phrase-card" data-category="Aufgabe🎧HV">gut, hier ist die <b>Wiederholung!</b></div>
+            <div class="phrase-card" data-category="Aufgabe🎧HV">hier kommt der zweite <b>Anlauf!</b></div>
+            <div class="phrase-card" data-category="Aufgabe🎧HV">okay, auf geht’s zur zweiten Runde!</div>
+            <div class="phrase-card" data-category="Aufgabe🎧HV">(wollen wir) <b>noch einmal hören?</b></div>
+            <div class="phrase-card" data-category="Aufgabe🎧HV">sollen wir das nochmal <b>abspielen?</b></div>
+            <div class="phrase-card" data-category="Aufgabe🎧HV">das war Deutsch im Turbo-Modus!</div>
+            <div class="phrase-card" data-category="Aufgabe🎧HV">die Hauptaussagen des Audios <b>wiedergeben</b></div>
+            <div class="phrase-card" data-category="Aufgabe🎧HV">Deutsch hören ist wie Sport / Crossfit!</div>
+            <div class="phrase-card" data-category="Aufgabe🎧HV">habt ihr das verstanden? Nein? Ich auch nicht!</div>
+            <div class="phrase-card" data-category="Aufgabe🎧HV">hört zu und sprecht nach</div>
+            <div class="phrase-card" data-category="Aufgabe🎧HV">Hört zur Kontrolle</div>
+            <div class="phrase-card" data-category="Aufgabe🎧HV">ist das Deutsch...?</div>
+            <div class="phrase-card" data-category="Aufgabe🎧HV">puh, mein Kopf raucht schon!</div>
+            <div class="phrase-card" data-category="Aufgabe🎧HV">war das nhanh? ja, das war schnell! :_D</div>
+            <div class="phrase-card" data-category="Aufgabe🎧HV">wer hat das verstanden? Niemand? Super, alles normal!</div>
+            <div class="phrase-card" data-category="Aufgabe🎧HV">wollen wir es uns nochmal anhören?</div>
+            <div class="phrase-card" data-category="Aufgabe🎧HV">wollt ihr es noch einmal hören?</div>
+            <div class="phrase-card" data-category="Aufgabe🎧HV">wow das war schnell wie ein Blitz!</div>
+            <div class="phrase-card" data-category="Aufgabe🎧HV">worum gehen die Gespräche? Welche waren die Themen?</div>
+            <div class="phrase-card" data-category="Aufgabe📚LV">Lies den Text laut / leise - magst du deine Antworten vorlesen</div>
+            <div class="phrase-card" data-category="Aufgabe📚LV">unterteilt in Abschnitte</div>
+            <div class="phrase-card" data-category="Bewertung✔️Richtig/Gut">5 von 10 (aus)</div>
+            <div class="phrase-card" data-category="comparad respuestas">vergleicht gegenseitig???</div>
+            <div class="phrase-card" data-category="ℹ️Erklärung">passt auf, das kann man leicht verwechseln!</div>
+            <div class="phrase-card" data-category="ℹ️Erklärung">denkt bitte daran, x zu tun</div>
+            <div class="phrase-card" data-category="🔡Grammatik &amp; Wortschatz">fett, kursiv, unterstrichen</div>
+            <div class="phrase-card" data-category="🔡Grammatik &amp; Wortschatz">Satzglieder</div>
+            <div class="phrase-card" data-category="🔡Grammatik &amp; Wortschatz">schwierige Vokabeln</div>
+            <div class="phrase-card" data-category="🔡Grammatik &amp; Wortschatz">das Verb steht am falschen Ort, es sollte am Satzende platziert werden!.</div>
+            <div class="phrase-card" data-category="🪜Stufe">A1 Anfänger, (A2 +fortgeschritten), B1 Fortgeschrittene (Stufe), B2 sehr Fortgeschrittene, C1 Profis</div>
+            <div class="phrase-card" data-category="🪜Stufe">Anfänger / Mittelstufe / Fortgeschritten...</div>
+            <div class="phrase-card" data-category="🪜Stufe">Beherrschst du diese Sprache?</div>
+            <div class="phrase-card" data-category="🪜Stufe">eSprachkenntnisse / Kompetenzen</div>
+            <div class="phrase-card" data-category="🪜Stufe">s(Sprach)Niveau (in auf welchem ~ bist du?)</div>
+            <div class="phrase-card" data-category="🤓Prüfung">ihr könnt allerlei (Materialien) benutzen: alles geht, alles darf sein</div>
+            <div class="phrase-card" data-category="🤓Prüfung">Bitte weitergehen / Bitte fortfahren</div>
+            <div class="phrase-card" data-category="🤓Prüfung PEC05">Kandidat A fängt immer an</div>
+            <div class="phrase-card" data-category="🤓Prüfung">Moment, es ist noch nicht zu Ende</div>
+            <div class="phrase-card" data-category="🔥Motivation">Es wird schon / gehen, passen, klappen... / <b>alles/das wird gut / schon (wieder)</b></div>
+            <div class="phrase-card" data-category="🔥Motivation">Ich verspreche dir, du schaffst das!</div>
+            <div class="phrase-card" data-category="🔥Motivation">Keine Sorge das kriegen wir schon (hin)!</div>
+            <div class="phrase-card" data-category="🧺Abwesenheit">Emma fehlt / Emma ist nicht da / Ich bin da</div>
+            <div class="phrase-card" data-category="🧺Abwesenheit">Sind alle da? Ja, alle sind da...</div>
+            <div class="phrase-card" data-category="🧺Abwesenheit">Wer ist heute nicht da?, Wer fehlt heute?</div>
+            <div class="phrase-card" data-category="🧺Arbeits-E-mails">ich werde voraussichtlich Freitag mein Material vorbereiten</div>
+            <div class="phrase-card" data-category="🚪Einführung (Thema)">Wollen wir (mal)…?</div>
+            <div class="phrase-card" data-category="🛑Schluss">die Stunde ist um / vorbei / aus / das war's!</div>
+            <div class="phrase-card" data-category="Bewertung✔️Richtig/Gut">Vollkommen richtig!</div>
+            <div class="phrase-card" data-category="🔢🚀Los!">seid ihr motiviert?!!</div>
+            <div class="phrase-card" data-category="🔍Hausaufgabe">Einfach! <b>Kinderspiel!  • Pille-palle!  • Alles Roger in Kambodscha?  • alles paletti spaghetti?  • babyleicht / kinderleicht</b></div>
+            <div class="phrase-card" data-category="🗣️Erzählt">geht's auch ein bisschen konkreter! :-)</div>
+            <div class="phrase-card" data-category="🔢🛑Schluss">Ahhhh… wie die Zeit vergeht!</div>
+            <div class="phrase-card" data-category="🔢🛑Schluss">Punkt. Aus. Ende! (ugs) / Jetzt ist <b>finito</b></div>
+            <div class="phrase-card" data-category="Aufgabe 🗣️Sprechen">Ton ab, Kamera läuft, und bitte</div>
+            <div class="phrase-card" data-category="Aufgabe: Rangliste">ordnet die Begriffe <b>nach ihrer persönlichen Wichtigkeit</b></div>
+            <div class="phrase-card" data-category="Aufgabe: Rangliste">erstellt eine <b>Rangliste</b> (rank) und begründet eure Entscheidung</div>
+            <div class="phrase-card" data-category="Aufgabe: Rangliste">bringt die Begriffe <b>in eine Reihenfolge</b> <b>von sehr wichtig bis weniger wichtig</b></div>
+            <div class="phrase-card" data-category="Smalltalk: Wochenende">alles gut am WE?</div>
+            <div class="phrase-card" data-category="Smalltalk: Wochenende">WE? War's entspannt oder eher stressig?</div>
+            <div class="phrase-card" data-category="Smalltalk: Wochenende">na, alles klar am WE?</div>
+            <div class="phrase-card" data-category="Aufgabe: Rangliste">was ist für dich <b>am wichtigsten</b>?</div>
+            <div class="phrase-card" data-category="Aufgabe: Rangliste">was hast du <b>auf Platz X</b>? was hast du auf Nummer 2 <b>gesetzt</b>?</div>
+            <div class="phrase-card" data-category="📚Übungen">ihr habt dazu eine Minute Zeit / <b>eineinhalb</b> Minuten ~ / Fünf Minuten <b>Lesezeit</b></div>
+            <div class="phrase-card" data-category="🔥Motivation">trau dich! (atrévete!) / vertrau dir! (confía en ti)</div>
+            <div class="phrase-card" data-category="Aufgabe 🗣️Sprechen">wir stimmen im Kurs ab!</div>
+            <div class="phrase-card" data-category="Aufgabe 🗣️Sprechen">sobald ihr zugestimmt habt,</div>
+            <div class="phrase-card" data-category="📚Übungen">einfach / Kinderspiel / anspruchslos - mittel<b> schwer</b> / geht so</div>
+            <div class="phrase-card" data-category="Aufgabe📚LV">Informationen aus dem Text <b>heraus</b>filtern... dem Text die wichtigsten Informationen <b>entnehmen</b></div>
+            <div class="phrase-card" data-category="Aufgabe📚LV">eine <b>Minute Zeit</b> zum <b>Einlesen</b></div>
+            <div class="phrase-card" data-category="Aufgabe📚LV">for eine Aufgabe gibt es keine Lösung</div>
+            <div class="phrase-card" data-category="🤓Prüfung"><b>Wie war</b> die Übung / Aufgabe? /  <b>Wie lief's mit</b> der ~ ?</div>
+            <div class="phrase-card" data-category="🤓Prüfung"><b>ging so</b> / es ging / war okay / nicht schlecht, aber auch nicht super</div>
+        </div>
+    </div>
+
+    <button class="download-btn" id="downloadBtn" onclick="downloadCurrentHTML()">💾 to HTML</button>
+
+    <script>
+        let currentMode = 'category'; 
+        let currentActiveCategory = '';
+
+        // Add dynamic event listening safely for setup elements that are now fully integrated
+        window.addEventListener('DOMContentLoaded', () => {
+            const cards = document.querySelectorAll('.phrase-card');
+            cards.forEach((card, idx) => {
+                // Attach functional interactive pin icons dynamically
+                const pinBtn = document.createElement('button');
+                pinBtn.className = 'pin-toggle';
+                pinBtn.innerHTML = '📌';
+                pinBtn.title = 'Anpinnen';
+                pinBtn.onclick = function(e) {
+                    e.stopPropagation();
+                    togglePinItem(card);
+                };
+                card.appendChild(pinBtn);
+            });
+        });
+
+        function togglePinItem(cardElement) {
+            cardElement.classList.toggle('is-pinned');
+            if (currentMode === 'pinned' && !cardElement.classList.contains('is-pinned')) {
+                cardElement.style.display = 'none';
+                checkPinnedCountOrReset();
+            }
+        }
+
+        function filterPhrases(category, labelText) {
+            currentMode = 'category';
+            currentActiveCategory = category;
+            const cards = document.querySelectorAll('.phrase-card');
+            
+            cards.forEach(card => {
+                if (card.getAttribute('data-category') === category) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            updateMenuUI(labelText + " ▾");
+            document.getElementById('headerUnpinBtn').style.display = 'none';
+        }
+
+        function filterPinnedOnly() {
+            currentMode = 'pinned';
+            const cards = document.querySelectorAll('.phrase-card');
+            let pinnedCount = 0;
+
+            cards.forEach(card => {
+                if (card.classList.contains('is-pinned')) {
+                    card.style.display = 'block';
+                    pinnedCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            if(pinnedCount === 0) {
+                alert("Du hast noch keine Elemente angepinnt! Klicke auf das 📌 Symbol in den Karten.");
+                resetView();
+                return;
+            }
+
+            updateMenuUI("📌 Clipboard ▾");
+            document.getElementById('headerUnpinBtn').style.display = 'block'; 
+        }
+
+        function checkPinnedCountOrReset() {
+            const visibleCards = Array.from(document.querySelectorAll('.phrase-card')).filter(c => c.style.display === 'block');
+            if (visibleCards.length === 0) {
+                resetView();
+            }
+        }
+
+        function unpinAllItems() {
+            if(confirm("Möchtest du alle Fixierungen aufheben?")) {
+                const cards = document.querySelectorAll('.phrase-card');
+                cards.forEach(card => card.classList.remove('is-pinned'));
+                resetView();
+            }
+        }
+
+        function updateMenuUI(summaryText) {
+            document.getElementById('actualButtons').style.display = 'none';
+            document.getElementById('menuSummaryText').innerText = summaryText;
+            document.getElementById('menuSummary').style.display = 'flex';
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function expandMenu() {
+            document.getElementById('actualButtons').style.display = 'flex';
+            document.getElementById('menuSummary').style.display = 'none';
+        }
+
+        function resetView() {
+            const cards = document.querySelectorAll('.phrase-card');
+            cards.forEach(card => card.style.display = 'none');
+            expandMenu();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function downloadCurrentHTML() {
+            const docClone = document.documentElement.cloneNode(true);
+            
+            const dlBtn = docClone.querySelector('#downloadBtn');
+            if (dlBtn) dlBtn.remove();
+            
+            const summaryBlock = docClone.querySelector('#menuSummary');
+            if (summaryBlock) summaryBlock.style.display = 'none';
+            
+            const summaryTextBlock = docClone.querySelector('#menuSummaryText');
+            if (summaryTextBlock) summaryTextBlock.innerText = '';
+
+            const headerUnpinBlock = docClone.querySelector('#headerUnpinBtn');
+            if (headerUnpinBlock) headerUnpinBlock.style.display = 'none';
+
+            const actualBtnsWrapper = docClone.querySelector('#actualButtons');
+            if (actualBtnsWrapper) actualBtnsWrapper.style.display = 'flex';
+
+            const cleanCards = docClone.querySelectorAll('.phrase-card');
+            cleanCards.forEach(card => {
+                card.style.display = 'none';
+                card.classList.remove('is-pinned');
+                // Remove programmatically appended pin buttons inside clone clean-state download to avoid duplication cycles
+                const freshPins = card.querySelectorAll('.pin-toggle');
+                freshPins.forEach(p => p.remove());
+            });
+
+            const totalSource = "<!DOCTYPE html>\n" + docClone.outerHTML;
+            const blob = new Blob([totalSource], { type: "text/html;charset=utf-8" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "phrases_final_app.html";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>
