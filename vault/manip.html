@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Manipulator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
+
+        .controls {
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: flex;
+            gap: 10px;
+        }
+
+        #wordInput {
+            flex: 1;
+            padding: 10px;
+            font-size: 16px;
+            border: 2px solid #ccc;
+            border-radius: 4px;
+            transition: border-color 0.3s;
+        }
+
+        #wordInput:focus {
+            outline: none;
+            border-color: #87CEEB;
+        }
+
+        #addButton {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #87CEEB;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        #addButton:hover {
+            background-color: #5B9FBD;
+        }
+
+        #canvas {
+            flex: 1;
+            background-color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .word-box {
+            position: absolute;
+            background-color: #87CEEB;
+            color: #333;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: grab;
+            user-select: none;
+            font-weight: 500;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            transition: box-shadow 0.2s;
+        }
+
+        .word-box:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+        }
+
+        .word-box:active {
+            cursor: grabbing;
+        }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <input 
+            type="text" 
+            id="wordInput" 
+            placeholder="Enter a word and press Enter or click Add"
+            autofocus
+        >
+        <button id="addButton">Add Word</button>
+    </div>
+
+    <div id="canvas"></div>
+
+    <script>
+        const wordInput = document.getElementById('wordInput');
+        const addButton = document.getElementById('addButton');
+        const canvas = document.getElementById('canvas');
+
+        let draggedElement = null;
+        let offsetX = 0;
+        let offsetY = 0;
+
+        // Add word when button is clicked
+        addButton.addEventListener('click', addWord);
+
+        // Add word when Enter is pressed
+        wordInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                addWord();
+            }
+        });
+
+        function addWord() {
+            const word = wordInput.value.trim();
+            
+            if (word === '') {
+                alert('Please enter a word');
+                return;
+            }
+
+            // Create the word box
+            const wordBox = document.createElement('div');
+            wordBox.className = 'word-box';
+            wordBox.textContent = word;
+
+            // Random position on canvas
+            const randomX = Math.random() * (canvas.clientWidth - 150);
+            const randomY = Math.random() * (canvas.clientHeight - 50);
+            wordBox.style.left = randomX + 'px';
+            wordBox.style.top = randomY + 'px';
+
+            // Add drag functionality
+            wordBox.addEventListener('mousedown', startDrag);
+
+            canvas.appendChild(wordBox);
+
+            // Clear input and focus
+            wordInput.value = '';
+            wordInput.focus();
+        }
+
+        function startDrag(e) {
+            draggedElement = this;
+            const rect = draggedElement.getBoundingClientRect();
+            const canvasRect = canvas.getBoundingClientRect();
+
+            offsetX = e.clientX - rect.left;
+            offsetY = e.clientY - rect.top;
+
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('mouseup', stopDrag);
+        }
+
+        function drag(e) {
+            if (draggedElement) {
+                const canvasRect = canvas.getBoundingClientRect();
+                let newX = e.clientX - canvasRect.left - offsetX;
+                let newY = e.clientY - canvasRect.top - offsetY;
+
+                // Keep box within canvas bounds
+                newX = Math.max(0, Math.min(newX, canvas.clientWidth - draggedElement.offsetWidth));
+                newY = Math.max(0, Math.min(newY, canvas.clientHeight - draggedElement.offsetHeight));
+
+                draggedElement.style.left = newX + 'px';
+                draggedElement.style.top = newY + 'px';
+            }
+        }
+
+        function stopDrag() {
+            draggedElement = null;
+            document.removeEventListener('mousemove', drag);
+            document.removeEventListener('mouseup', stopDrag);
+        }
+    </script>
+</body>
+</html>
