@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marking Grid</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #f4f4f9;
+            margin: 0;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 8px;
+            max-width: 600px;
+            width: 100%;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .grid-btn {
+            aspect-ratio: 1; /* Keeps them square */
+            font-size: 16px;
+            font-weight: bold;
+            background-color: #e0e0e0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .grid-btn:hover {
+            background-color: #d0d0d0;
+        }
+
+        .grid-btn.selected {
+            background-color: #4CAF50;
+            color: white;
+            border-color: #388E3C;
+        }
+
+        .total-box {
+            margin-top: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            padding: 15px 30px;
+            background: #2196F3;
+            color: white;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            min-width: 100px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="grid-container" id="buttonGrid">
+        </div>
+
+    <div class="total-box" id="totalDisplay">0</div>
+
+    <script>
+        const gridContainer = document.getElementById('buttonGrid');
+        const totalDisplay = document.getElementById('totalDisplay');
+        
+        // The 10 values for each row
+        const rowValues = [10, 9, 8, 7, 6, 5, 4, 2, 1.5, 0];
+        const totalRows = 5;
+
+        // Generate the 5x10 grid
+        for (let row = 0; row < totalRows; row++) {
+            rowValues.forEach(val => {
+                const button = document.createElement('button');
+                button.classList.add('grid-btn');
+                button.textContent = val;
+                button.dataset.value = val; // Store the numerical value
+                
+                // Add click event listener
+                button.addEventListener('click', () => {
+                    button.classList.toggle('selected');
+                    updateTotal();
+                });
+
+                gridContainer.appendChild(button);
+            });
+        }
+
+        // Function to calculate and display the sum
+        function updateTotal() {
+            const selectedButtons = document.querySelectorAll('.grid-btn.selected');
+            let sum = 0;
+            
+            selectedButtons.forEach(btn => {
+                sum += parseFloat(btn.dataset.value);
+            });
+
+            // Displays the sum, formatted beautifully if decimals exist
+            totalDisplay.textContent = Number(sum.toFixed(2));
+        }
+    </script>
+
+</body>
+</html>
