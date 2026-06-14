@@ -74,6 +74,8 @@
             font-weight: 500;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
             transition: box-shadow 0.2s;
+            /* Prevent default touch behaviours while dragging */
+            touch-action: none;
         }
 
         .word-box:hover {
@@ -106,6 +108,7 @@
         let draggedElement = null;
         let offsetX = 0;
         let offsetY = 0;
+        let activePointerId = null;
 
         // Add word when button is clicked
         addButton.addEventListener('click', addWord);
@@ -136,8 +139,8 @@
             wordBox.style.left = randomX + 'px';
             wordBox.style.top = randomY + 'px';
 
-            // Add drag functionality
-            wordBox.addEventListener('mousedown', startDrag);
+            // Add pointer-based drag functionality (works for mouse, touch, pen)
+            wordBox.addEventListener('pointerdown', startDrag);
 
             canvas.appendChild(wordBox);
 
@@ -147,40 +150,65 @@
         }
 
         function startDrag(e) {
+            // Only respond to primary button/touch/pen
+            if (e.button && e.button !== 0) return;
+
+            e.preventDefault();
+
             draggedElement = this;
+            activePointerId = e.pointerId;
+
             const canvasRect = canvas.getBoundingClientRect();
-            
+
             // Get current position from CSS
             const currentX = parseFloat(draggedElement.style.left) || 0;
             const currentY = parseFloat(draggedElement.style.top) || 0;
 
-            // Calculate offset from mouse position to element's current position
+            // Calculate offset from mouse/touch position to element's current position
             offsetX = e.clientX - canvasRect.left - currentX;
             offsetY = e.clientY - canvasRect.top - currentY;
 
-            document.addEventListener('mousemove', drag);
-            document.addEventListener('mouseup', stopDrag);
+            // Try to capture the pointer on the element so we receive events even if pointer leaves it
+            try {
+                draggedElement.setPointerCapture(activePointerId);
+            } catch (err) {
+                // setPointerCapture may fail in some browsers; it's optional
+            }
+
+            document.addEventListener('pointermove', drag);
+            document.addEventListener('pointerup', stopDrag);
+            document.addEventListener('pointercancel', stopDrag);
         }
 
         function drag(e) {
-            if (draggedElement) {
-                const canvasRect = canvas.getBoundingClientRect();
-                let newX = e.clientX - canvasRect.left - offsetX;
-                let newY = e.clientY - canvasRect.top - offsetY;
+            if (!draggedElement || e.pointerId !== activePointerId) return;
 
-                // Keep box within canvas bounds
-                newX = Math.max(0, Math.min(newX, canvas.clientWidth - draggedElement.offsetWidth));
-                newY = Math.max(0, Math.min(newY, canvas.clientHeight - draggedElement.offsetHeight));
+            const canvasRect = canvas.getBoundingClientRect();
+            let newX = e.clientX - canvasRect.left - offsetX;
+            let newY = e.clientY - canvasRect.top - offsetY;
 
-                draggedElement.style.left = newX + 'px';
-                draggedElement.style.top = newY + 'px';
-            }
+            // Keep box within canvas bounds
+            newX = Math.max(0, Math.min(newX, canvas.clientWidth - draggedElement.offsetWidth));
+            newY = Math.max(0, Math.min(newY, canvas.clientHeight - draggedElement.offsetHeight));
+
+            draggedElement.style.left = newX + 'px';
+            draggedElement.style.top = newY + 'px';
         }
 
-        function stopDrag() {
+        function stopDrag(e) {
+            if (draggedElement && activePointerId !== null) {
+                try {
+                    draggedElement.releasePointerCapture(activePointerId);
+                } catch (err) {
+                    // ignore
+                }
+            }
+
+            activePointerId = null;
             draggedElement = null;
-            document.removeEventListener('mousemove', drag);
-            document.removeEventListener('mouseup', stopDrag);
+            document.removeEventListener('pointermove', drag);
+            document.removeEventListener('pointerup', stopDrag);
+            document.removeEventListener('pointercancel', stopDrag);
         }
     </script>
 </body>
