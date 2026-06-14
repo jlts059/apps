@@ -104,6 +104,18 @@
             color: #FF9800;
         }
 
+        .summary-value.mark-out-of-10.green {
+            color: #4CAF50;
+        }
+
+        .summary-value.mark-out-of-10.blue {
+            color: #2196F3;
+        }
+
+        .summary-value.mark-out-of-10.red {
+            color: #F44336;
+        }
+
         .panel-wrapper {
             width: 100%;
             max-width: var(--max-width);
@@ -416,7 +428,8 @@
         // Shared configuration
         const rowValues = [10, 9, 8, 7, 6, 5, 4, 2, 1.5, 0];
         const totalRows = 5;
-        const maxPossibleMark = 10 * totalRows * 2; // 10 is max value, totalRows rows, 2 grids per candidate
+        // Maximum possible mark = 100 from grids + 100 from PO#2 + POI#2 = 200
+        const maxPossibleMark = 200;
 
         // Keypad state
         let keypadState = {
@@ -554,7 +567,18 @@
 
             // Calculate /10 as (finalTotal / maxPossibleMark) * 10
             const markOut10 = (finalTotal / maxPossibleMark) * 10;
-            document.getElementById(`outOf10${candidate}`).textContent = markOut10.toFixed(1);
+            const outOf10Element = document.getElementById(`outOf10${candidate}`);
+            outOf10Element.textContent = markOut10.toFixed(1);
+
+            // Apply color coding based on mark out of 10
+            outOf10Element.classList.remove('green', 'blue', 'red');
+            if (markOut10 > 6.5) {
+                outOf10Element.classList.add('green');
+            } else if (markOut10 >= 5 && markOut10 <= 6.5) {
+                outOf10Element.classList.add('blue');
+            } else if (markOut10 <= 4) {
+                outOf10Element.classList.add('red');
+            }
         }
 
         // Keypad functions
