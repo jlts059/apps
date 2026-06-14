@@ -81,6 +81,12 @@
             border-color: #2b6fb7;
         }
 
+        .label-muted {
+            color: #999;
+            font-size: 0.9em;
+            font-weight: 400;
+        }
+
         .summary-label {
             font-size: 11px;
             font-weight: 600;
@@ -195,6 +201,80 @@
             text-align: center;
         }
 
+        .sticky-header {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            background: var(--page-bg);
+            padding-top: 24px;
+            padding-bottom: 12px;
+        }
+
+        .label-muted {
+            color: #999;
+            font-size: 0.9em;
+            font-weight: 400;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .grid-total-box {
+            min-width: 72px;
+            padding: 10px 14px;
+            background: #1976D2;
+            color: white;
+            border-radius: 8px;
+            font-weight: bold;
+            text-align: center;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+        }
+
+        .summary-box.green,
+        .grid-total-box.green {
+            background: #e8f5e9;
+            border-color: #4CAF50;
+            color: #2E7D32;
+        }
+
+        .summary-box.blue,
+        .grid-total-box.blue {
+            background: #e3f2fd;
+            border-color: #2196F3;
+            color: #1565C0;
+        }
+
+        .summary-box.red,
+        .grid-total-box.red {
+            background: #ffebee;
+            border-color: #F44336;
+            color: #7f1d1d;
+        }
+
+        .summary-box.orange,
+        .grid-total-box.orange {
+            background: #fff3e0;
+            border-color: #FF9800;
+            color: #E65100;
+        }
+
+        .summary-box.green .summary-value,
+        .summary-box.blue .summary-value,
+        .summary-box.red .summary-value {
+            color: inherit;
+        }
+
+        .grid-total-box.green,
+        .grid-total-box.blue,
+        .grid-total-box.red {
+            border: 1px solid transparent;
+        }
+
         /* Keypad Modal */
         .modal {
             display: none;
@@ -241,6 +321,14 @@
             margin-bottom: 16px;
             min-height: 40px;
             word-wrap: break-word;
+        }
+
+        .keypad-error {
+            color: #d32f2f;
+            font-size: 14px;
+            min-height: 18px;
+            text-align: center;
+            margin-bottom: 8px;
         }
 
         .keypad-buttons {
@@ -303,31 +391,32 @@
 </head>
 <body>
 
-    <div class="tabs">
-        <div id="tabA" class="tab active">Candidato A</div>
-        <div id="tabB" class="tab">Candidato B</div>
-    </div>
+    <div class="sticky-header">
+        <div class="tabs">
+            <div id="tabA" class="tab active">Candidato A</div>
+            <div id="tabB" class="tab">Candidato B</div>
+        </div>
 
-    <!-- Summary Row -->
-    <div class="summary-row" id="summaryRowA">
+        <!-- Summary Row -->
+        <div class="summary-row" id="summaryRowA">
         <div class="summary-box">
-            <div class="summary-label">Tot #1</div>
+            <div class="summary-label">Tot #1 <span class="label-muted">/100</span></div>
             <div class="summary-value" id="tot1A">0</div>
         </div>
         <div class="summary-box input-field" id="po2BoxA">
-            <div class="summary-label">PO #2</div>
+            <div class="summary-label">PO #2 <span class="label-muted">/50</span></div>
             <div class="summary-value" id="po2A">-</div>
         </div>
         <div class="summary-box input-field" id="poi2BoxA">
-            <div class="summary-label">POI#2</div>
+            <div class="summary-label">POI#2 <span class="label-muted">/50</span></div>
             <div class="summary-value" id="poi2A">-</div>
         </div>
         <div class="summary-box input-field" id="tot2BoxA">
-            <div class="summary-label">Tot #2</div>
+            <div class="summary-label">Tot #2 <span class="label-muted">/100</span></div>
             <div class="summary-value" id="tot2A">-</div>
         </div>
         <div class="summary-box">
-            <div class="summary-label">Total</div>
+            <div class="summary-label">Total <span class="label-dynamic" id="totalLabelA">/200</span></div>
             <div class="summary-value total" id="totalA">0</div>
         </div>
         <div class="summary-box">
@@ -336,25 +425,25 @@
         </div>
     </div>
 
-    <div class="summary-row" id="summaryRowB" style="display: none;">
+        <div class="summary-row" id="summaryRowB" style="display: none;">
         <div class="summary-box">
-            <div class="summary-label">Tot #1</div>
+            <div class="summary-label">Tot #1 <span class="label-muted">/100</span></div>
             <div class="summary-value" id="tot1B">0</div>
         </div>
         <div class="summary-box input-field" id="po2BoxB">
-            <div class="summary-label">PO #2</div>
+            <div class="summary-label">PO #2 <span class="label-muted">/50</span></div>
             <div class="summary-value" id="po2B">-</div>
         </div>
         <div class="summary-box input-field" id="poi2BoxB">
-            <div class="summary-label">POI#2</div>
+            <div class="summary-label">POI#2 <span class="label-muted">/50</span></div>
             <div class="summary-value" id="poi2B">-</div>
         </div>
         <div class="summary-box input-field" id="tot2BoxB">
-            <div class="summary-label">Tot #2</div>
+            <div class="summary-label">Tot #2 <span class="label-muted">/100</span></div>
             <div class="summary-value" id="tot2B">-</div>
         </div>
         <div class="summary-box">
-            <div class="summary-label">Total</div>
+            <div class="summary-label">Total <span class="label-dynamic" id="totalLabelB">/200</span></div>
             <div class="summary-value total" id="totalB">0</div>
         </div>
         <div class="summary-box">
@@ -362,39 +451,48 @@
             <div class="summary-value mark-out-of-10" id="outOf10B">0.0</div>
         </div>
     </div>
+    </div>
 
     <!-- Panels -->
     <div class="panel-wrapper">
         <div class="panel active" id="panelA">
             <!-- Grid A1 -->
             <div class="card">
-                <h3 class="grid-title">Grid A1</h3>
-                <div class="grid-container" id="buttonGridA1"></div>
-                <div class="total-box" id="totalDisplayA1">0</div>
+            <div class="card-header">
+                <h3 class="grid-title">Monólogo (PO #1)</h3>
+                <div class="grid-total-box" id="totalDisplayA1">0</div>
             </div>
+            <div class="grid-container" id="buttonGridA1"></div>
+        </div>
 
             <!-- Grid A2 -->
             <div class="card">
-                <h3 class="grid-title">Grid A2</h3>
-                <div class="grid-container" id="buttonGridA2"></div>
-                <div class="total-box" id="totalDisplayA2">0</div>
+            <div class="card-header">
+                <h3 class="grid-title">Diálogo (POI#1)</h3>
+                <div class="grid-total-box" id="totalDisplayA2">0</div>
             </div>
+            <div class="grid-container" id="buttonGridA2"></div>
+        </div>
         </div>
 
         <div class="panel" id="panelB">
             <!-- Grid B1 -->
             <div class="card">
-                <h3 class="grid-title">Grid B1</h3>
-                <div class="grid-container" id="buttonGridB1"></div>
-                <div class="total-box" id="totalDisplayB1">0</div>
+            <div class="card-header">
+                <h3 class="grid-title">Monólogo (PO #1)</h3>
+                <div class="grid-total-box" id="totalDisplayB1">0</div>
             </div>
+            <div class="grid-container" id="buttonGridB1"></div>
+        </div>
 
             <!-- Grid B2 -->
             <div class="card">
-                <h3 class="grid-title">Grid B2</h3>
-                <div class="grid-container" id="buttonGridB2"></div>
-                <div class="total-box" id="totalDisplayB2">0</div>
+            <div class="card-header">
+                <h3 class="grid-title">Diálogo (POI#1)</h3>
+                <div class="grid-total-box" id="totalDisplayB2">0</div>
             </div>
+            <div class="grid-container" id="buttonGridB2"></div>
+        </div>
         </div>
     </div>
 
@@ -403,6 +501,7 @@
         <div class="keypad-container">
             <div class="keypad-title" id="keypadTitle">Enter Value</div>
             <div class="keypad-display" id="keypadDisplay">0</div>
+            <div class="keypad-error" id="keypadError"></div>
             <div class="keypad-buttons">
                 <button class="keypad-btn" onclick="keypadNumber('1')">1</button>
                 <button class="keypad-btn" onclick="keypadNumber('2')">2</button>
@@ -428,8 +527,11 @@
         // Shared configuration
         const rowValues = [10, 9, 8, 7, 6, 5, 4, 2, 1.5, 0];
         const totalRows = 5;
-        // Maximum possible mark = 100 from grids + 100 from PO#2 + POI#2 = 200
-        const maxPossibleMark = 200;
+        const maxGridValue = Math.max(...rowValues);
+        const singleGridMax = maxGridValue * totalRows;
+        const tot1Max = singleGridMax * 2;
+        const tot2Max = singleGridMax * 2;
+        const maxPossibleMark = tot1Max + tot2Max;
 
         // Keypad state
         let keypadState = {
@@ -524,6 +626,55 @@
         }
 
         // Calculate total for a given container
+        function formatNumber(value, precision = 2) {
+            const rounded = Number(value.toFixed(precision));
+            return Number.isInteger(rounded) ? String(rounded) : String(rounded);
+        }
+
+        function clearColorClasses(element) {
+            element.classList.remove('green', 'blue', 'red');
+        }
+
+        function getColorClass(percent) {
+            if (percent > 0.65) return 'green';
+            if (percent >= 0.5) return 'blue';
+            if (percent > 0.4) return 'orange';
+            if (percent <= 0.4) return 'red';
+            return '';
+        }
+
+        function applyColorToElement(element, percent) {
+            clearColorClasses(element);
+            const colorClass = getColorClass(percent);
+            if (colorClass) {
+                element.classList.add(colorClass);
+            }
+        }
+
+        function updateNumericBoxColor(valueText, maxValue, valueId) {
+            const value = parseFloat(valueText);
+            const valueElement = document.getElementById(valueId);
+            if (!valueElement) return;
+            const box = valueElement.closest('.summary-box');
+            if (!box) return;
+            if (valueText === '-' || Number.isNaN(value) || maxValue <= 0) {
+                clearColorClasses(box);
+                return;
+            }
+            applyColorToElement(box, value / maxValue);
+        }
+
+        function updateGridTotalColor(totalId) {
+            const totalElement = document.getElementById(totalId);
+            const valueText = totalElement.textContent;
+            const value = parseFloat(valueText);
+            if (valueText === '-' || Number.isNaN(value)) {
+                clearColorClasses(totalElement);
+                return;
+            }
+            applyColorToElement(totalElement, value / singleGridMax);
+        }
+
         function updateTotal(container, totalDisplay, candidate) {
             const selectedButtons = container.querySelectorAll('.grid-btn.selected');
             let sum = 0;
@@ -531,54 +682,115 @@
                 sum += parseFloat(btn.dataset.value);
             });
 
-            const value = Number(sum.toFixed(2));
-            totalDisplay.textContent = Number.isInteger(value) ? String(value) : value.toFixed(2);
+            totalDisplay.textContent = formatNumber(sum);
             updateSummary(candidate);
         }
 
         // Update summary values
+        function isGridComplete(container) {
+            for (let row = 0; row < totalRows; row++) {
+                if (!container.querySelector(`.grid-btn.selected[data-row="${row}"]`)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
         function updateSummary(candidate) {
-            const po2 = parseFloat(document.getElementById(`po2${candidate}`).textContent) || 0;
-            const poi2 = parseFloat(document.getElementById(`poi2${candidate}`).textContent) || 0;
-            const tot2Value = document.getElementById(`tot2${candidate}`).textContent;
+            const po2Text = document.getElementById(`po2${candidate}`).textContent;
+            const poi2Text = document.getElementById(`poi2${candidate}`).textContent;
+            const po2 = parseFloat(po2Text) || 0;
+            const poi2 = parseFloat(poi2Text) || 0;
 
-            // Calculate Tot #1
-            const combinedTot1 = candidate === 'A' ? 
-                (parseFloat(document.getElementById('totalDisplayA1').textContent) || 0) + 
-                (parseFloat(document.getElementById('totalDisplayA2').textContent) || 0) :
-                (parseFloat(document.getElementById('totalDisplayB1').textContent) || 0) + 
-                (parseFloat(document.getElementById('totalDisplayB2').textContent) || 0);
-            
-            document.getElementById(`tot1${candidate}`).textContent = combinedTot1.toFixed(2);
-
-            // Calculate Tot #2 by adding PO #2 and POI #2
-            const tot2 = po2 + poi2;
-            if (tot2 > 0 || tot2Value !== '-') {
-                document.getElementById(`tot2${candidate}`).textContent = tot2.toFixed(2);
-            }
-
-            // Calculate Total
-            const finalTot1 = parseFloat(document.getElementById(`tot1${candidate}`).textContent) || 0;
-            const finalTot2 = parseFloat(document.getElementById(`tot2${candidate}`).textContent) || 0;
-            const finalTotal = finalTot1 + finalTot2;
-            
-            // Display total as "X / maxPossibleMark"
-            document.getElementById(`total${candidate}`).textContent = `${finalTotal.toFixed(2)} / ${maxPossibleMark}`;
-
-            // Calculate /10 as (finalTotal / maxPossibleMark) * 10
-            const markOut10 = (finalTotal / maxPossibleMark) * 10;
+            const grid1Container = document.getElementById(candidate === 'A' ? 'buttonGridA1' : 'buttonGridB1');
+            const grid2Container = document.getElementById(candidate === 'A' ? 'buttonGridA2' : 'buttonGridB2');
+            const grid1Complete = isGridComplete(grid1Container);
+            const grid2Complete = isGridComplete(grid2Container);
+            const tot1Element = document.getElementById(`tot1${candidate}`);
+            const tot2Element = document.getElementById(`tot2${candidate}`);
+            const summaryTotal = document.getElementById(`total${candidate}`);
             const outOf10Element = document.getElementById(`outOf10${candidate}`);
-            outOf10Element.textContent = markOut10.toFixed(1);
 
-            // Apply color coding based on mark out of 10
-            outOf10Element.classList.remove('green', 'blue', 'red');
-            if (markOut10 > 6.5) {
-                outOf10Element.classList.add('green');
-            } else if (markOut10 >= 5 && markOut10 <= 6.5) {
-                outOf10Element.classList.add('blue');
-            } else if (markOut10 <= 4) {
-                outOf10Element.classList.add('red');
+            // Calculate Tot #1 only when both grids are complete
+            if (grid1Complete && grid2Complete) {
+                const combinedTot1 = (parseFloat(document.getElementById('totalDisplay' + candidate + '1').textContent) || 0) +
+                    (parseFloat(document.getElementById('totalDisplay' + candidate + '2').textContent) || 0);
+                tot1Element.textContent = formatNumber(combinedTot1);
+            } else {
+                tot1Element.textContent = '-';
             }
+
+            // Calculate Tot #2 by adding PO #2 and POI #2 only when both values are present
+            const tot2Full = po2Text !== '-' && poi2Text !== '-';
+            if (tot2Full) {
+                const tot2 = po2 + poi2;
+                tot2Element.textContent = formatNumber(tot2);
+            } else {
+                tot2Element.textContent = '-';
+            }
+
+            // Calculate Total only when Tot #1 and Tot #2 are both full
+            const tot1Text = tot1Element.textContent;
+            const tot2Text = tot2Element.textContent;
+            const canComputeTotal = tot1Text !== '-' && tot2Text !== '-';
+
+            if (canComputeTotal) {
+                const finalTot1 = parseFloat(tot1Text) || 0;
+                const finalTot2 = parseFloat(tot2Text) || 0;
+                const finalTotal = finalTot1 + finalTot2;
+
+                // Update the dynamic Total label with the sum of TOT #1 and TOT #2 maximums
+                document.getElementById(`totalLabel${candidate}`).textContent = `/ ${maxPossibleMark}`;
+                    summaryTotal.textContent = formatNumber(finalTotal);
+
+                // Calculate /10 as (finalTotal / maxPossibleMark) * 10
+                const markOut10 = (finalTotal / maxPossibleMark) * 10;
+                outOf10Element.textContent = formatNumber(markOut10, 1);
+                clearColorClasses(outOf10Element);
+                const colorClass = getColorClass(markOut10 / 10);
+                if (colorClass) {
+                    outOf10Element.classList.add(colorClass);
+                }
+            } else {
+                summaryTotal.textContent = '-';
+                outOf10Element.textContent = '-';
+                clearColorClasses(outOf10Element);
+            }
+
+            updateNumericBoxColor(tot1Element.textContent, tot1Max, `tot1${candidate}`);
+            updateNumericBoxColor(po2Text, singleGridMax, `po2${candidate}`);
+            updateNumericBoxColor(poi2Text, singleGridMax, `poi2${candidate}`);
+            updateNumericBoxColor(tot2Element.textContent, tot2Max, `tot2${candidate}`);
+            updateNumericBoxColor(summaryTotal.textContent, maxPossibleMark, `total${candidate}`);
+            updateGridTotalColor(`totalDisplay${candidate}1`);
+            updateGridTotalColor(`totalDisplay${candidate}2`);
+        }
+
+        function showKeypadError(message) {
+            document.getElementById('keypadError').textContent = message;
+        }
+
+        function clearKeypadError() {
+            document.getElementById('keypadError').textContent = '';
+        }
+
+        function updateKeypadDisplay() {
+            const raw = keypadState.value;
+            let displayValue = raw;
+
+            if (raw === '' || raw === '0') {
+                displayValue = '0';
+            } else if (raw.endsWith('.')) {
+                displayValue = raw;
+            } else {
+                const parsed = parseFloat(raw);
+                if (!Number.isNaN(parsed)) {
+                    const precision = keypadState.hasDecimal ? Math.max(raw.length - raw.indexOf('.') - 1, 1) : 2;
+                    displayValue = formatNumber(parsed, precision);
+                }
+            }
+
+            document.getElementById('keypadDisplay').textContent = displayValue;
         }
 
         // Keypad functions
@@ -588,15 +800,11 @@
             keypadState.value = '0';
             keypadState.hasDecimal = false;
 
-            const currentValue = document.getElementById(`${field}${candidate}`).textContent;
-            if (currentValue !== '-') {
-                keypadState.value = currentValue;
-                keypadState.hasDecimal = currentValue.includes('.');
-            }
-
+            clearKeypadError();
             document.getElementById('keypadTitle').textContent = `${title} - ${candidate === 'A' ? 'Candidato A' : 'Candidato B'}`;
-            document.getElementById('keypadDisplay').textContent = keypadState.value;
+            updateKeypadDisplay();
             document.getElementById('keypadModal').classList.add('active');
+            document.getElementById('keypadDisplay').focus();
         }
 
         function keypadNumber(num) {
@@ -605,7 +813,7 @@
             } else if (keypadState.value.length < 10) {
                 keypadState.value += num;
             }
-            document.getElementById('keypadDisplay').textContent = keypadState.value;
+            updateKeypadDisplay();
         }
 
         function keypadDecimal() {
@@ -613,7 +821,7 @@
                 keypadState.value += '.';
                 keypadState.hasDecimal = true;
             }
-            document.getElementById('keypadDisplay').textContent = keypadState.value;
+            updateKeypadDisplay();
         }
 
         function keypadBackspace() {
@@ -626,11 +834,34 @@
                 keypadState.value = '0';
                 keypadState.hasDecimal = false;
             }
-            document.getElementById('keypadDisplay').textContent = keypadState.value;
+            updateKeypadDisplay();
+        }
+
+        function getFieldMax(field) {
+            if (field === 'po2' || field === 'poi2') return singleGridMax;
+            if (field === 'tot2') return tot2Max;
+            return Infinity;
         }
 
         function confirmKeypad() {
-            const value = parseFloat(keypadState.value) || 0;
+            const rawValue = keypadState.value.trim();
+            const value = parseFloat(rawValue);
+            const maxValue = getFieldMax(keypadState.field);
+
+            if (Number.isNaN(value) || rawValue === '') {
+                showKeypadError('Valor inválido');
+                return;
+            }
+            if (value < 0) {
+                showKeypadError('Valor inválido');
+                return;
+            }
+            if (value > maxValue) {
+                showKeypadError(`máximo ${Number.isInteger(maxValue) ? maxValue : maxValue.toFixed(2)}`);
+                return;
+            }
+
+            clearKeypadError();
             document.getElementById(`${keypadState.field}${keypadState.candidate}`).textContent = value.toString();
             closeKeypad();
             updateSummary(keypadState.candidate);
@@ -643,6 +874,29 @@
         // Close modal on background click
         document.getElementById('keypadModal').addEventListener('click', (e) => {
             if (e.target.id === 'keypadModal') {
+                closeKeypad();
+            }
+        });
+
+        // Keyboard support for keypad
+        document.addEventListener('keydown', (e) => {
+            const modal = document.getElementById('keypadModal');
+            if (!modal.classList.contains('active')) return;
+
+            if (e.key >= '0' && e.key <= '9') {
+                e.preventDefault();
+                keypadNumber(e.key);
+            } else if (e.key === '.') {
+                e.preventDefault();
+                keypadDecimal();
+            } else if (e.key === 'Backspace') {
+                e.preventDefault();
+                keypadBackspace();
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                confirmKeypad();
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
                 closeKeypad();
             }
         });
