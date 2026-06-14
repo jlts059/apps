@@ -416,6 +416,7 @@
         // Shared configuration
         const rowValues = [10, 9, 8, 7, 6, 5, 4, 2, 1.5, 0];
         const totalRows = 5;
+        const maxPossibleMark = 10 * totalRows * 2; // 10 is max value, totalRows rows, 2 grids per candidate
 
         // Keypad state
         let keypadState = {
@@ -524,14 +525,11 @@
 
         // Update summary values
         function updateSummary(candidate) {
-            const tot1 = parseFloat(document.getElementById(`tot1${candidate}`).textContent) || 0;
             const po2 = parseFloat(document.getElementById(`po2${candidate}`).textContent) || 0;
             const poi2 = parseFloat(document.getElementById(`poi2${candidate}`).textContent) || 0;
             const tot2Value = document.getElementById(`tot2${candidate}`).textContent;
 
             // Calculate Tot #1
-            const tot1Display = parseFloat(document.getElementById(`totalDisplayA1`).textContent) || 0;
-            const tot1Display2 = parseFloat(document.getElementById(`totalDisplayA2`).textContent) || 0;
             const combinedTot1 = candidate === 'A' ? 
                 (parseFloat(document.getElementById('totalDisplayA1').textContent) || 0) + 
                 (parseFloat(document.getElementById('totalDisplayA2').textContent) || 0) :
@@ -540,22 +538,22 @@
             
             document.getElementById(`tot1${candidate}`).textContent = combinedTot1.toFixed(2);
 
-            // Calculate Tot #2 if not manually set
-            if (tot2Value === '-') {
-                if (po2 !== 0 || poi2 !== 0) {
-                    const tot2 = (po2 || 0) + (poi2 || 0);
-                    document.getElementById(`tot2${candidate}`).textContent = tot2.toFixed(2);
-                }
+            // Calculate Tot #2 by adding PO #2 and POI #2
+            const tot2 = po2 + poi2;
+            if (tot2 > 0 || tot2Value !== '-') {
+                document.getElementById(`tot2${candidate}`).textContent = tot2.toFixed(2);
             }
 
             // Calculate Total
             const finalTot1 = parseFloat(document.getElementById(`tot1${candidate}`).textContent) || 0;
-            const finalTot2 = tot2Value === '-' ? 0 : parseFloat(tot2Value) || 0;
+            const finalTot2 = parseFloat(document.getElementById(`tot2${candidate}`).textContent) || 0;
             const finalTotal = finalTot1 + finalTot2;
-            document.getElementById(`total${candidate}`).textContent = finalTotal.toFixed(2);
+            
+            // Display total as "X / maxPossibleMark"
+            document.getElementById(`total${candidate}`).textContent = `${finalTotal.toFixed(2)} / ${maxPossibleMark}`;
 
-            // Calculate /10
-            const markOut10 = (finalTotal / finalTotal) * 10 || 0;
+            // Calculate /10 as (finalTotal / maxPossibleMark) * 10
+            const markOut10 = (finalTotal / maxPossibleMark) * 10;
             document.getElementById(`outOf10${candidate}`).textContent = markOut10.toFixed(1);
         }
 
