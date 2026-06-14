@@ -46,9 +46,16 @@
             box-shadow: 0 2px 6px rgba(0,0,0,0.12);
         }
 
-        .card {
+        .grids-container {
             width: 100%;
             max-width: var(--max-width);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .card {
+            width: 100%;
             background: var(--card-bg);
             padding: 16px;
             border-radius: 8px;
@@ -56,6 +63,13 @@
             display: flex;
             flex-direction: column;
             gap: 12px;
+        }
+
+        .grid-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin: 0;
         }
 
         .grid-container {
@@ -116,9 +130,22 @@
             align-self: center;
         }
 
+        .combined-total-box {
+            margin-top: 12px;
+            font-size: 22px;
+            font-weight: bold;
+            padding: 12px 20px;
+            background: #FF9800;
+            color: white;
+            border-radius: 6px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+            text-align: center;
+            align-self: center;
+        }
+
         /* hide inactive panels */
         .panel { display: none; }
-        .panel.active { display: flex; flex-direction: column; gap: 8px; }
+        .panel.active { display: flex; flex-direction: column; gap: 16px; }
     </style>
 </head>
 <body>
@@ -128,14 +155,42 @@
         <div id="tabB" class="tab">Marking B</div>
     </div>
 
-    <div class="card panel active" id="panelA">
-        <div class="grid-container" id="buttonGridA"></div>
-        <div class="total-box" id="totalDisplayA">0</div>
+    <div class="panel active" id="panelA">
+        <!-- Grid A1 -->
+        <div class="card">
+            <h3 class="grid-title">Grid A1</h3>
+            <div class="grid-container" id="buttonGridA1"></div>
+            <div class="total-box" id="totalDisplayA1">0</div>
+        </div>
+
+        <!-- Grid A2 -->
+        <div class="card">
+            <h3 class="grid-title">Grid A2</h3>
+            <div class="grid-container" id="buttonGridA2"></div>
+            <div class="total-box" id="totalDisplayA2">0</div>
+        </div>
+
+        <!-- Combined Total for Tab A -->
+        <div class="combined-total-box" id="combinedTotalA">Total: 0</div>
     </div>
 
-    <div class="card panel" id="panelB">
-        <div class="grid-container" id="buttonGridB"></div>
-        <div class="total-box" id="totalDisplayB">0</div>
+    <div class="panel" id="panelB">
+        <!-- Grid B1 -->
+        <div class="card">
+            <h3 class="grid-title">Grid B1</h3>
+            <div class="grid-container" id="buttonGridB1"></div>
+            <div class="total-box" id="totalDisplayB1">0</div>
+        </div>
+
+        <!-- Grid B2 -->
+        <div class="card">
+            <h3 class="grid-title">Grid B2</h3>
+            <div class="grid-container" id="buttonGridB2"></div>
+            <div class="total-box" id="totalDisplayB2">0</div>
+        </div>
+
+        <!-- Combined Total for Tab B -->
+        <div class="combined-total-box" id="combinedTotalB">Total: 0</div>
     </div>
 
     <script>
@@ -143,9 +198,11 @@
         const rowValues = [10, 9, 8, 7, 6, 5, 4, 2, 1.5, 0];
         const totalRows = 5;
 
-        // Create both grids
-        createGrid('buttonGridA', 'totalDisplayA');
-        createGrid('buttonGridB', 'totalDisplayB');
+        // Create all four grids
+        createGrid('buttonGridA1', 'totalDisplayA1', 'combinedTotalA');
+        createGrid('buttonGridA2', 'totalDisplayA2', 'combinedTotalA');
+        createGrid('buttonGridB1', 'totalDisplayB1', 'combinedTotalB');
+        createGrid('buttonGridB2', 'totalDisplayB2', 'combinedTotalB');
 
         // Tab switching
         const tabA = document.getElementById('tabA');
@@ -168,9 +225,10 @@
         });
 
         // Factory to create a grid inside the container with its own total display
-        function createGrid(containerId, totalId) {
+        function createGrid(containerId, totalId, combinedTotalId) {
             const container = document.getElementById(containerId);
             const totalDisplay = document.getElementById(totalId);
+            const combinedTotal = document.getElementById(combinedTotalId);
 
             for (let row = 0; row < totalRows; row++) {
                 rowValues.forEach(val => {
@@ -209,6 +267,7 @@
                         }
 
                         updateTotal(container, totalDisplay);
+                        updateCombinedTotal(combinedTotalId);
                     });
 
                     container.appendChild(button);
@@ -227,6 +286,25 @@
             // Display nicely (avoid trailing .00 if integer)
             const value = Number(sum.toFixed(2));
             totalDisplay.textContent = Number.isInteger(value) ? String(value) : value.toFixed(2);
+        }
+
+        // Update combined total for a tab
+        function updateCombinedTotal(combinedTotalId) {
+            const combinedTotal = document.getElementById(combinedTotalId);
+            let total = 0;
+
+            if (combinedTotalId === 'combinedTotalA') {
+                const total1 = parseFloat(document.getElementById('totalDisplayA1').textContent) || 0;
+                const total2 = parseFloat(document.getElementById('totalDisplayA2').textContent) || 0;
+                total = total1 + total2;
+            } else if (combinedTotalId === 'combinedTotalB') {
+                const total1 = parseFloat(document.getElementById('totalDisplayB1').textContent) || 0;
+                const total2 = parseFloat(document.getElementById('totalDisplayB2').textContent) || 0;
+                total = total1 + total2;
+            }
+
+            const value = Number(total.toFixed(2));
+            combinedTotal.textContent = 'Total: ' + (Number.isInteger(value) ? String(value) : value.toFixed(2));
         }
     </script>
 
