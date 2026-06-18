@@ -1,215 +1,47 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Word Manipulator</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+function resolveCollisions() {
+    const boxes = Array.from(document.querySelectorAll('.word-box'));
+    const iterations = 10; // Repeat a few times to settle cascading chain-reaction bumps
 
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            background-color: #f0f0f0;
-        }
+    for (let i = 0; i < iterations; i++) {
+        let collisionsResolved = 0;
 
-        .controls {
-            padding: 20px;
-            background-color: #fff;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            display: flex;
-            gap: 10px;
-        }
+        for (let j = 0; j < boxes.length; j++) {
+            for (let k = j + 1; k < boxes.length; k++) {
+                const b1 = boxes[j];
+                const b2 = boxes[k];
 
-        #wordInput {
-            flex: 1;
-            padding: 10px;
-            font-size: 16px;
-            border: 2px solid #ccc;
-            border-radius: 4px;
-            transition: border-color 0.3s;
-        }
+                const r1 = b1.getBoundingClientRect();
+                const r2 = b2.getBoundingClientRect();
 
-        #wordInput:focus {
-            outline: none;
-            border-color: #87CEEB;
-        }
+                // Check if they overlap
+                const overlapX = Math.min(r1.right, r2.right) - Math.max(r1.left, r2.left);
+                const overlapY = Math.min(r1.bottom, r2.bottom) - Math.max(r1.top, r2.top);
 
-        #addButton {
-            padding: 10px 20px;
-            font-size: 16px;
-            background-color: #87CEEB;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
+                if (overlapX > 0 && overlapY > 0) {
+                    collisionsResolved++;
 
-        #addButton:hover {
-            background-color: #5B9FBD;
-        }
+                    // Push along the axis with the shallowest overlap to keep movements natural
+                    if (overlapX < overlapY) {
+                        const pushX = overlapX / 2;
+                        const sign = r1.left + r1.width / 2 < r2.left + r2.width / 2 ? -1 : 1;
+                        
+                        adjustElementX(b1, sign * pushX);
+                        adjustElementX(b2, -sign * pushX);
+                    } else {
+                        const pushY = overlapY / 2;
+                        const sign = r1.top + r1.height / 2 < r2.top + r2.height / 2 ? -1 : 1;
 
-        #canvas {
-            flex: 1;
-            background-color: white;
-            position: relative;
-            overflow: hidden;
-        }
+                        adjustElementY(b1, sign * pushY);
+                        adjustElementY(b2, -sign * pushY);
+                    }
 
-        .word-box {
-            position: absolute;
-            background-color: #87CEEB;
-            color: #333;
-            padding: 10px 15px;
-            border-radius: 6px;
-            cursor: grab;
-            user-select: none;
-            font-weight: 500;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-            transition: box-shadow 0.2s;
-            /* Prevent default touch behaviours while dragging */
-            touch-action: none;
-        }
-
-        .word-box:hover {
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
-        }
-
-        .word-box:active {
-            cursor: grabbing;
-        }
-    </style>
-</head>
-<body>
-    <div class="controls">
-        <input 
-            type="text" 
-            id="wordInput" 
-            placeholder="Enter a word and press Enter or click Add"
-            autofocus
-        >
-        <button id="addButton">Add Word</button>
-    </div>
-
-    <div id="canvas"></div>
-
-    <script>
-        const wordInput = document.getElementById('wordInput');
-        const addButton = document.getElementById('addButton');
-        const canvas = document.getElementById('canvas');
-
-        let draggedElement = null;
-        let offsetX = 0;
-        let offsetY = 0;
-        let activePointerId = null;
-
-        // Add word when button is clicked
-        addButton.addEventListener('click', addWord);
-
-        // Add word when Enter is pressed
-        wordInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                addWord();
-            }
-        });
-
-        function addWord() {
-            const word = wordInput.value.trim();
-            
-            if (word === '') {
-                alert('Please enter a word');
-                return;
-            }
-
-            // Create the word box
-            const wordBox = document.createElement('div');
-            wordBox.className = 'word-box';
-            wordBox.textContent = word;
-
-            // Random position on canvas
-            const randomX = Math.random() * (canvas.clientWidth - 150);
-            const randomY = Math.random() * (canvas.clientHeight - 50);
-            wordBox.style.left = randomX + 'px';
-            wordBox.style.top = randomY + 'px';
-
-            // Add pointer-based drag functionality (works for mouse, touch, pen)
-            wordBox.addEventListener('pointerdown', startDrag);
-
-            canvas.appendChild(wordBox);
-
-            // Clear input and focus
-            wordInput.value = '';
-            wordInput.focus();
-        }
-
-        function startDrag(e) {
-            // Only respond to primary button/touch/pen
-            if (e.button && e.button !== 0) return;
-
-            e.preventDefault();
-
-            draggedElement = this;
-            activePointerId = e.pointerId;
-
-            const canvasRect = canvas.getBoundingClientRect();
-
-            // Get current position from CSS
-            const currentX = parseFloat(draggedElement.style.left) || 0;
-            const currentY = parseFloat(draggedElement.style.top) || 0;
-
-            // Calculate offset from mouse/touch position to element's current position
-            offsetX = e.clientX - canvasRect.left - currentX;
-            offsetY = e.clientY - canvasRect.top - currentY;
-
-            // Try to capture the pointer on the element so we receive events even if pointer leaves it
-            try {
-                draggedElement.setPointerCapture(activePointerId);
-            } catch (err) {
-                // setPointerCapture may fail in some browsers; it's optional
-            }
-
-            document.addEventListener('pointermove', drag);
-            document.addEventListener('pointerup', stopDrag);
-            document.addEventListener('pointercancel', stopDrag);
-        }
-
-        function drag(e) {
-            if (!draggedElement || e.pointerId !== activePointerId) return;
-
-            const canvasRect = canvas.getBoundingClientRect();
-            let newX = e.clientX - canvasRect.left - offsetX;
-            let newY = e.clientY - canvasRect.top - offsetY;
-
-            // Keep box within canvas bounds
-            newX = Math.max(0, Math.min(newX, canvas.clientWidth - draggedElement.offsetWidth));
-            newY = Math.max(0, Math.min(newY, canvas.clientHeight - draggedElement.offsetHeight));
-
-            draggedElement.style.left = newX + 'px';
-            draggedElement.style.top = newY + 'px';
-        }
-
-        function stopDrag(e) {
-            if (draggedElement && activePointerId !== null) {
-                try {
-                    draggedElement.releasePointerCapture(activePointerId);
-                } catch (err) {
-                    // ignore
+                    // Keep boxes within canvas boundaries during the push
+                    constrainToCanvas(b1);
+                    constrainToCanvas(b2);
                 }
             }
-
-            activePointerId = null;
-            draggedElement = null;
-            document.removeEventListener('pointermove', drag);
-            document.removeEventListener('pointerup', stopDrag);
-            document.removeEventListener('pointercancel', stopDrag);
         }
-    </script>
-</body>
-</html>
+        // If a pass completes with zero overlaps, we can stop early
+        if (collisionsResolved === 0) break;
+    }
+}
