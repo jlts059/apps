@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Marking Grid (Two Candidates)</title>
+    <title>Marking Grid</title>
     <style>
         :root{
             --card-bg: #ffffff;
             --page-bg: #f4f4f9;
             --gap: 6px;
-            --max-width: 600px;
+            --max-width: 650px;
         }
 
         body {
@@ -21,126 +21,166 @@
             min-height: 100vh;
             background-color: var(--page-bg);
             margin: 0;
-            padding: 24px;
+            padding: 12px;
             gap: 16px;
+            transition: background-color 0.2s ease;
         }
+
+        /* Distinctive dynamic body theme tracking background tints */
+        body.theme-A { background-color: #eef4fa; --page-bg: #eef4fa; }
+        body.theme-B { background-color: #faf2f6; --page-bg: #faf2f6; }
+        body.theme-QC { background-color: #f4f4f9; --page-bg: #f4f4f9; }
 
         .tabs {
             display: flex;
-            gap: 8px;
+            gap: 6px;
+            margin-bottom: 4px;
         }
 
         .tab {
-            padding: 8px 14px;
-            background: #e9eef8;
+            padding: 8px 12px;
             border-radius: 6px;
             cursor: pointer;
             user-select: none;
             font-weight: 600;
+            font-size: 13px;
             border: 1px solid rgba(0,0,0,0.06);
+            transition: all 0.2s ease;
         }
 
-        .tab.active {
-            background: #2b6fb7;
-            color: white;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.12);
-        }
+        /* Non-intrusive adaptive tab background colors */
+        #tabA { background: #d0e1f3; color: #333; }
+        #tabB { background: #f3d0e4; color: #333; }
+        #tabQC { background: #e2e2e6; color: #333; }
 
-        /* Summary Row */
-        .summary-row {
+        /* Highly visible active darkening states */
+        #tabA.active { background: #1a5296; color: white; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
+        #tabB.active { background: #961a5c; color: white; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
+        #tabQC.active { background: #555558; color: white; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
+
+        .sticky-header {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            background: inherit; 
+            padding-top: 4px;
+            padding-bottom: 8px;
             width: 100%;
             max-width: var(--max-width);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .summary-row {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .summary-sub-row {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
-            gap: 8px;
-            margin-bottom: 16px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+            width: 100%;
         }
 
         .summary-box {
             background: var(--card-bg);
-            padding: 12px;
+            padding: 8px 4px;
             border-radius: 6px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
             display: flex;
             flex-direction: column;
-            gap: 6px;
-            cursor: pointer;
+            gap: 4px;
             transition: all 0.2s ease;
-            border: 2px solid transparent;
-        }
-
-        .summary-box:hover {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+            border: 1px solid transparent;
+            min-width: 0;
+            text-align: center;
+            box-sizing: border-box;
         }
 
         .summary-box.input-field {
             cursor: pointer;
+            border-style: dashed;
+            border-color: #ccc;
         }
 
         .summary-box.input-field:active {
             border-color: #2b6fb7;
+            border-style: solid;
+        }
+
+        /* Standout bold solid black borders */
+        .summary-box.standout {
+            border: 3px solid #000000 !important;
+        }
+        .summary-box.standout-orange {
+            border: 3px solid #000000 !important;
         }
 
         .label-muted {
             color: #999;
-            font-size: 0.9em;
+            font-size: 0.8em;
             font-weight: 400;
         }
 
         .summary-label {
-            font-size: 11px;
-            font-weight: 600;
-            color: #666;
+            font-size: 9px;
+            font-weight: 700;
+            color: #555;
             text-transform: uppercase;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .summary-value {
-            font-size: 24px;
+            font-size: 18px;
             font-weight: bold;
             color: #333;
             text-align: center;
-            min-height: 30px;
+            min-height: 22px;
+            line-height: 22px;
         }
 
-        .summary-value.total {
-            color: #2b6fb7;
-        }
-
-        .summary-value.mark-out-of-10 {
-            color: #FF9800;
-        }
-
-        .summary-value.mark-out-of-10.green {
-            color: #4CAF50;
-        }
-
-        .summary-value.mark-out-of-10.blue {
-            color: #2196F3;
-        }
-
-        .summary-value.mark-out-of-10.red {
-            color: #F44336;
-        }
+        .summary-value.total { color: #000000; }
+        .summary-value.mark-out-of-10 { color: #000000; }
 
         .panel-wrapper {
             width: 100%;
             max-width: var(--max-width);
         }
 
+        .panel { display: none; width: 100%; }
+        .panel.active { display: flex; flex-direction: column; gap: 14px; }
+
+        #panelQC.active {
+            justify-content: center;
+            align-items: center;
+        }
+
         .card {
             width: 100%;
             background: var(--card-bg);
-            padding: 16px;
+            padding: 12px;
             border-radius: 8px;
-            box-shadow: 0 6px 12px rgba(0,0,0,0.06);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            margin-bottom: 16px;
+            gap: 10px;
+            box-sizing: border-box;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .grid-title {
-            font-size: 16px;
+            font-size: 14px;
             font-weight: 600;
             color: #333;
             margin: 0;
@@ -151,17 +191,19 @@
             grid-template-columns: repeat(10, 1fr);
             gap: var(--gap);
             width: 100%;
+            justify-content: center;
+            align-content: center;
+            margin: 0 auto;
         }
 
         .grid-btn {
             aspect-ratio: 1;
-            font-size: 14px;
-            font-weight: 700;
+            font-size: 13px;
+            font-weight: bold;
             background-color: #e0e0e0;
             border: 1px solid #ccc;
             border-radius: 6px;
             cursor: pointer;
-            transition: transform 0.08s ease, box-shadow 0.08s ease;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -169,334 +211,184 @@
             padding: 0;
         }
 
-        .grid-btn:active { transform: translateY(1px); }
+        .grid-btn.selected.group-high { background-color: #4CAF50; color: #fff; border-color: #2E7D32; }
+        .grid-btn.selected.group-mid { background-color: #2196F3; color: #fff; border-color: #1565C0; }
+        .grid-btn.selected.group-low { background-color: #FFCDD2; color: #7f1d1d; border-color: #ef9a9a; }
 
-        .grid-btn.selected.group-high {
-            background-color: #4CAF50;
-            color: #fff;
-            border-color: #2E7D32;
+        /* Style for the transparent, minimal header button rows */
+        .grid-btn.header-selector {
+            background-color: transparent;
+            border: 1px dashed #bbb;
+            color: #666;
+            font-weight: normal;
+            font-size: 11px;
         }
-
-        .grid-btn.selected.group-mid {
-            background-color: #2196F3;
-            color: #fff;
-            border-color: #1565C0;
-        }
-
-        .grid-btn.selected.group-low {
-            background-color: #FFCDD2;
-            color: #7f1d1d;
-            border-color: #ef9a9a;
-        }
-
-        .total-box {
-            margin-top: 6px;
-            font-size: 18px;
-            font-weight: bold;
-            padding: 10px 18px;
-            background: #1976D2;
-            color: white;
-            border-radius: 6px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.12);
-            text-align: center;
-        }
-
-        .sticky-header {
-            position: sticky;
-            top: 0;
-            z-index: 20;
-            background: var(--page-bg);
-            padding-top: 24px;
-            padding-bottom: 12px;
-        }
-
-        .label-muted {
-            color: #999;
-            font-size: 0.9em;
-            font-weight: 400;
-        }
-
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 12px;
+        .grid-btn.header-selector:active {
+            background-color: rgba(0, 0, 0, 0.08);
         }
 
         .grid-total-box {
-            min-width: 72px;
-            padding: 10px 14px;
+            min-width: 55px;
+            padding: 5px 8px;
             background: #1976D2;
             color: white;
-            border-radius: 8px;
+            border-radius: 6px;
             font-weight: bold;
-            text-align: center;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.12);
-        }
-
-        .summary-box.green,
-        .grid-total-box.green {
-            background: #e8f5e9;
-            border-color: #4CAF50;
-            color: #2E7D32;
-        }
-
-        .summary-box.blue,
-        .grid-total-box.blue {
-            background: #e3f2fd;
-            border-color: #2196F3;
-            color: #1565C0;
-        }
-
-        .summary-box.red,
-        .grid-total-box.red {
-            background: #ffebee;
-            border-color: #F44336;
-            color: #7f1d1d;
-        }
-
-        .summary-box.orange,
-        .grid-total-box.orange {
-            background: #fff3e0;
-            border-color: #FF9800;
-            color: #E65100;
-        }
-
-        .summary-box.green .summary-value,
-        .summary-box.blue .summary-value,
-        .summary-box.red .summary-value {
-            color: inherit;
-        }
-
-        .grid-total-box.green,
-        .grid-total-box.blue,
-        .grid-total-box.red {
-            border: 1px solid transparent;
-        }
-
-        /* Keypad Modal */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.4);
-        }
-
-        .modal.active {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .keypad-container {
-            background-color: white;
-            padding: 24px;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-            max-width: 300px;
-            width: 90%;
-        }
-
-        .keypad-title {
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 16px;
-            color: #333;
+            font-size: 13px;
             text-align: center;
         }
 
-        .keypad-display {
-            background: #f0f0f0;
-            padding: 16px;
-            border-radius: 6px;
-            font-size: 32px;
-            font-weight: bold;
-            color: #333;
-            text-align: right;
-            margin-bottom: 16px;
-            min-height: 40px;
-            word-wrap: break-word;
-        }
+        /* Color Overrides */
+        .summary-box.green { background: #e8f5e9; border-color: #4CAF50 !important; color: #2E7D32; }
+        .summary-box.blue { background: #e3f2fd; border-color: #2196F3 !important; color: #1565C0; }
+        .summary-box.red { background: #ffebee; border-color: #F44336 !important; color: #7f1d1d; }
+        .summary-box.orange { background: #fff3e0; border-color: #FF9800 !important; color: #E65100; }
+        
+        /* Enforce absolute solid black overrides for standout elements while accepting backgrounds */
+        .summary-box.standout.green { border-color: #000000 !important; }
+        .summary-box.standout.blue { border-color: #000000 !important; }
+        .summary-box.standout.orange { border-color: #000000 !important; }
+        .summary-box.standout.red { border-color: #000000 !important; }
+        
+        .summary-box.standout-orange.green { border-color: #000000 !important; }
+        .summary-box.standout-orange.blue { border-color: #000000 !important; }
+        .summary-box.standout-orange.orange { border-color: #000000 !important; }
+        .summary-box.standout-orange.red { border-color: #000000 !important; }
 
-        .keypad-error {
-            color: #d32f2f;
-            font-size: 14px;
-            min-height: 18px;
-            text-align: center;
-            margin-bottom: 8px;
-        }
+        .summary-box.green .summary-value, .summary-box.blue .summary-value, .summary-box.red .summary-value, .summary-box.orange .summary-value { color: inherit; }
 
-        .keypad-buttons {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-            margin-bottom: 12px;
-        }
+        /* Keypad Modal Structure */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.4); }
+        .modal.active { display: flex; align-items: center; justify-content: center; }
+        .keypad-container { background-color: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); max-width: 280px; width: 90%; }
+        .keypad-title { font-size: 16px; font-weight: bold; margin-bottom: 12px; color: #333; text-align: center; }
+        .keypad-display { background: #f0f0f0; padding: 12px; border-radius: 6px; font-size: 28px; font-weight: bold; color: #333; text-align: right; margin-bottom: 12px; min-height: 34px; }
+        .keypad-error { color: #d32f2f; font-size: 13px; min-height: 16px; text-align: center; margin-bottom: 6px; }
+        .keypad-buttons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 12px; }
+        .keypad-btn { padding: 14px; font-size: 16px; font-weight: bold; background: #e0e0e0; border: 1px solid #ccc; border-radius: 6px; cursor: pointer; }
+        .keypad-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+        .keypad-action-btn { padding: 10px; font-size: 15px; font-weight: bold; border: 1px solid #ccc; border-radius: 6px; cursor: pointer; }
+        .keypad-action-btn.cancel { background: #f44336; color: white; }
+        .keypad-action-btn.confirm { background: #4CAF50; color: white; }
 
-        .keypad-btn {
-            padding: 16px;
-            font-size: 18px;
-            font-weight: bold;
-            background: #e0e0e0;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
+        /* Horizontal sequence sorting order weights */
+        .box-po1  { order: 1; }
+        .box-poi1 { order: 2; }
+        .box-tot1 { order: 3; }
+        .box-po2  { order: 4; }
+        .box-poi2 { order: 5; }
+        .box-tot2 { order: 6; }
+        .box-tot  { order: 7; }
+        .box-out10{ order: 8; }
 
-        .keypad-btn:active {
-            background: #d0d0d0;
-            transform: scale(0.95);
+        /* --- HORIZONTAL DISPLAY ADAPTATIONS (Desktop / Landscape) --- */
+        @media (min-width: 768px) or (orientation: landscape) {
+            :root {
+                --max-width: 1000px;
+            }
+            .summary-row {
+                flex-direction: row !important;
+                gap: 4px;
+            }
+            .summary-sub-row {
+                display: contents !important;
+            }
+            .summary-box {
+                flex: 1;
+            }
+            .summary-box.standout {
+                border: 3px solid #000000 !important;
+            }
+            .summary-box.standout-orange {
+                border: 3px solid #000000 !important;
+            }
+            .panel.active {
+                flex-direction: row;
+                gap: 16px;
+            }
+            .card {
+                flex: 1;
+            }
+            #panelQC .card {
+                max-width: calc(50% - 8px);
+            }
         }
-
-        .keypad-actions {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-        }
-
-        .keypad-action-btn {
-            padding: 12px;
-            font-size: 16px;
-            font-weight: bold;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .keypad-action-btn.cancel {
-            background: #f44336;
-            color: white;
-        }
-
-        .keypad-action-btn.confirm {
-            background: #4CAF50;
-            color: white;
-        }
-
-        .keypad-action-btn:active {
-            transform: scale(0.95);
-        }
-
-        /* hide inactive panels */
-        .panel { display: none; }
-        .panel.active { display: flex; flex-direction: column; gap: 16px; }
     </style>
 </head>
-<body>
+<body class="theme-A">
 
     <div class="sticky-header">
         <div class="tabs">
             <div id="tabA" class="tab active">Candidato A</div>
+            <div id="tabQC" class="tab">QuickCal</div>
             <div id="tabB" class="tab">Candidato B</div>
         </div>
 
-        <!-- Summary Row -->
         <div class="summary-row" id="summaryRowA">
-        <div class="summary-box">
-            <div class="summary-label">Tot #1 <span class="label-muted">/100</span></div>
-            <div class="summary-value" id="tot1A">0</div>
+            <div class="summary-sub-row">
+                <div class="summary-box box-po1" id="po1BoxA"><div class="summary-label">PO #1 <span class="label-muted">/50</span></div><div class="summary-value" id="po1ValA">0</div></div>
+                <div class="summary-box box-poi1" id="poi1BoxA"><div class="summary-label">POI #1 <span class="label-muted">/50</span></div><div class="summary-value" id="poi1ValA">0</div></div>
+                <div class="summary-box box-tot1" id="tot1BoxA"><div class="summary-label">Tot #1 <span class="label-muted">/100</span></div><div class="summary-value" id="tot1A">0</div></div>
+                <div class="summary-box standout box-tot" id="totalBoxA"><div class="summary-label">Total <span class="label-dynamic" id="totalLabelA">/200</span></div><div class="summary-value total" id="totalA">0</div></div>
+            </div>
+            <div class="summary-sub-row">
+                <div class="summary-box input-field box-po2" id="po2BoxA"><div class="summary-label">PO #2 <span class="label-muted">/50</span></div><div class="summary-value" id="po2A">-</div></div>
+                <div class="summary-box input-field box-poi2" id="poi2BoxA"><div class="summary-label">POI #2 <span class="label-muted">/50</span></div><div class="summary-value" id="poi2A">-</div></div>
+                <div class="summary-box input-field box-tot2" id="tot2BoxA"><div class="summary-label">Tot #2 <span class="label-muted">/100</span></div><div class="summary-value" id="tot2A">-</div></div>
+                <div class="summary-box standout-orange box-out10" id="outOf10BoxA"><div class="summary-label">/10</div><div class="summary-value mark-out-of-10" id="outOf10A">0.0</div></div>
+            </div>
         </div>
-        <div class="summary-box input-field" id="po2BoxA">
-            <div class="summary-label">PO #2 <span class="label-muted">/50</span></div>
-            <div class="summary-value" id="po2A">-</div>
-        </div>
-        <div class="summary-box input-field" id="poi2BoxA">
-            <div class="summary-label">POI#2 <span class="label-muted">/50</span></div>
-            <div class="summary-value" id="poi2A">-</div>
-        </div>
-        <div class="summary-box input-field" id="tot2BoxA">
-            <div class="summary-label">Tot #2 <span class="label-muted">/100</span></div>
-            <div class="summary-value" id="tot2A">-</div>
-        </div>
-        <div class="summary-box">
-            <div class="summary-label">Total <span class="label-dynamic" id="totalLabelA">/200</span></div>
-            <div class="summary-value total" id="totalA">0</div>
-        </div>
-        <div class="summary-box">
-            <div class="summary-label">/10</div>
-            <div class="summary-value mark-out-of-10" id="outOf10A">0.0</div>
-        </div>
-    </div>
 
         <div class="summary-row" id="summaryRowB" style="display: none;">
-        <div class="summary-box">
-            <div class="summary-label">Tot #1 <span class="label-muted">/100</span></div>
-            <div class="summary-value" id="tot1B">0</div>
+            <div class="summary-sub-row">
+                <div class="summary-box box-po1" id="po1BoxB"><div class="summary-label">PO #1 <span class="label-muted">/50</span></div><div class="summary-value" id="po1ValB">0</div></div>
+                <div class="summary-box box-poi1" id="poi1BoxB"><div class="summary-label">POI #1 <span class="label-muted">/50</span></div><div class="summary-value" id="poi1ValB">0</div></div>
+                <div class="summary-box box-tot1" id="tot1BoxB"><div class="summary-label">Tot #1 <span class="label-muted">/100</span></div><div class="summary-value" id="tot1B">0</div></div>
+                <div class="summary-box standout box-tot" id="totalBoxB"><div class="summary-label">Total <span class="label-dynamic" id="totalLabelB">/200</span></div><div class="summary-value total" id="totalB">0</div></div>
+            </div>
+            <div class="summary-sub-row">
+                <div class="summary-box input-field box-po2" id="po2BoxB"><div class="summary-label">PO #2 <span class="label-muted">/50</span></div><div class="summary-value" id="po2B">-</div></div>
+                <div class="summary-box input-field box-poi2" id="poi2BoxB"><div class="summary-label">POI #2 <span class="label-muted">/50</span></div><div class="summary-value" id="poi2B">-</div></div>
+                <div class="summary-box input-field box-tot2" id="tot2BoxB"><div class="summary-label">Tot #2 <span class="label-muted">/100</span></div><div class="summary-value" id="tot2B">-</div></div>
+                <div class="summary-box standout-orange box-out10" id="outOf10BoxB"><div class="summary-label">/10</div><div class="summary-value mark-out-of-10" id="outOf10B">0.0</div></div>
+            </div>
         </div>
-        <div class="summary-box input-field" id="po2BoxB">
-            <div class="summary-label">PO #2 <span class="label-muted">/50</span></div>
-            <div class="summary-value" id="po2B">-</div>
-        </div>
-        <div class="summary-box input-field" id="poi2BoxB">
-            <div class="summary-label">POI#2 <span class="label-muted">/50</span></div>
-            <div class="summary-value" id="poi2B">-</div>
-        </div>
-        <div class="summary-box input-field" id="tot2BoxB">
-            <div class="summary-label">Tot #2 <span class="label-muted">/100</span></div>
-            <div class="summary-value" id="tot2B">-</div>
-        </div>
-        <div class="summary-box">
-            <div class="summary-label">Total <span class="label-dynamic" id="totalLabelB">/200</span></div>
-            <div class="summary-value total" id="totalB">0</div>
-        </div>
-        <div class="summary-box">
-            <div class="summary-label">/10</div>
-            <div class="summary-value mark-out-of-10" id="outOf10B">0.0</div>
-        </div>
-    </div>
     </div>
 
-    <!-- Panels -->
     <div class="panel-wrapper">
         <div class="panel active" id="panelA">
-            <!-- Grid A1 -->
             <div class="card">
-            <div class="card-header">
-                <h3 class="grid-title">Monólogo (PO #1)</h3>
-                <div class="grid-total-box" id="totalDisplayA1">0</div>
+                <div class="card-header"><h3 class="grid-title">Monólogo (PO #1)</h3><div class="grid-total-box" id="totalDisplayA1">0</div></div>
+                <div class="grid-container" id="buttonGridA1"></div>
             </div>
-            <div class="grid-container" id="buttonGridA1"></div>
+            <div class="card">
+                <div class="card-header"><h3 class="grid-title">Diálogo (POI#1)</h3><div class="grid-total-box" id="totalDisplayA2">0</div></div>
+                <div class="grid-container" id="buttonGridA2"></div>
+            </div>
         </div>
 
-            <!-- Grid A2 -->
+        <div class="panel" id="panelQC">
             <div class="card">
-            <div class="card-header">
-                <h3 class="grid-title">Diálogo (POI#1)</h3>
-                <div class="grid-total-box" id="totalDisplayA2">0</div>
+                <div class="card-header">
+                    <h3 class="grid-title">Quick Calculation Grid</h3>
+                    <div class="grid-total-box" id="totalDisplayQC">0</div>
+                </div>
+                <div class="grid-container" id="buttonGridQC"></div>
             </div>
-            <div class="grid-container" id="buttonGridA2"></div>
-        </div>
         </div>
 
         <div class="panel" id="panelB">
-            <!-- Grid B1 -->
             <div class="card">
-            <div class="card-header">
-                <h3 class="grid-title">Monólogo (PO #1)</h3>
-                <div class="grid-total-box" id="totalDisplayB1">0</div>
+                <div class="card-header"><h3 class="grid-title">Monólogo (PO #1)</h3><div class="grid-total-box" id="totalDisplayB1">0</div></div>
+                <div class="grid-container" id="buttonGridB1"></div>
             </div>
-            <div class="grid-container" id="buttonGridB1"></div>
-        </div>
-
-            <!-- Grid B2 -->
             <div class="card">
-            <div class="card-header">
-                <h3 class="grid-title">Diálogo (POI#1)</h3>
-                <div class="grid-total-box" id="totalDisplayB2">0</div>
+                <div class="card-header"><h3 class="grid-title">Diálogo (POI#1)</h3><div class="grid-total-box" id="totalDisplayB2">0</div></div>
+                <div class="grid-container" id="buttonGridB2"></div>
             </div>
-            <div class="grid-container" id="buttonGridB2"></div>
-        </div>
         </div>
     </div>
 
-    <!-- Keypad Modal -->
     <div class="modal" id="keypadModal">
         <div class="keypad-container">
             <div class="keypad-title" id="keypadTitle">Enter Value</div>
@@ -524,7 +416,6 @@
     </div>
 
     <script>
-        // Shared configuration
         const rowValues = [10, 9, 8, 7, 6, 5, 4, 2, 1.5, 0];
         const totalRows = 5;
         const maxGridValue = Math.max(...rowValues);
@@ -533,60 +424,73 @@
         const tot2Max = singleGridMax * 2;
         const maxPossibleMark = tot1Max + tot2Max;
 
-        // Keypad state
-        let keypadState = {
-            field: null,
-            candidate: null,
-            value: '0',
-            hasDecimal: false
-        };
+        let keypadState = { field: null, candidate: null, value: '0', hasDecimal: false };
 
-        // Create all four grids
         createGrid('buttonGridA1', 'totalDisplayA1', 'A');
         createGrid('buttonGridA2', 'totalDisplayA2', 'A');
+        createGrid('buttonGridQC', 'totalDisplayQC', 'QC');
         createGrid('buttonGridB1', 'totalDisplayB1', 'B');
         createGrid('buttonGridB2', 'totalDisplayB2', 'B');
 
-        // Tab switching
+        // Navigation Controller
         const tabA = document.getElementById('tabA');
+        const tabQC = document.getElementById('tabQC');
         const tabB = document.getElementById('tabB');
         const panelA = document.getElementById('panelA');
+        const panelQC = document.getElementById('panelQC');
         const panelB = document.getElementById('panelB');
         const summaryRowA = document.getElementById('summaryRowA');
         const summaryRowB = document.getElementById('summaryRowB');
 
-        tabA.addEventListener('click', () => {
-            tabA.classList.add('active');
-            tabB.classList.remove('active');
-            panelA.classList.add('active');
-            panelB.classList.remove('active');
-            summaryRowA.style.display = 'grid';
-            summaryRowB.style.display = 'none';
-        });
-
-        tabB.addEventListener('click', () => {
-            tabB.classList.add('active');
-            tabA.classList.remove('active');
-            panelB.classList.add('active');
-            panelA.classList.remove('active');
-            summaryRowB.style.display = 'grid';
+        function clearTabs() {
+            [tabA, tabQC, tabB].forEach(t => t.classList.remove('active'));
+            [panelA, panelQC, panelB].forEach(p => p.classList.remove('active'));
             summaryRowA.style.display = 'none';
-        });
+            summaryRowB.style.display = 'none';
+            document.body.className = ''; 
+        }
 
-        // Input field click handlers
+        tabA.addEventListener('click', () => { clearTabs(); tabA.classList.add('active'); panelA.classList.add('active'); summaryRowA.style.display = 'flex'; document.body.className = 'theme-A'; });
+        tabQC.addEventListener('click', () => { clearTabs(); tabQC.classList.add('active'); panelQC.classList.add('active'); document.body.className = 'theme-QC'; });
+        tabB.addEventListener('click', () => { clearTabs(); tabB.classList.add('active'); panelB.classList.add('active'); summaryRowB.style.display = 'flex'; document.body.className = 'theme-B'; });
+
+        // Keypads triggers
         document.getElementById('po2BoxA').addEventListener('click', () => openKeypad('po2', 'A', 'PO #2'));
-        document.getElementById('poi2BoxA').addEventListener('click', () => openKeypad('poi2', 'A', 'POI#2'));
+        document.getElementById('poi2BoxA').addEventListener('click', () => openKeypad('poi2', 'A', 'POI #2'));
         document.getElementById('tot2BoxA').addEventListener('click', () => openKeypad('tot2', 'A', 'Tot #2'));
-
         document.getElementById('po2BoxB').addEventListener('click', () => openKeypad('po2', 'B', 'PO #2'));
-        document.getElementById('poi2BoxB').addEventListener('click', () => openKeypad('poi2', 'B', 'POI#2'));
+        document.getElementById('poi2BoxB').addEventListener('click', () => openKeypad('poi2', 'B', 'POI #2'));
         document.getElementById('tot2BoxB').addEventListener('click', () => openKeypad('tot2', 'B', 'Tot #2'));
 
-        // Factory to create a grid
         function createGrid(containerId, totalId, candidate) {
             const container = document.getElementById(containerId);
             const totalDisplay = document.getElementById(totalId);
 
+            // 1. Generate Header click-to-select column indicators
+            rowValues.forEach(val => {
+                const headerBtn = document.createElement('button');
+                headerBtn.classList.add('grid-btn', 'header-selector');
+                headerBtn.textContent = val;
+                headerBtn.title = `Select all ${val}s`;
+                
+                headerBtn.addEventListener('click', () => {
+                    // Loop over each grid grading row inside this container
+                    for (let r = 0; r < totalRows; r++) {
+                        const targets = container.querySelectorAll(`.grid-btn[data-row="${r}"]`);
+                        targets.forEach(btn => {
+                            if (parseFloat(btn.dataset.value) === val) {
+                                btn.classList.add('selected');
+                            } else {
+                                btn.classList.remove('selected');
+                            }
+                        });
+                    }
+                    updateTotal(container, totalDisplay, candidate);
+                });
+                container.appendChild(headerBtn);
+            });
+
+            // 2. Generate standard data grids
             for (let row = 0; row < totalRows; row++) {
                 rowValues.forEach(val => {
                     const button = document.createElement('button');
@@ -595,60 +499,37 @@
                     button.dataset.value = val;
                     button.dataset.row = row;
 
-                    if (val === 10 || val === 9 || val === 8) {
-                        button.classList.add('group-high');
-                    } else if (val === 7 || val === 6 || val === 5) {
-                        button.classList.add('group-mid');
-                    } else {
-                        button.classList.add('group-low');
-                    }
+                    if (val === 10 || val === 9 || val === 8) button.classList.add('group-high');
+                    else if (val === 7 || val === 6 || val === 5) button.classList.add('group-mid');
+                    else button.classList.add('group-low');
 
                     button.addEventListener('click', () => {
                         const rowIndex = button.dataset.row;
-                        const selector = `.grid-btn.selected[data-row="${rowIndex}"]`;
-                        const currentlySelected = container.querySelector(selector);
-
+                        const currentlySelected = container.querySelector(`.grid-btn.selected[data-row="${rowIndex}"]`);
                         if (button.classList.contains('selected')) {
                             button.classList.remove('selected');
                         } else {
-                            if (currentlySelected && currentlySelected !== button) {
-                                currentlySelected.classList.remove('selected');
-                            }
+                            if (currentlySelected && currentlySelected !== button) currentlySelected.classList.remove('selected');
                             button.classList.add('selected');
                         }
-
                         updateTotal(container, totalDisplay, candidate);
                     });
-
                     container.appendChild(button);
                 });
             }
         }
 
-        // Calculate total for a given container
         function formatNumber(value, precision = 2) {
-            const rounded = Number(value.toFixed(precision));
-            return Number.isInteger(rounded) ? String(rounded) : String(rounded);
+            return String(Number(value.toFixed(precision)));
         }
 
-        function clearColorClasses(element) {
-            element.classList.remove('green', 'blue', 'red');
-        }
-
+        function clearColorClasses(element) { element.classList.remove('green', 'blue', 'orange', 'red'); }
+        
         function getColorClass(percent) {
             if (percent > 0.65) return 'green';
             if (percent >= 0.5) return 'blue';
             if (percent > 0.4) return 'orange';
-            if (percent <= 0.4) return 'red';
-            return '';
-        }
-
-        function applyColorToElement(element, percent) {
-            clearColorClasses(element);
-            const colorClass = getColorClass(percent);
-            if (colorClass) {
-                element.classList.add(colorClass);
-            }
+            return 'red';
         }
 
         function updateNumericBoxColor(valueText, maxValue, valueId) {
@@ -657,250 +538,167 @@
             if (!valueElement) return;
             const box = valueElement.closest('.summary-box');
             if (!box) return;
-            if (valueText === '-' || Number.isNaN(value) || maxValue <= 0) {
-                clearColorClasses(box);
-                return;
-            }
-            applyColorToElement(box, value / maxValue);
-        }
-
-        function updateGridTotalColor(totalId) {
-            const totalElement = document.getElementById(totalId);
-            const valueText = totalElement.textContent;
-            const value = parseFloat(valueText);
-            if (valueText === '-' || Number.isNaN(value)) {
-                clearColorClasses(totalElement);
-                return;
-            }
-            applyColorToElement(totalElement, value / singleGridMax);
+            if (valueText === '-' || Number.isNaN(value) || maxValue <= 0) { clearColorClasses(box); return; }
+            clearColorClasses(box);
+            const colorClass = getColorClass(value / maxValue);
+            if (colorClass) box.classList.add(colorClass);
         }
 
         function updateTotal(container, totalDisplay, candidate) {
-            const selectedButtons = container.querySelectorAll('.grid-btn.selected');
             let sum = 0;
-            selectedButtons.forEach(btn => {
-                sum += parseFloat(btn.dataset.value);
-            });
-
+            container.querySelectorAll('.grid-btn.selected').forEach(btn => { sum += parseFloat(btn.dataset.value); });
             totalDisplay.textContent = formatNumber(sum);
-            updateSummary(candidate);
+            
+            if (candidate === 'QC') {
+                updateQuickCal(sum);
+            } else {
+                updateSummary(candidate);
+            }
         }
 
-        // Update summary values
+        function isGridTouched(container) {
+            return container.querySelectorAll('.grid-btn.selected').length > 0;
+        }
+
         function isGridComplete(container) {
             for (let row = 0; row < totalRows; row++) {
-                if (!container.querySelector(`.grid-btn.selected[data-row="${row}"]`)) {
-                    return false;
-                }
+                if (!container.querySelector(`.grid-btn.selected[data-row="${row}"]`)) return false;
             }
             return true;
+        }
+
+        function updateQuickCal(sum) {
+            const totalDisplay = document.getElementById('totalDisplayQC');
+            clearColorClasses(totalDisplay);
+            const pct = sum / singleGridMax;
+            const cl = getColorClass(pct);
+            if (cl && sum > 0) {
+                totalDisplay.classList.add(cl);
+            }
         }
 
         function updateSummary(candidate) {
             const po2Text = document.getElementById(`po2${candidate}`).textContent;
             const poi2Text = document.getElementById(`poi2${candidate}`).textContent;
-            const po2 = parseFloat(po2Text) || 0;
-            const poi2 = parseFloat(poi2Text) || 0;
+            let tot2Text = document.getElementById(`tot2${candidate}`).textContent;
 
             const grid1Container = document.getElementById(candidate === 'A' ? 'buttonGridA1' : 'buttonGridB1');
             const grid2Container = document.getElementById(candidate === 'A' ? 'buttonGridA2' : 'buttonGridB2');
-            const grid1Complete = isGridComplete(grid1Container);
-            const grid2Complete = isGridComplete(grid2Container);
-            const tot1Element = document.getElementById(`tot1${candidate}`);
-            const tot2Element = document.getElementById(`tot2${candidate}`);
-            const summaryTotal = document.getElementById(`total${candidate}`);
-            const outOf10Element = document.getElementById(`outOf10${candidate}`);
+            const g1Score = parseFloat(document.getElementById('totalDisplay' + candidate + '1').textContent) || 0;
+            const g2Score = parseFloat(document.getElementById('totalDisplay' + candidate + '2').textContent) || 0;
 
-            // Calculate Tot #1 only when both grids are complete
-            if (grid1Complete && grid2Complete) {
-                const combinedTot1 = (parseFloat(document.getElementById('totalDisplay' + candidate + '1').textContent) || 0) +
-                    (parseFloat(document.getElementById('totalDisplay' + candidate + '2').textContent) || 0);
-                tot1Element.textContent = formatNumber(combinedTot1);
+            const g1Touched = isGridTouched(grid1Container);
+            const g2Touched = isGridTouched(grid2Container);
+
+            document.getElementById(`po1Val${candidate}`).textContent = g1Touched ? formatNumber(g1Score) : '-';
+            document.getElementById(`poi1Val${candidate}`).textContent = g2Touched ? formatNumber(g2Score) : '-';
+
+            const tot1Element = document.getElementById(`tot1${candidate}`);
+            if (isGridComplete(grid1Container) && isGridComplete(grid2Container)) {
+                tot1Element.textContent = formatNumber(g1Score + g2Score);
             } else {
                 tot1Element.textContent = '-';
             }
 
-            // Calculate Tot #2 by adding PO #2 and POI #2 only when both values are present
-            const tot2Full = po2Text !== '-' && poi2Text !== '-';
-            if (tot2Full) {
-                const tot2 = po2 + poi2;
-                tot2Element.textContent = formatNumber(tot2);
-            } else {
-                tot2Element.textContent = '-';
+            if (po2Text !== '-' && poi2Text !== '-') {
+                tot2Text = formatNumber(parseFloat(po2Text) + parseFloat(poi2Text));
+                document.getElementById(`tot2${candidate}`).textContent = tot2Text;
             }
 
-            // Calculate Total only when Tot #1 and Tot #2 are both full
-            const tot1Text = tot1Element.textContent;
-            const tot2Text = tot2Element.textContent;
-            const canComputeTotal = tot1Text !== '-' && tot2Text !== '-';
+            const summaryTotal = document.getElementById(`total${candidate}`);
+            const outOf10Element = document.getElementById(`outOf10${candidate}`);
 
-            if (canComputeTotal) {
-                const finalTot1 = parseFloat(tot1Text) || 0;
-                const finalTot2 = parseFloat(tot2Text) || 0;
-                const finalTotal = finalTot1 + finalTot2;
-
-                // Update the dynamic Total label with the sum of TOT #1 and TOT #2 maximums
+            // Update boxes and dynamically add conditional color coding backgrounds to the thick black standout buttons
+            if (tot1Element.textContent !== '-' && tot2Text !== '-') {
+                const finalTotal = parseFloat(tot1Element.textContent) + parseFloat(tot2Text);
                 document.getElementById(`totalLabel${candidate}`).textContent = `/ ${maxPossibleMark}`;
-                    summaryTotal.textContent = formatNumber(finalTotal);
+                summaryTotal.textContent = formatNumber(finalTotal);
 
-                // Calculate /10 as (finalTotal / maxPossibleMark) * 10
                 const markOut10 = (finalTotal / maxPossibleMark) * 10;
                 outOf10Element.textContent = formatNumber(markOut10, 1);
-                clearColorClasses(outOf10Element);
-                const colorClass = getColorClass(markOut10 / 10);
-                if (colorClass) {
-                    outOf10Element.classList.add(colorClass);
-                }
+                
+                // Fire dynamic background trackers directly on the Total and /10 container elements
+                updateNumericBoxColor(summaryTotal.textContent, maxPossibleMark, `total${candidate}`);
+                updateNumericBoxColor(outOf10Element.textContent, 10, `outOf10${candidate}`);
             } else {
-                summaryTotal.textContent = '-';
-                outOf10Element.textContent = '-';
-                clearColorClasses(outOf10Element);
+                summaryTotal.textContent = '-'; outOf10Element.textContent = '-'; 
+                clearColorClasses(summaryTotal.closest('.summary-box'));
+                clearColorClasses(outOf10Element.closest('.summary-box'));
             }
 
+            updateNumericBoxColor(g1Touched ? formatNumber(g1Score) : '-', singleGridMax, `po1Val${candidate}`);
+            updateNumericBoxColor(g2Touched ? formatNumber(g2Score) : '-', singleGridMax, `poi1Val${candidate}`);
             updateNumericBoxColor(tot1Element.textContent, tot1Max, `tot1${candidate}`);
+            updateNumericBoxColor(tot2Text, tot2Max, `tot2${candidate}`);
             updateNumericBoxColor(po2Text, singleGridMax, `po2${candidate}`);
             updateNumericBoxColor(poi2Text, singleGridMax, `poi2${candidate}`);
-            updateNumericBoxColor(tot2Element.textContent, tot2Max, `tot2${candidate}`);
-            updateNumericBoxColor(summaryTotal.textContent, maxPossibleMark, `total${candidate}`);
-            updateGridTotalColor(`totalDisplay${candidate}1`);
-            updateGridTotalColor(`totalDisplay${candidate}2`);
+
+            const tDisp1 = document.getElementById(`totalDisplay${candidate}1`);
+            const tDisp2 = document.getElementById(`totalDisplay${candidate}2`);
+            clearColorClasses(tDisp1);
+            clearColorClasses(tDisp2);
+            if (g1Touched) { const c1 = getColorClass(g1Score / singleGridMax); if (c1) tDisp1.classList.add(c1); }
+            if (g2Touched) { const c2 = getColorClass(g2Score / singleGridMax); if (c2) tDisp2.classList.add(c2); }
         }
 
-        function showKeypadError(message) {
-            document.getElementById('keypadError').textContent = message;
-        }
-
-        function clearKeypadError() {
-            document.getElementById('keypadError').textContent = '';
-        }
-
-        function updateKeypadDisplay() {
-            const raw = keypadState.value;
-            let displayValue = raw;
-
-            if (raw === '' || raw === '0') {
-                displayValue = '0';
-            } else if (raw.endsWith('.')) {
-                displayValue = raw;
-            } else {
-                const parsed = parseFloat(raw);
-                if (!Number.isNaN(parsed)) {
-                    const precision = keypadState.hasDecimal ? Math.max(raw.length - raw.indexOf('.') - 1, 1) : 2;
-                    displayValue = formatNumber(parsed, precision);
-                }
-            }
-
-            document.getElementById('keypadDisplay').textContent = displayValue;
-        }
-
-        // Keypad functions
         function openKeypad(field, candidate, title) {
-            keypadState.field = field;
-            keypadState.candidate = candidate;
-            keypadState.value = '0';
-            keypadState.hasDecimal = false;
-
+            keypadState.field = field; keypadState.candidate = candidate;
+            keypadState.value = '0'; keypadState.hasDecimal = false;
             clearKeypadError();
-            document.getElementById('keypadTitle').textContent = `${title} - ${candidate === 'A' ? 'Candidato A' : 'Candidato B'}`;
+            document.getElementById('keypadTitle').textContent = `Enter ${title}`;
             updateKeypadDisplay();
             document.getElementById('keypadModal').classList.add('active');
-            document.getElementById('keypadDisplay').focus();
         }
 
         function keypadNumber(num) {
-            if (keypadState.value === '0') {
-                keypadState.value = num;
-            } else if (keypadState.value.length < 10) {
-                keypadState.value += num;
-            }
+            if (keypadState.value === '0') keypadState.value = num;
+            else if (keypadState.value.length < 10) keypadState.value += num;
             updateKeypadDisplay();
         }
 
         function keypadDecimal() {
-            if (!keypadState.hasDecimal && keypadState.value.length < 10) {
-                keypadState.value += '.';
-                keypadState.hasDecimal = true;
-            }
+            if (!keypadState.hasDecimal && keypadState.value.length < 10) { keypadState.value += '.'; keypadState.hasDecimal = true; }
             updateKeypadDisplay();
         }
 
         function keypadBackspace() {
             if (keypadState.value.length > 1) {
-                if (keypadState.value.endsWith('.')) {
-                    keypadState.hasDecimal = false;
-                }
+                if (keypadState.value.endsWith('.')) keypadState.hasDecimal = false;
                 keypadState.value = keypadState.value.slice(0, -1);
-            } else {
-                keypadState.value = '0';
-                keypadState.hasDecimal = false;
-            }
+            } else { keypadState.value = '0'; keypadState.hasDecimal = false; }
             updateKeypadDisplay();
         }
 
-        function getFieldMax(field) {
-            if (field === 'po2' || field === 'poi2') return singleGridMax;
-            if (field === 'tot2') return tot2Max;
-            return Infinity;
+        function updateKeypadDisplay() {
+            let val = keypadState.value;
+            if (val === '' || val === '0') val = '0';
+            document.getElementById('keypadDisplay').textContent = val;
         }
 
         function confirmKeypad() {
-            const rawValue = keypadState.value.trim();
-            const value = parseFloat(rawValue);
-            const maxValue = getFieldMax(keypadState.field);
+            const raw = keypadState.value.trim();
+            const val = parseFloat(raw);
+            if (Number.isNaN(val) || val < 0 || val > 100) { showKeypadError('Invalid Value (0-100)'); return; }
 
-            if (Number.isNaN(value) || rawValue === '') {
-                showKeypadError('Valor inválido');
-                return;
-            }
-            if (value < 0) {
-                showKeypadError('Valor inválido');
-                return;
-            }
-            if (value > maxValue) {
-                showKeypadError(`máximo ${Number.isInteger(maxValue) ? maxValue : maxValue.toFixed(2)}`);
-                return;
-            }
-
-            clearKeypadError();
-            document.getElementById(`${keypadState.field}${keypadState.candidate}`).textContent = value.toString();
-            closeKeypad();
+            document.getElementById(`${keypadState.field}${keypadState.candidate}`).textContent = val.toString();
             updateSummary(keypadState.candidate);
+            closeKeypad();
         }
 
-        function closeKeypad() {
-            document.getElementById('keypadModal').classList.remove('active');
-        }
+        function closeKeypad() { document.getElementById('keypadModal').classList.remove('active'); }
+        function showKeypadError(msg) { document.getElementById('keypadError').textContent = msg; }
+        function clearKeypadError() { document.getElementById('keypadError').textContent = ''; }
 
-        // Close modal on background click
-        document.getElementById('keypadModal').addEventListener('click', (e) => {
-            if (e.target.id === 'keypadModal') {
-                closeKeypad();
-            }
-        });
-
-        // Keyboard support for keypad
+        document.getElementById('keypadModal').addEventListener('click', (e) => { if (e.target.id === 'keypadModal') closeKeypad(); });
         document.addEventListener('keydown', (e) => {
             const modal = document.getElementById('keypadModal');
             if (!modal.classList.contains('active')) return;
-
-            if (e.key >= '0' && e.key <= '9') {
-                e.preventDefault();
-                keypadNumber(e.key);
-            } else if (e.key === '.') {
-                e.preventDefault();
-                keypadDecimal();
-            } else if (e.key === 'Backspace') {
-                e.preventDefault();
-                keypadBackspace();
-            } else if (e.key === 'Enter') {
-                e.preventDefault();
-                confirmKeypad();
-            } else if (e.key === 'Escape') {
-                e.preventDefault();
-                closeKeypad();
-            }
+            if (e.key >= '0' && e.key <= '9') { e.preventDefault(); keypadNumber(e.key); }
+            else if (e.key === '.') { e.preventDefault(); keypadDecimal(); }
+            else if (e.key === 'Backspace') { e.preventDefault(); keypadBackspace(); }
+            else if (e.key === 'Enter') { e.preventDefault(); confirmKeypad(); }
+            else if (e.key === 'Escape') { e.preventDefault(); closeKeypad(); }
         });
     </script>
-
 </body>
 </html>
