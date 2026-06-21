@@ -1,47 +1,757 @@
-function resolveCollisions() {
-    const boxes = Array.from(document.querySelectorAll('.word-box'));
-    const iterations = 10; // Repeat a few times to settle cascading chain-reaction bumps
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Manipulator Session</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    for (let i = 0; i < iterations; i++) {
-        let collisionsResolved = 0;
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
 
-        for (let j = 0; j < boxes.length; j++) {
-            for (let k = j + 1; k < boxes.length; k++) {
-                const b1 = boxes[j];
-                const b2 = boxes[k];
+        .controls {
+            padding: 15px 20px;
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
 
-                const r1 = b1.getBoundingClientRect();
-                const r2 = b2.getBoundingClientRect();
+        .input-group {
+            display: flex;
+            gap: 8px;
+            flex: 1;
+            min-width: 300px;
+        }
 
-                // Check if they overlap
-                const overlapX = Math.min(r1.right, r2.right) - Math.max(r1.left, r2.left);
-                const overlapY = Math.min(r1.bottom, r2.bottom) - Math.max(r1.top, r2.top);
+        #sessionTitleInput {
+            width: 150px;
+            padding: 10px;
+            font-size: 15px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+        }
 
-                if (overlapX > 0 && overlapY > 0) {
-                    collisionsResolved++;
+        #wordInput {
+            flex: 1;
+            padding: 10px;
+            font-size: 15px;
+            border: 2px solid #ccc;
+            border-radius: 4px;
+            transition: border-color 0.3s;
+        }
 
-                    // Push along the axis with the shallowest overlap to keep movements natural
-                    if (overlapX < overlapY) {
-                        const pushX = overlapX / 2;
-                        const sign = r1.left + r1.width / 2 < r2.left + r2.width / 2 ? -1 : 1;
-                        
-                        adjustElementX(b1, sign * pushX);
-                        adjustElementX(b2, -sign * pushX);
-                    } else {
-                        const pushY = overlapY / 2;
-                        const sign = r1.top + r1.height / 2 < r2.top + r2.height / 2 ? -1 : 1;
+        #wordInput:focus, #sessionTitleInput:focus {
+            outline: none;
+            border-color: #87CEEB;
+        }
 
-                        adjustElementY(b1, sign * pushY);
-                        adjustElementY(b2, -sign * pushY);
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 15px;
+            font-weight: bold;
+            color: #333;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .checkbox-container input {
+            cursor: pointer;
+            width: 18px;
+            height: 18px;
+        }
+
+        .btn {
+            padding: 10px 18px;
+            font-size: 15px;
+            background-color: #87CEEB;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-weight: bold;
+        }
+
+        .btn:hover {
+            background-color: #5B9FBD;
+        }
+
+        .size-btn {
+            padding: 10px 14px;
+            min-width: 40px;
+        }
+
+        .action-btn {
+            background-color: #5D6D7E;
+        }
+        .action-btn:hover {
+            background-color: #34495E;
+        }
+
+        #canvas {
+            flex: 1;
+            background-color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #canvasTitleDisplay {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            color: #999;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            pointer-events: none;
+            user-select: none;
+        }
+
+        .word-box {
+            position: absolute;
+            background-color: #87CEEB;
+            color: #333;
+            border-radius: 6px;
+            cursor: grab;
+            user-select: none;
+            font-weight: 500;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            transition: box-shadow 0.2s, background-color 0.3s;
+            touch-action: none;
+            white-space: nowrap;
+        }
+
+        .word-box:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+        }
+
+        .word-box:active {
+            cursor: grabbing;
+        }
+
+        /* Modal Settings */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 25px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+
+        .modal-content h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .modal-list {
+            overflow-y: auto;
+            flex: 1;
+            margin-bottom: 20px;
+            padding-right: 5px;
+        }
+
+        .modal-item-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+            gap: 15px;
+        }
+
+        .modal-item-text {
+            font-weight: 500;
+            color: #444;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            flex: 1;
+        }
+
+        .color-select {
+            padding: 6px 10px;
+            font-size: 14px;
+            border: 2px solid #ccc;
+            border-radius: 4px;
+            outline: none;
+            cursor: pointer;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .color-select option {
+            color: #333;
+            font-weight: normal;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <div class="input-group">
+            <input type="text" id="sessionTitleInput" placeholder="Session Title...">
+            <input type="text" id="wordInput" placeholder='Enter words or sentences to chop up into words, or separate items with ;' autofocus>
+        </div>
+        <label class="checkbox-container">
+            <input type="checkbox" id="colorCheckbox">
+            Colour
+        </label>
+        <button id="addButton" class="btn">Add Word</button>
+        <button id="decreaseSize" class="btn size-btn">−</button>
+        <button id="increaseSize" class="btn size-btn">+</button>
+        <button id="changeColorsBtn" class="btn action-btn">Change Colours</button>
+        <button id="downloadBtn" class="btn action-btn" style="background-color: #27AE60;">Download Session</button>
+    </div>
+
+    <div id="canvas">
+        <div id="canvasTitleDisplay">UNTITLED GENERATION</div>
+    </div>
+
+    <div class="modal-overlay" id="colorModal">
+        <div class="modal-content">
+            <h3 id="modalTitle">Choose Background Colours</h3>
+            <div class="modal-list" id="modalList"></div>
+            <div class="modal-actions">
+                <button id="cancelModalBtn" class="btn" style="background-color: #bbb;">Cancel</button>
+                <button id="confirmModalBtn" class="btn">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const sessionTitleInput = document.getElementById('sessionTitleInput');
+        const wordInput = document.getElementById('wordInput');
+        const addButton = document.getElementById('addButton');
+        const canvas = document.getElementById('canvas');
+        const canvasTitleDisplay = document.getElementById('canvasTitleDisplay');
+        const increaseSizeBtn = document.getElementById('increaseSize');
+        const decreaseSizeBtn = document.getElementById('decreaseSize');
+        const colorCheckbox = document.getElementById('colorCheckbox');
+        const changeColorsBtn = document.getElementById('changeColorsBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        
+        const colorModal = document.getElementById('colorModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalList = document.getElementById('modalList');
+        const cancelModalBtn = document.getElementById('cancelModalBtn');
+        const confirmModalBtn = document.getElementById('confirmModalBtn');
+
+        let draggedElement = null;
+        let offsetX = 0;
+        let offsetY = 0;
+        let activePointerId = null;
+
+        let currentScaleIndex = 2; 
+        const fontSizes = [11, 13, 16, 20, 26, 34, 44];
+        const paddings = ["6px 10px", "8px 12px", "10px 15px", "12px 18px", "15px 22px", "18px 26px", "22px 32px"];
+
+        let nextSpawnX = 20;
+        let nextSpawnY = 20;
+        let maxRowHeight = 0;
+
+        // Swapped Olive for a soft Clay Brown (#D6BEA9) completely distinct from orange & gray
+        const colorOptions = [
+            { name: "Blue", hex: "#87CEEB" },
+            { name: "Green", hex: "#A3E4D7" },
+            { name: "Pink", hex: "#FADBD8" },
+            { name: "Yellow", hex: "#FCF3CF" },
+            { name: "Purple", hex: "#E8DAEF" },
+            { name: "Orange", hex: "#F5CBA7" },
+            { name: "Gray", hex: "#D5D8DC" },
+            { name: "Red", hex: "#F1948A" },
+            { name: "Brown", hex: "#D6BEA9" }, 
+            { name: "Mint", hex: "#D5F5E3" }
+        ];
+
+        let modalMode = "add";
+        let pendingItemsQueue = [];
+
+        sessionTitleInput.addEventListener('input', () => {
+            const val = sessionTitleInput.value.trim();
+            canvasTitleDisplay.textContent = val ? val.toUpperCase() : "UNTITLED GENERATION";
+        });
+
+        addButton.addEventListener('click', processInput);
+        wordInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') processInput(); });
+
+        increaseSizeBtn.addEventListener('click', () => {
+            if (currentScaleIndex < fontSizes.length - 1) { currentScaleIndex++; updateGlobalItemSizes(); }
+        });
+        decreaseSizeBtn.addEventListener('click', () => {
+            if (currentScaleIndex > 0) { currentScaleIndex--; updateGlobalItemSizes(); }
+        });
+
+        changeColorsBtn.addEventListener('click', openColorEditor);
+        downloadBtn.addEventListener('click', downloadHTMLSnapshot);
+
+        cancelModalBtn.addEventListener('click', () => {
+            colorModal.style.display = 'none';
+            pendingItemsQueue = [];
+        });
+
+        confirmModalBtn.addEventListener('click', () => {
+            const dropdowns = modalList.querySelectorAll('.color-select');
+            
+            if (modalMode === "add") {
+                const finalizedItems = [];
+                dropdowns.forEach((select, index) => {
+                    finalizedItems.push({ text: pendingItemsQueue[index], color: select.value });
+                });
+                spawnItems(finalizedItems);
+            } else if (modalMode === "edit") {
+                const boxes = canvas.querySelectorAll('.word-box');
+                dropdowns.forEach((select, index) => {
+                    if (boxes[index]) {
+                        boxes[index].style.backgroundColor = select.value;
                     }
+                });
+            }
 
-                    // Keep boxes within canvas boundaries during the push
-                    constrainToCanvas(b1);
-                    constrainToCanvas(b2);
+            colorModal.style.display = 'none';
+            pendingItemsQueue = [];
+        });
+
+        function updateGlobalItemSizes() {
+            const boxes = document.querySelectorAll('.word-box');
+            boxes.forEach(box => {
+                box.style.fontSize = fontSizes[currentScaleIndex] + 'px';
+                box.style.padding = paddings[currentScaleIndex];
+            });
+            resolveCollisions();
+        }
+
+        function processInput() {
+            const input = wordInput.value.trim();
+            if (input === '') { alert('Please enter text'); return; }
+
+            const items = [];
+            const blocks = input.split(';');
+
+            blocks.forEach(block => {
+                const regex = /"([^"]*)"|([^\s"]+)/g;
+                let match;
+                while ((match = regex.exec(block)) !== null) {
+                    const exactMatch = match[1] !== undefined ? match[1] : match[2];
+                    const cleanItem = exactMatch.trim();
+                    if (cleanItem) items.push(cleanItem);
                 }
+            });
+
+            wordInput.value = '';
+            wordInput.focus();
+            if (items.length === 0) return;
+
+            if (colorCheckbox.checked) {
+                modalMode = "add";
+                modalTitle.textContent = "Choose Background Colours";
+                pendingItemsQueue = items;
+                renderColorModalList(items, true);
+            } else {
+                const standardItems = items.map(text => ({ text, color: '#87CEEB' }));
+                spawnItems(standardItems);
             }
         }
-        // If a pass completes with zero overlaps, we can stop early
-        if (collisionsResolved === 0) break;
-    }
-}
+
+        function openColorEditor() {
+            const boxes = Array.from(canvas.querySelectorAll('.word-box'));
+            if (boxes.length === 0) { alert("There are no words on the canvas to recolor."); return; }
+            
+            modalMode = "edit";
+            modalTitle.textContent = "Modify Canvas Colours";
+            
+            const existingTexts = boxes.map(b => b.textContent);
+            renderColorModalList(existingTexts, false, boxes.map(b => b.style.backgroundColor));
+        }
+
+        function renderColorModalList(textList, autoCycleColors, customHexList = []) {
+            modalList.innerHTML = ''; 
+            
+            textList.forEach((itemText, index) => {
+                const row = document.createElement('div');
+                row.className = 'modal-item-row';
+
+                const label = document.createElement('div');
+                label.className = 'modal-item-text';
+                label.textContent = itemText;
+
+                const select = document.createElement('select');
+                select.className = 'color-select';
+
+                let initialHex = '#87CEEB';
+                if (autoCycleColors) {
+                    initialHex = colorOptions[index % colorOptions.length].hex;
+                } else if (customHexList[index]) {
+                    initialHex = rgbToHex(customHexList[index]) || customHexList[index];
+                }
+
+                colorOptions.forEach((opt) => {
+                    const option = document.createElement('option');
+                    option.value = opt.hex;
+                    option.textContent = opt.name;
+                    option.style.backgroundColor = opt.hex;
+                    
+                    if (opt.hex.toLowerCase() === initialHex.toLowerCase()) {
+                        option.selected = true;
+                    }
+                    select.appendChild(option);
+                });
+
+                select.style.backgroundColor = select.value;
+                select.addEventListener('change', () => { select.style.backgroundColor = select.value; });
+
+                row.appendChild(label);
+                row.appendChild(select);
+                modalList.appendChild(row);
+            });
+
+            colorModal.style.display = 'flex';
+        }
+
+        function spawnItems(itemsArray) {
+            itemsArray.forEach((itemObj) => {
+                const wordBox = document.createElement('div');
+                wordBox.className = 'word-box';
+                wordBox.textContent = itemObj.text;
+                wordBox.style.backgroundColor = itemObj.color; 
+
+                wordBox.style.fontSize = fontSizes[currentScaleIndex] + 'px';
+                wordBox.style.padding = paddings[currentScaleIndex];
+
+                wordBox.addEventListener('pointerdown', startDrag);
+                canvas.appendChild(wordBox);
+
+                const boxWidth = wordBox.offsetWidth;
+                const boxHeight = wordBox.offsetHeight;
+                
+                if (boxHeight > maxRowHeight) maxRowHeight = boxHeight;
+
+                if (nextSpawnX + boxWidth + 20 > canvas.clientWidth) {
+                    nextSpawnX = 20;
+                    nextSpawnY += maxRowHeight + 20;
+                    maxRowHeight = boxHeight; 
+                }
+                if (nextSpawnY + boxHeight > canvas.clientHeight) { nextSpawnY = 20; }
+
+                wordBox.style.left = nextSpawnX + 'px';
+                wordBox.style.top = nextSpawnY + 'px';
+
+                nextSpawnX += boxWidth + 15; 
+            });
+
+            resolveCollisions();
+        }
+
+        // --- DOWNLOAD STRIPPED-DOWN HTML SNAPSHOT ---
+        function downloadHTMLSnapshot() {
+            const rawTitle = sessionTitleInput.value.trim();
+            const formattedTitle = rawTitle ? rawTitle.replace(/\s+/g, '_') : 'untitled';
+            const filename = `manip-${formattedTitle}.html`;
+
+            const boxes = canvas.querySelectorAll('.word-box');
+            let spawnedElementsMarkup = '';
+            boxes.forEach(b => {
+                spawnedElementsMarkup += `
+        <div class="word-box" style="left: ${b.style.left}; top: ${b.style.top}; background-color: ${b.style.backgroundColor}; font-size: ${b.style.fontSize}; padding: ${b.style.padding};">${b.textContent}</div>`;
+            });
+
+            // Reassemble cleaner page for snapshot (Only + & - buttons remain active, all input blocks dropped)
+            const fullSnapshotHTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Manipulator - Saved Session</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; display: flex; flex-direction: column; height: 100vh; background-color: #f0f0f0; }
+        .controls { padding: 15px 20px; background-color: #fff; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); display: flex; gap: 12px; align-items: center; justify-content: flex-start; }
+        .btn { padding: 10px 18px; font-size: 15px; background-color: #87CEEB; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn:hover { background-color: #5B9FBD; }
+        .size-btn { padding: 10px 14px; min-width: 40px; }
+        #canvas { flex: 1; background-color: white; position: relative; overflow: hidden; }
+        #canvasTitleDisplay { position: absolute; top: 15px; right: 20px; font-size: 14px; font-weight: bold; color: #bbb; letter-spacing: 1px; text-transform: uppercase; pointer-events: none; user-select: none; }
+        .word-box { position: absolute; color: #333; border-radius: 6px; cursor: grab; user-select: none; font-weight: 500; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); touch-action: none; white-space: nowrap; transition: font-size 0.2s, padding 0.2s, box-shadow 0.2s; }
+        .word-box:hover { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25); }
+        .word-box:active { cursor: grabbing; }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <button id="decreaseSize" class="btn size-btn">−</button>
+        <button id="increaseSize" class="btn size-btn">+</button>
+    </div>
+    <div id="canvas">
+        <div id="canvasTitleDisplay">${rawTitle ? rawTitle.toUpperCase() : 'SAVED GENERATION'}</div>
+        ${spawnedElementsMarkup}
+    </div>
+    <script>
+        const canvas = document.getElementById('canvas');
+        const increaseSizeBtn = document.getElementById('increaseSize');
+        const decreaseSizeBtn = document.getElementById('decreaseSize');
+
+        let draggedElement = null; let offsetX = 0; let offsetY = 0; let activePointerId = null;
+        let currentScaleIndex = ${currentScaleIndex}; 
+        const fontSizes = [11, 13, 16, 20, 26, 34, 44];
+        const paddings = ["6px 10px", "8px 12px", "10px 15px", "12px 18px", "15px 22px", "18px 26px", "22px 32px"];
+
+        // Re-attach active size controllers on saved layout
+        increaseSizeBtn.addEventListener('click', () => {
+            if (currentScaleIndex < fontSizes.length - 1) { currentScaleIndex++; updateGlobalItemSizes(); }
+        });
+        decreaseSizeBtn.addEventListener('click', () => {
+            if (currentScaleIndex > 0) { currentScaleIndex--; updateGlobalItemSizes(); }
+        });
+
+        function updateGlobalItemSizes() {
+            const boxes = document.querySelectorAll('.word-box');
+            boxes.forEach(box => {
+                box.style.fontSize = fontSizes[currentScaleIndex] + 'px';
+                box.style.padding = paddings[currentScaleIndex];
+            });
+            resolveCollisions();
+        }
+
+        // --- EXPORTED ATTACHMENTS ENGINE ---
+        function adjustElementX(element, amount) {
+            const currentX = parseFloat(element.style.left) || 0;
+            element.style.left = (currentX + amount) + 'px';
+        }
+        function adjustElementY(element, amount) {
+            const currentY = parseFloat(element.style.top) || 0;
+            element.style.top = (currentY + amount) + 'px';
+        }
+        function constrainToCanvas(element) {
+            let currentX = parseFloat(element.style.left) || 0;
+            let currentY = parseFloat(element.style.top) || 0;
+            currentX = Math.max(0, Math.min(currentX, canvas.clientWidth - element.offsetWidth));
+            currentY = Math.max(0, Math.min(currentY, canvas.clientHeight - element.offsetHeight));
+            element.style.left = currentX + 'px'; element.style.top = currentY + 'px';
+        }
+
+        function resolveCollisions() {
+            const boxes = Array.from(document.querySelectorAll('.word-box'));
+            const iterations = 10; 
+            for (let i = 0; i < iterations; i++) {
+                let collisionsResolved = 0;
+                for (let j = 0; j < boxes.length; j++) {
+                    for (let k = j + 1; k < boxes.length; k++) {
+                        const b1 = boxes[j]; const b2 = boxes[k];
+                        const r1 = {
+                            left: parseFloat(b1.style.left) || 0, top: parseFloat(b1.style.top) || 0,
+                            right: (parseFloat(b1.style.left) || 0) + b1.offsetWidth, bottom: (parseFloat(b1.style.top) || 0) + b1.offsetHeight,
+                            width: b1.offsetWidth, height: b1.offsetHeight
+                        };
+                        const r2 = {
+                            left: parseFloat(b2.style.left) || 0, top: parseFloat(b2.style.top) || 0,
+                            right: (parseFloat(b2.style.left) || 0) + b2.offsetWidth, bottom: (parseFloat(b2.style.top) || 0) + b2.offsetHeight,
+                            width: b2.offsetWidth, height: b2.offsetHeight
+                        };
+                        const overlapX = Math.min(r1.right, r2.right) - Math.max(r1.left, r2.left);
+                        const overlapY = Math.min(r1.bottom, r2.bottom) - Math.max(r1.top, r2.top);
+
+                        if (overlapX > 0 && overlapY > 0) {
+                            collisionsResolved++;
+                            if (overlapX < overlapY) {
+                                const pushX = overlapX / 2;
+                                const sign = r1.left + r1.width / 2 < r2.left + r2.width / 2 ? -1 : 1;
+                                adjustElementX(b1, sign * pushX); adjustElementX(b2, -sign * pushX);
+                            } else {
+                                const pushY = overlapY / 2;
+                                const sign = r1.top + r1.height / 2 < r2.top + r2.height / 2 ? -1 : 1;
+                                adjustElementY(b1, sign * pushY); adjustElementY(b2, -sign * pushY);
+                            }
+                            constrainToCanvas(b1); constrainToCanvas(b2);
+                        }
+                    }
+                }
+                if (collisionsResolved === 0) break;
+            }
+        }
+
+        // Restores reactive engine drag actions directly on reopen
+        document.querySelectorAll('.word-box').forEach(box => {
+            box.addEventListener('pointerdown', startDrag);
+        });
+
+        function startDrag(e) {
+            if (e.button && e.button !== 0) return;
+            e.preventDefault();
+            draggedElement = this; activePointerId = e.pointerId;
+            const canvasRect = canvas.getBoundingClientRect();
+            offsetX = e.clientX - canvasRect.left - (parseFloat(draggedElement.style.left) || 0);
+            offsetY = e.clientY - canvasRect.top - (parseFloat(draggedElement.style.top) || 0);
+            try { draggedElement.setPointerCapture(activePointerId); } catch (err) {}
+            document.addEventListener('pointermove', drag);
+            document.addEventListener('pointerup', stopDrag);
+            document.addEventListener('pointercancel', stopDrag);
+        }
+
+        function drag(e) {
+            if (!draggedElement || e.pointerId !== activePointerId) return;
+            const canvasRect = canvas.getBoundingClientRect();
+            let newX = e.clientX - canvasRect.left - offsetX;
+            let newY = e.clientY - canvasRect.top - offsetY;
+            newX = Math.max(0, Math.min(newX, canvas.clientWidth - draggedElement.offsetWidth));
+            newY = Math.max(0, Math.min(newY, canvas.clientHeight - draggedElement.offsetHeight));
+            draggedElement.style.left = newX + 'px'; draggedElement.style.top = newY + 'px';
+            resolveCollisions();
+        }
+
+        function stopDrag(e) {
+            if (draggedElement && activePointerId !== null) { try { draggedElement.releasePointerCapture(activePointerId); } catch (err) {} }
+            activePointerId = null; draggedElement = null;
+            document.removeEventListener('pointermove', drag); document.removeEventListener('pointerup', stopDrag); document.removeEventListener('pointercancel', stopDrag);
+        }
+    <\/script>
+</body>
+</html>`;
+
+            const blob = new Blob([fullSnapshotHTML], { type: 'text/html' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            link.click();
+            URL.revokeObjectURL(link.href);
+        }
+
+        // --- COLLISION RESOLUTION ---
+        function adjustElementX(element, amount) {
+            const currentX = parseFloat(element.style.left) || 0;
+            element.style.left = (currentX + amount) + 'px';
+        }
+        function adjustElementY(element, amount) {
+            const currentY = parseFloat(element.style.top) || 0;
+            element.style.top = (currentY + amount) + 'px';
+        }
+        function constrainToCanvas(element) {
+            let currentX = parseFloat(element.style.left) || 0;
+            let currentY = parseFloat(element.style.top) || 0;
+            currentX = Math.max(0, Math.min(currentX, canvas.clientWidth - element.offsetWidth));
+            currentY = Math.max(0, Math.min(currentY, canvas.clientHeight - element.offsetHeight));
+            element.style.left = currentX + 'px';
+            element.style.top = currentY + 'px';
+        }
+
+        function resolveCollisions() {
+            const boxes = Array.from(document.querySelectorAll('.word-box'));
+            const iterations = 10; 
+            for (let i = 0; i < iterations; i++) {
+                let collisionsResolved = 0;
+                for (let j = 0; j < boxes.length; j++) {
+                    for (let k = j + 1; k < boxes.length; k++) {
+                        const b1 = boxes[j]; const b2 = boxes[k];
+                        const r1 = {
+                            left: parseFloat(b1.style.left) || 0, top: parseFloat(b1.style.top) || 0,
+                            right: (parseFloat(b1.style.left) || 0) + b1.offsetWidth, bottom: (parseFloat(b1.style.top) || 0) + b1.offsetHeight,
+                            width: b1.offsetWidth, height: b1.offsetHeight
+                        };
+                        const r2 = {
+                            left: parseFloat(b2.style.left) || 0, top: parseFloat(b2.style.top) || 0,
+                            right: (parseFloat(b2.style.left) || 0) + b2.offsetWidth, bottom: (parseFloat(b2.style.top) || 0) + b2.offsetHeight,
+                            width: b2.offsetWidth, height: b2.offsetHeight
+                        };
+                        const overlapX = Math.min(r1.right, r2.right) - Math.max(r1.left, r2.left);
+                        const overlapY = Math.min(r1.bottom, r2.bottom) - Math.max(r1.top, r2.top);
+
+                        if (overlapX > 0 && overlapY > 0) {
+                            collisionsResolved++;
+                            if (overlapX < overlapY) {
+                                const pushX = overlapX / 2;
+                                const sign = r1.left + r1.width / 2 < r2.left + r2.width / 2 ? -1 : 1;
+                                adjustElementX(b1, sign * pushX); adjustElementX(b2, -sign * pushX);
+                            } else {
+                                const pushY = overlapY / 2;
+                                const sign = r1.top + r1.height / 2 < r2.top + r2.height / 2 ? -1 : 1;
+                                adjustElementY(b1, sign * pushY); adjustElementY(b2, -sign * pushY);
+                            }
+                            constrainToCanvas(b1); constrainToCanvas(b2);
+                        }
+                    }
+                }
+                if (collisionsResolved === 0) break;
+            }
+        }
+
+        // --- DRAG AND DROP ---
+        function startDrag(e) {
+            if (e.button && e.button !== 0) return;
+            e.preventDefault();
+            draggedElement = this; activePointerId = e.pointerId;
+            const canvasRect = canvas.getBoundingClientRect();
+            offsetX = e.clientX - canvasRect.left - (parseFloat(draggedElement.style.left) || 0);
+            offsetY = e.clientY - canvasRect.top - (parseFloat(draggedElement.style.top) || 0);
+            try { draggedElement.setPointerCapture(activePointerId); } catch (err) {}
+            document.addEventListener('pointermove', drag);
+            document.addEventListener('pointerup', stopDrag);
+            document.addEventListener('pointercancel', stopDrag);
+        }
+
+        function drag(e) {
+            if (!draggedElement || e.pointerId !== activePointerId) return;
+            const canvasRect = canvas.getBoundingClientRect();
+            let newX = e.clientX - canvasRect.left - offsetX;
+            let newY = e.clientY - canvasRect.top - offsetY;
+            newX = Math.max(0, Math.min(newX, canvas.clientWidth - draggedElement.offsetWidth));
+            newY = Math.max(0, Math.min(newY, canvas.clientHeight - draggedElement.offsetHeight));
+            draggedElement.style.left = newX + 'px'; draggedElement.style.top = newY + 'px';
+            resolveCollisions();
+        }
+
+        function stopDrag(e) {
+            if (draggedElement && activePointerId !== null) { try { draggedElement.releasePointerCapture(activePointerId); } catch (err) {} }
+            activePointerId = null; draggedElement = null;
+            document.removeEventListener('pointermove', drag); document.removeEventListener('pointerup', stopDrag); document.removeEventListener('pointercancel', stopDrag);
+        }
+
+        function rgbToHex(rgb) {
+            if (/^rgb/.test(rgb)) {
+                const parts = rgb.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*\d+)?\)$/);
+                if (parts) {
+                    return "#" + ("0" + parseInt(parts[1],10).toString(16)).slice(-2) +
+                                 ("0" + parseInt(parts[2],10).toString(16)).slice(-2) +
+                                 ("0" + parseInt(parts[3],10).toString(16)).slice(-2);
+                }
+            }
+            return null;
+        }
+    </script>
+</body>
+</html>
