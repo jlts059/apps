@@ -157,7 +157,6 @@
         button.btn-back-step { background: #94a3b8; }
         button.btn-back-step:hover { background: #64748b; }
 
-        /* Contenedor de navegación superior optimizado */
         .top-nav-bar {
             display: none;
             align-items: center;
@@ -230,7 +229,6 @@
             padding: 40px;
         }
 
-        /* En pantalla completa mantenemos la barra superior visible dentro del zoom */
         .output-container.fullscreen .top-nav-bar {
             display: flex !important;
         }
@@ -439,8 +437,14 @@
         actualizarAnalisisInterfaz();
     }
 
+    // CORRECCIÓN PARA MÓVILES: Ignora el zoom si se pulsa un botón o elemento de navegación
     function toggleFullscreen(e) {
-        if (e.target.tagName === 'BUTTON' || e.target.classList.contains('lineup-1')) return;
+        if (e.target.tagName === 'BUTTON' || 
+            e.target.closest('button') || 
+            e.target.closest('.nav-buttons-container') || 
+            e.target.classList.contains('lineup-1')) {
+            return;
+        }
         const out = document.getElementById('output');
         if (!out.classList.contains('active')) return;
         out.classList.toggle('fullscreen');
@@ -480,7 +484,7 @@
             gruposTemporales.forEach(grupo => {
                 for(let i=0; i<grupo.length; i++) {
                     for(let j=i+1; j<grupo.length; j++) {
-                        if (historialParejas.has([grupo[i], grupo[j]].sort().join('|'))) repeticionesIntento++;
+                        if (historialParejas.has([grupo[i], group[j]].sort().join('|'))) repeticionesIntento++;
                     }
                 }
             });
@@ -671,7 +675,7 @@
     }
 
     function revisarHistorialParejasRotacion(nombreA, nombreB, hastaRondaIndex) {
-        if (nombreA === "[Sitio Libre]" || nombreB === "[Sitio Libre]" || nombreA === pointer || nombreA === nombreB) return false;
+        if (nombreA === "[Sitio Libre]" || nombreB === "[Sitio Libre]" || nombreA === nombreB) return false;
         
         for (let r = 0; r < hastaRondaIndex; r++) {
             let rondaAnterior = datosRotacionRondas[r];
@@ -731,7 +735,7 @@
     }
 
     // ==========================================
-    // OPCIÓN 5: PAREJAS CRUZADAS (NUEVA)
+    // OPCIÓN 5: PAREJAS CRUZADAS
     // ==========================================
     function generarOpcion5(alumnos) {
         const total = alumnos.length;
