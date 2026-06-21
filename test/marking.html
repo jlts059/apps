@@ -26,7 +26,6 @@
             transition: background-color 0.2s ease;
         }
 
-        /* Distinctive dynamic body theme tracking background tints */
         body.theme-A { background-color: #eef4fa; --page-bg: #eef4fa; }
         body.theme-B { background-color: #faf2f6; --page-bg: #faf2f6; }
         body.theme-QC { background-color: #f4f4f9; --page-bg: #f4f4f9; }
@@ -48,12 +47,10 @@
             transition: all 0.2s ease;
         }
 
-        /* Non-intrusive adaptive tab background colors */
         #tabA { background: #d0e1f3; color: #333; }
         #tabB { background: #f3d0e4; color: #333; }
         #tabQC { background: #e2e2e6; color: #333; }
 
-        /* Highly visible active darkening states */
         #tabA.active { background: #1a5296; color: white; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
         #tabB.active { background: #961a5c; color: white; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
         #tabQC.active { background: #555558; color: white; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
@@ -70,6 +67,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            gap: 12px;
         }
 
         .summary-row {
@@ -112,13 +110,8 @@
             border-style: solid;
         }
 
-        /* Standout bold solid black borders */
-        .summary-box.standout {
-            border: 3px solid #000000 !important;
-        }
-        .summary-box.standout-orange {
-            border: 3px solid #000000 !important;
-        }
+        .summary-box.standout { border: 3px solid #000000 !important; }
+        .summary-box.standout-orange { border: 3px solid #000000 !important; }
 
         .label-muted {
             color: #999;
@@ -147,6 +140,37 @@
 
         .summary-value.total { color: #000000; }
         .summary-value.mark-out-of-10 { color: #000000; }
+
+        /* Dynamic Name Input Styling matching Tab Transitions */
+        .name-container {
+            width: 100%;
+            max-width: var(--max-width);
+            box-sizing: border-box;
+        }
+        .name-input {
+            width: 100%;
+            padding: 10px 14px;
+            font-size: 15px;
+            font-weight: bold;
+            border: 1px solid rgba(0,0,0,0.08);
+            border-radius: 6px;
+            box-sizing: border-box;
+            text-align: center;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+        
+        /* Base / Empty Adaptive Styles */
+        #nameInputA { background-color: #d0e1f3; color: #333; }
+        #nameInputB { background-color: #f3d0e4; color: #333; }
+
+        /* Filled States mimicking Active Dark Tab Backgrounds */
+        #nameInputA.filled { background-color: #1a5296; color: white; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+        #nameInputB.filled { background-color: #961a5c; color: white; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+
+        /* Dynamic Placeholder Text Color Tweaking */
+        .name-input::placeholder { color: #666; transition: color 0.2s; }
+        .name-input.filled::placeholder { color: rgba(255, 255, 255, 0.6); }
 
         .panel-wrapper {
             width: 100%;
@@ -198,7 +222,7 @@
 
         .grid-btn {
             aspect-ratio: 1;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: bold;
             background-color: #e0e0e0;
             border: 1px solid #ccc;
@@ -215,13 +239,12 @@
         .grid-btn.selected.group-mid { background-color: #2196F3; color: #fff; border-color: #1565C0; }
         .grid-btn.selected.group-low { background-color: #FFCDD2; color: #7f1d1d; border-color: #ef9a9a; }
 
-        /* Style for the transparent, minimal header button rows */
         .grid-btn.header-selector {
             background-color: transparent;
             border: 1px dashed #bbb;
             color: #666;
             font-weight: normal;
-            font-size: 11px;
+            font-size: 10px;
         }
         .grid-btn.header-selector:active {
             background-color: rgba(0, 0, 0, 0.08);
@@ -238,13 +261,11 @@
             text-align: center;
         }
 
-        /* Color Overrides */
         .summary-box.green { background: #e8f5e9; border-color: #4CAF50 !important; color: #2E7D32; }
         .summary-box.blue { background: #e3f2fd; border-color: #2196F3 !important; color: #1565C0; }
         .summary-box.red { background: #ffebee; border-color: #F44336 !important; color: #7f1d1d; }
         .summary-box.orange { background: #fff3e0; border-color: #FF9800 !important; color: #E65100; }
         
-        /* Enforce absolute solid black overrides for standout elements while accepting backgrounds */
         .summary-box.standout.green { border-color: #000000 !important; }
         .summary-box.standout.blue { border-color: #000000 !important; }
         .summary-box.standout.orange { border-color: #000000 !important; }
@@ -257,7 +278,6 @@
 
         .summary-box.green .summary-value, .summary-box.blue .summary-value, .summary-box.red .summary-value, .summary-box.orange .summary-value { color: inherit; }
 
-        /* Keypad Modal Structure */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.4); }
         .modal.active { display: flex; align-items: center; justify-content: center; }
         .keypad-container { background-color: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); max-width: 280px; width: 90%; }
@@ -271,7 +291,6 @@
         .keypad-action-btn.cancel { background: #f44336; color: white; }
         .keypad-action-btn.confirm { background: #4CAF50; color: white; }
 
-        /* Horizontal sequence sorting order weights */
         .box-po1  { order: 1; }
         .box-poi1 { order: 2; }
         .box-tot1 { order: 3; }
@@ -281,7 +300,6 @@
         .box-tot  { order: 7; }
         .box-out10{ order: 8; }
 
-        /* --- HORIZONTAL DISPLAY ADAPTATIONS (Desktop / Landscape) --- */
         @media (min-width: 768px) or (orientation: landscape) {
             :root {
                 --max-width: 1000px;
@@ -296,12 +314,8 @@
             .summary-box {
                 flex: 1;
             }
-            .summary-box.standout {
-                border: 3px solid #000000 !important;
-            }
-            .summary-box.standout-orange {
-                border: 3px solid #000000 !important;
-            }
+            .summary-box.standout { border: 3px solid #000000 !important; }
+            .summary-box.standout-orange { border: 3px solid #000000 !important; }
             .panel.active {
                 flex-direction: row;
                 gap: 16px;
@@ -352,6 +366,13 @@
                 <div class="summary-box input-field box-tot2" id="tot2BoxB"><div class="summary-label">Tot #2 <span class="label-muted">/100</span></div><div class="summary-value" id="tot2B">-</div></div>
                 <div class="summary-box standout-orange box-out10" id="outOf10BoxB"><div class="summary-label">/10</div><div class="summary-value mark-out-of-10" id="outOf10B">0.0</div></div>
             </div>
+        </div>
+
+        <div class="name-container" id="nameContainerA">
+            <input type="text" class="name-input" id="nameInputA" placeholder="NOMBRE" aria-label="Nombre Candidato A">
+        </div>
+        <div class="name-container" id="nameContainerB" style="display: none;">
+            <input type="text" class="name-input" id="nameInputB" placeholder="NOMBRE" aria-label="Nombre Candidato B">
         </div>
     </div>
 
@@ -416,7 +437,7 @@
     </div>
 
     <script>
-        const rowValues = [10, 9, 8, 7, 6, 5, 4, 2, 1.5, 0];
+        const rowValues = [10, 9, 8, 7, 6.5, 5, 4, 2.5, 1, 0];
         const totalRows = 5;
         const maxGridValue = Math.max(...rowValues);
         const singleGridMax = maxGridValue * totalRows;
@@ -432,7 +453,6 @@
         createGrid('buttonGridB1', 'totalDisplayB1', 'B');
         createGrid('buttonGridB2', 'totalDisplayB2', 'B');
 
-        // Navigation Controller
         const tabA = document.getElementById('tabA');
         const tabQC = document.getElementById('tabQC');
         const tabB = document.getElementById('tabB');
@@ -441,20 +461,61 @@
         const panelB = document.getElementById('panelB');
         const summaryRowA = document.getElementById('summaryRowA');
         const summaryRowB = document.getElementById('summaryRowB');
+        const nameContainerA = document.getElementById('nameContainerA');
+        const nameContainerB = document.getElementById('nameContainerB');
+        const nameInputA = document.getElementById('nameInputA');
+        const nameInputB = document.getElementById('nameInputB');
+
+        // Text input field helper to check text contents and toggle active state classes
+        function handleInputState(inputElement) {
+            if (inputElement.value.trim() !== "") {
+                inputElement.classList.add('filled');
+            } else {
+                inputElement.classList.remove('filled');
+            }
+        }
+
+        // Attach listeners directly to monitor name inputs
+        nameInputA.addEventListener('input', () => handleInputState(nameInputA));
+        nameInputB.addEventListener('input', () => handleInputState(nameInputB));
 
         function clearTabs() {
             [tabA, tabQC, tabB].forEach(t => t.classList.remove('active'));
             [panelA, panelQC, panelB].forEach(p => p.classList.remove('active'));
             summaryRowA.style.display = 'none';
             summaryRowB.style.display = 'none';
+            nameContainerA.style.display = 'none';
+            nameContainerB.style.display = 'none';
             document.body.className = ''; 
         }
 
-        tabA.addEventListener('click', () => { clearTabs(); tabA.classList.add('active'); panelA.classList.add('active'); summaryRowA.style.display = 'flex'; document.body.className = 'theme-A'; });
-        tabQC.addEventListener('click', () => { clearTabs(); tabQC.classList.add('active'); panelQC.classList.add('active'); document.body.className = 'theme-QC'; });
-        tabB.addEventListener('click', () => { clearTabs(); tabB.classList.add('active'); panelB.classList.add('active'); summaryRowB.style.display = 'flex'; document.body.className = 'theme-B'; });
+        tabA.addEventListener('click', () => { 
+            clearTabs(); 
+            tabA.classList.add('active'); 
+            panelA.classList.add('active'); 
+            summaryRowA.style.display = 'flex'; 
+            nameContainerA.style.display = 'block';
+            handleInputState(nameInputA); // recalculate state upon visual mount
+            document.body.className = 'theme-A'; 
+        });
+        
+        tabQC.addEventListener('click', () => { 
+            clearTabs(); 
+            tabQC.classList.add('active'); 
+            panelQC.classList.add('active'); 
+            document.body.className = 'theme-QC'; 
+        });
+        
+        tabB.addEventListener('click', () => { 
+            clearTabs(); 
+            tabB.classList.add('active'); 
+            panelB.classList.add('active'); 
+            summaryRowB.style.display = 'flex'; 
+            nameContainerB.style.display = 'block';
+            handleInputState(nameInputB); // recalculate state upon visual mount
+            document.body.className = 'theme-B'; 
+        });
 
-        // Keypads triggers
         document.getElementById('po2BoxA').addEventListener('click', () => openKeypad('po2', 'A', 'PO #2'));
         document.getElementById('poi2BoxA').addEventListener('click', () => openKeypad('poi2', 'A', 'POI #2'));
         document.getElementById('tot2BoxA').addEventListener('click', () => openKeypad('tot2', 'A', 'Tot #2'));
@@ -466,7 +527,6 @@
             const container = document.getElementById(containerId);
             const totalDisplay = document.getElementById(totalId);
 
-            // 1. Generate Header click-to-select column indicators
             rowValues.forEach(val => {
                 const headerBtn = document.createElement('button');
                 headerBtn.classList.add('grid-btn', 'header-selector');
@@ -474,7 +534,6 @@
                 headerBtn.title = `Select all ${val}s`;
                 
                 headerBtn.addEventListener('click', () => {
-                    // Loop over each grid grading row inside this container
                     for (let r = 0; r < totalRows; r++) {
                         const targets = container.querySelectorAll(`.grid-btn[data-row="${r}"]`);
                         targets.forEach(btn => {
@@ -490,7 +549,6 @@
                 container.appendChild(headerBtn);
             });
 
-            // 2. Generate standard data grids
             for (let row = 0; row < totalRows; row++) {
                 rowValues.forEach(val => {
                     const button = document.createElement('button');
@@ -500,7 +558,7 @@
                     button.dataset.row = row;
 
                     if (val === 10 || val === 9 || val === 8) button.classList.add('group-high');
-                    else if (val === 7 || val === 6 || val === 5) button.classList.add('group-mid');
+                    else if (val === 7 || val === 6.5 || val === 5) button.classList.add('group-mid');
                     else button.classList.add('group-low');
 
                     button.addEventListener('click', () => {
@@ -608,7 +666,6 @@
             const summaryTotal = document.getElementById(`total${candidate}`);
             const outOf10Element = document.getElementById(`outOf10${candidate}`);
 
-            // Update boxes and dynamically add conditional color coding backgrounds to the thick black standout buttons
             if (tot1Element.textContent !== '-' && tot2Text !== '-') {
                 const finalTotal = parseFloat(tot1Element.textContent) + parseFloat(tot2Text);
                 document.getElementById(`totalLabel${candidate}`).textContent = `/ ${maxPossibleMark}`;
@@ -617,7 +674,6 @@
                 const markOut10 = (finalTotal / maxPossibleMark) * 10;
                 outOf10Element.textContent = formatNumber(markOut10, 1);
                 
-                // Fire dynamic background trackers directly on the Total and /10 container elements
                 updateNumericBoxColor(summaryTotal.textContent, maxPossibleMark, `total${candidate}`);
                 updateNumericBoxColor(outOf10Element.textContent, 10, `outOf10${candidate}`);
             } else {
