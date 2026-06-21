@@ -2,8 +2,8 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generador de Ordenar Líneas - v1.3</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Unjumble Lines - Canvas Transmit Edition v4.2</title>
     <style>
         :root {
             --primary: #3b82f6;
@@ -11,7 +11,6 @@
             --success: #10b981;
             --success-hover: #059669;
             --danger: #ef4444;
-            --danger-hover: #dc2626;
             --background: #f8fafc;
             --card: #ffffff;
             --text: #1e293b;
@@ -24,448 +23,231 @@
             margin: 0;
             padding: 0;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
             background-color: var(--background);
             color: var(--text);
             min-height: 100vh;
-            padding: 15px;
+            padding: 10px;
             display: flex;
             flex-direction: column;
             align-items: center;
-        }
-
-        .brand-badge {
-            position: fixed;
-            top: 15px;
-            right: 15px;
-            background-color: transparent;
-            color: #94a3b8;
-            font-size: 14px;
-            font-weight: 600;
-            z-index: 9999;
-            pointer-events: none;
-            letter-spacing: 1px;
+            overflow-x: hidden;
         }
 
         .container {
             width: 100%;
-            max-width: 850px;
+            max-width: 600px;
             background: var(--card);
             border-radius: 16px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-            padding: 20px;
-            margin-top: 30px;
-            position: relative;
-        }
-
-        h1 {
-            font-size: 22px;
-            color: #0f172a;
-            margin-bottom: 8px;
-            text-align: center;
-        }
-
-        p.subtitle {
-            color: var(--text-light);
-            text-align: center;
-            margin-bottom: 20px;
-            font-size: 14px;
-        }
-
-        #setup-screen, #student-start-screen, #game-screen, #results-screen {
-            display: none;
-        }
-
-        .input-group {
-            margin-bottom: 20px;
-        }
-
-        textarea {
-            width: 100%;
-            height: 200px;
-            padding: 12px;
-            border: 2px solid var(--border);
-            border-radius: 10px;
-            resize: vertical;
-            font-size: 15px;
-            color: var(--text);
-        }
-
-        textarea:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
-
-        .btn-container {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-top: 12px;
-        }
-
-        button {
-            flex: 1;
-            min-width: 120px;
-            padding: 10px 16px;
-            border: none;
-            border-radius: 10px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .btn-primary { background-color: var(--primary); color: white; }
-        .btn-primary:hover { background-color: var(--primary-hover); }
-        .btn-success { background-color: var(--success); color: white; }
-        .btn-success:hover { background-color: var(--success-hover); }
-        .btn-danger { background-color: var(--danger); color: white; }
-        .btn-danger:hover { background-color: var(--danger-hover); }
-        .btn-secondary { background-color: #64748b; color: white; }
-
-        .start-card {
-            text-align: center;
-            padding: 20px 0;
+            padding: 15px;
+            margin-top: 10px;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            gap: 25px;
         }
 
-        .start-qr {
-            background: white;
-            padding: 10px;
-            border: 1px solid var(--border);
+        h1 { font-size: 20px; text-align: center; margin-bottom: 8px; }
+        p.subtitle { color: var(--text-light); text-align: center; margin-bottom: 15px; font-size: 13px; }
+
+        #setup-screen, #student-start-screen, #game-screen, #results-screen { display: none; }
+
+        textarea { width: 100%; height: 150px; padding: 12px; border: 2px solid var(--border); border-radius: 10px; font-size: 15px; }
+
+        .tabs-container { display: flex; background: #e2e8f0; border-radius: 10px; padding: 4px; margin-bottom: 15px; gap: 4px; }
+        .tab-btn { flex: 1; padding: 12px 8px; border: none; background: transparent; color: var(--text-light); font-weight: 700; font-size: 14px; border-radius: 8px; cursor: pointer; }
+        .tab-btn.active { background: var(--card); color: var(--primary); box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+
+        .view-section { display: none; }
+        .view-section.active { display: flex; flex-direction: column; gap: 15px; }
+
+        /* Estilos del Lienzo Libre (Canvas) */
+        .canvas-area {
+            width: 100%;
+            height: 60vh; 
+            background: #fef08a;
+            border: 2px dashed #facc15;
             border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        }
-        .start-qr img { width: 160px; height: 160px; display: block; }
-
-        .game-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 25px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .instructions-details {
-            max-width: 500px;
-            width: 100%;
-        }
-
-        .instructions-summary {
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--primary);
-            cursor: pointer;
-            user-select: none;
-            padding: 4px 8px;
-            background: #eff6ff;
-            border-radius: 6px;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .instructions-summary:hover {
-            background: #dbeafe;
-        }
-
-        .instructions-box {
-            margin-top: 6px;
-            font-size: 12px;
-            color: #334155;
-            font-weight: 500;
-            line-height: 1.4;
-            background: #f8fafc;
-            padding: 8px 12px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-        }
-
-        .qr-box {
-            background: white;
-            padding: 4px;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-
-        .qr-box:hover { transform: scale(1.05); }
-        .qr-box img { width: 55px; height: 55px; display: block; }
-
-        .board-container {
             position: relative;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
+            overflow: hidden;
+            touch-action: none; 
         }
 
-        .word-pool-container, .word-slots-container {
-            background: #f1f5f9;
-            border: 2px dashed #cbd5e1;
-            border-radius: 12px;
-            padding: 12px;
-            min-height: 100px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .word-slots-container {
-            background: #f8fafc;
-            border: 2px solid #cbd5e1;
-        }
-
-        .slot-wrapper {
-            display: flex;
-            flex-direction: column;
-            width: 100%;
-            position: relative;
-        }
-
-        .slot-underline {
-            width: 100%;
-            height: 2px;
-            background-color: #cbd5e1;
-            margin-top: 4px;
-        }
-
-        .slot-wrapper.has-word .slot-underline {
-            background-color: transparent;
-        }
-
-        .word-token {
+        /* Fichas compactas del canvas */
+        .canvas-token {
+            position: absolute;
             background: white;
             border: 1px solid #cbd5e1;
-            padding: 10px 14px;
-            border-radius: 8px;
-            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 13px;
             font-weight: 500;
-            font-size: 15px;
+            cursor: grab;
             user-select: none;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-            text-align: left;
-            width: 100%;
-            transition: background-color 0.15s, border-color 0.15s, color 0.15s;
-        }
-
-        .word-token.selected-orange {
-            background-color: #ffedd5 !important;
-            border-color: #f97316 !important;
-            color: #ea580c !important;
-            box-shadow: 0 0 0 2px #ffcaa8;
-        }
-
-        .word-token.word-correct {
-            background-color: #d1fae5 !important;
-            border-color: #10b981 !important;
-            color: #065f46 !important;
-        }
-
-        .word-token.word-incorrect {
-            background-color: #fee2e2 !important;
-            border-color: #ef4444 !important;
-            color: #991b1b !important;
-        }
-
-        .empty-slot-area {
-            min-height: 40px;
-            width: 100%;
-            cursor: pointer;
-            border: 1px dashed #cbd5e1;
-            border-radius: 6px;
+            width: max-content;
+            max-width: 90%;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: transform 0.1s;
+            z-index: 10;
             display: flex;
             align-items: center;
-            padding-left: 12px;
-            color: #94a3b8;
-            font-size: 14px;
-            font-weight: 600;
-            background: #ffffff;
-            transition: all 0.2s;
+            justify-content: space-between;
+            gap: 8px;
         }
+        .canvas-token:active { cursor: grabbing; transform: scale(1.05); z-index: 100; }
 
-        .empty-slot-area.selected-orange-dash {
-            border: 2px dashed #f97316 !important;
-            background-color: #fff7ed !important;
-            color: #c2410c;
-        }
-
-        .feedback-message {
-            position: absolute;
-            top: -20px;
-            right: 10px;
-            font-weight: 600;
-            font-size: 32px;
-            z-index: 10;
-            pointer-events: none;
-            line-height: 1;
-        }
-
-        @keyframes blink-animation {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.3; transform: scale(1.2); }
-        }
-
-        .correct-blink {
-            display: inline-block;
-            animation: blink-animation 0.4s ease-in-out 2;
-        }
-
-        .score-display {
-            text-align: center;
-            font-size: 36px;
-            font-weight: 800;
-            margin: 15px 0;
-        }
-
-        .results-list {
-            margin-top: 15px;
-            max-height: 350px;
-            overflow-y: auto;
-        }
-
-        .result-item {
-            padding: 12px;
-            border-radius: 10px;
-            margin-bottom: 10px;
-            border-left: 5px solid transparent;
-            background: #f8fafc;
-            font-size: 14px;
-            line-height: 1.4;
-        }
-
-        .result-item.correct { border-left-color: var(--success); background: #f0fdf4; }
-        .result-item.incorrect { border-left-color: var(--danger); background: #fef2f2; }
-
-        .text-green { color: #16a34a; font-weight: 600; }
-        .text-red { color: #dc2626; text-decoration: line-through; opacity: 0.8; }
-        .text-blue { color: #2563eb; margin-top: 4px; display: block; font-weight: 500; }
-
-        .qr-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(4px);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 10000;
+        /* Estilos de fichas en modo envío secuencial */
+        .canvas-token.transmitting {
+            background-color: #eff6ff;
+            border-color: #3b82f6;
             cursor: pointer;
         }
-
-        .qr-overlay img {
-            width: 80vmin;
-            height: 80vmin;
-            max-width: 450px;
-            max-height: 450px;
-            background: white;
-            padding: 15px;
-            border-radius: 16px;
+        .canvas-token.transmitted-done {
+            background-color: #e2e8f0;
+            border-color: #94a3b8;
+            border-style: dashed;
+            cursor: pointer; 
         }
+        .transmit-badge {
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        /* Estilos del Tablero Final (Lista Estructurada) */
+        .word-slots-container { background: #f8fafc; border: 2px solid #cbd5e1; border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+        .slot-wrapper { display: flex; flex-direction: column; width: 100%; position: relative; }
+        .slot-underline { width: 100%; height: 2px; background-color: #cbd5e1; margin-top: 4px; }
+        .slot-wrapper.has-word .slot-underline { background-color: transparent; }
+
+        .list-token {
+            background: #eff6ff;
+            border: 1px solid #3b82f6;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            text-align: left;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        /* Colores de validación */
+        .list-token.word-correct { background-color: #d1fae5 !important; border-color: #10b981 !important; color: #065f46 !important; }
+        .list-token.word-connected { background-color: #e0f2fe !important; border-color: #0284c7 !important; color: #0369a1 !important; }
+        .list-token.word-incorrect { background-color: #fee2e2 !important; border-color: #ef4444 !important; color: #991b1b !important; }
+
+        /* Menú desplegable móvil ultra-limpio sin texto inicial */
+        .token-dropdown {
+            background: transparent;
+            border: none;
+            width: 24px;
+            height: 24px;
+            font-size: 0px; 
+            color: inherit;
+            outline: none;
+            cursor: pointer;
+            text-align: center;
+        }
+        .token-dropdown option {
+            font-size: 13px; 
+        }
+
+        .btn-container { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+        button { flex: 1; padding: 12px; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .btn-primary { background-color: var(--primary); color: white; }
+        .btn-success { background-color: var(--success); color: white; }
+        .btn-danger { background-color: var(--danger); color: white; }
+        .btn-secondary { background-color: #64748b; color: white; }
+
+        .score-display { text-align: center; font-size: 32px; font-weight: 800; margin: 15px 0; }
+        .results-list { max-height: 300px; overflow-y: auto; }
+        .result-item { padding: 10px; border-radius: 8px; margin-bottom: 8px; border-left: 5px solid transparent; font-size: 13px; }
+        .result-item.correct { border-left-color: var(--success); background: #f0fdf4; }
+        .result-item.incorrect { border-left-color: var(--danger); background: #fef2f2; }
     </style>
 </head>
 <body>
 
-    <div class="brand-badge">Unjumble Lines</div>
-
     <div class="container">
         
         <div id="setup-screen">
-            <h1>Generador de Juegos: Ordenar Líneas / Textos</h1>
-            <p class="subtitle">Pega tu texto completo. Cada línea independiente se convertirá en una ficha para ordenar.</p>
-            
-            <div class="input-group">
-                <textarea id="sentences-input" placeholder="Pega los versos de una canción, poema o líneas de texto aquí..."></textarea>
-            </div>
-
+            <h1>Generador Canvas Móvil</h1>
+            <p class="subtitle">Introduce el texto línea por línea.</p>
+            <textarea id="sentences-input" placeholder="Línea 1&#10;Línea 2&#10;Línea 3..."></textarea>
             <div class="btn-container">
                 <button class="btn-primary" onclick="launchGame()">Probar Juego</button>
-                <button class="btn-secondary" style="background-color:#0284c7;" onclick="exportToHTML()">To HTML (Exportar)</button>
+                <button class="btn-secondary" onclick="exportToHTML()">Exportar HTML</button>
             </div>
         </div>
 
-        <div id="student-start-screen">
-            <h1>Unjumble: Ordena el texto</h1>
-            <div class="start-card">
-                <div class="start-qr">
-                    <img id="studentStartQr" src="" alt="Código QR del Ejercicio">
-                </div>
-                <div class="btn-container" style="width: 100%; max-width: 200px; margin-top: 5px;">
-                    <button class="btn-success" style="font-size: 18px; padding: 15px;" onclick="startPreloadedGame()">¡EMPEZAR!</button>
-                </div>
-            </div>
+        <div id="student-start-screen" style="text-align:center;">
+            <h1>Unjumble: Canvas Libre</h1>
+            <button class="btn-success" style="margin: 30px auto;" onclick="startPreloadedGame()">¡EMPEZAR!</button>
         </div>
 
         <div id="game-screen">
-            <div class="game-header">
-                <details class="instructions-details">
-                    <summary class="instructions-summary">ℹ️ Ver Instrucciones</summary>
-                    <div class="instructions-box">
-                        Toca una línea: irá al primer hueco libre. Para cambiar el orden de una línea colocada, tócala (se marcará en naranja), y luego toca su nueva posición o haz click otra vez para devolverla a la caja superior.
-                    </div>
-                </details>
+            <div class="tabs-container">
+                <button id="tab-workspace" class="tab-btn active" onclick="switchTab('workspace')">🎧 Mesa Libre</button>
+                <button id="tab-challenge" class="tab-btn" onclick="switchTab('challenge')">🏆 Orden Final</button>
+            </div>
 
-                <div class="qr-box" onclick="openZoomQR()">
-                    <img id="quizQrImg" src="" alt="QR Code">
+            <div id="view-workspace" class="view-section active">
+                <p id="canvas-instruction" class="subtitle" style="text-align: left; margin-bottom: 2px;">Mueve e identifica libremente los grupos:</p>
+                <div id="canvas-container" class="canvas-area"></div>
+                <div class="btn-container">
+                    <button id="btn-start-transmit" class="btn-primary" onclick="enableTransmitMode()">➡️ Enviar al Tablero Final</button>
                 </div>
             </div>
 
-            <div class="board-container">
-                <div id="feedback-area" class="feedback-message"></div>
-                <div id="word-pool" class="word-pool-container"></div>
-                <div id="word-slots" class="word-slots-container"></div>
+            <div id="view-challenge" class="view-section">
+                <p class="subtitle" style="text-align: left; margin-bottom: 2px;">Coloca aquí el orden definitivo de las piezas:</p>
+                <div id="challenge-slots" class="word-slots-container"></div>
+                <div class="btn-container">
+                    <button class="btn-success" onclick="checkCurrentAnswer()">¿COMPROBAR?</button>
+                    <button class="btn-danger" onclick="stopAndScore()">TERMINAR</button>
+                </div>
             </div>
 
-            <div class="btn-container" style="margin-top: 20px;">
-                <button class="btn-success" onclick="checkCurrentAnswer()">¿COMPROBAR?</button>
-                <button class="btn-danger" onclick="stopAndScore()">TERMINAR Y VER RESULTADOS</button>
-            </div>
-
-            <div class="btn-container" id="back-button-container" style="margin-top: 15px; border-top: 1px solid var(--border); padding-top: 15px;">
-                <button class="btn-secondary" onclick="returnToSetup()">&larr; Volver Atrás</button>
+            <div class="btn-container" id="back-button-container" style="border-top: 1px solid var(--border); padding-top: 10px;">
+                <button class="btn-secondary" style="width:100%;" onclick="returnToSetup()">&larr; Volver Atrás</button>
             </div>
         </div>
 
         <div id="results-screen">
-            <h1>Resultados del Ejercicio</h1>
+            <h1>Resultados</h1>
             <div class="score-display" id="final-score-value">0%</div>
             <div class="results-list" id="results-breakdown"></div>
-
-            <div class="btn-container" style="margin-top: 20px;">
-                <button class="btn-primary" onclick="restartSameGame()">Reiniciar Juego</button>
-                <button class="btn-secondary" id="creation-reset-btn" onclick="returnToSetup()">Crear Nuevo Juego</button>
+            <div class="btn-container">
+                <button class="btn-primary" onclick="restartSameGame()">Reiniciar</button>
+                <button class="btn-secondary" id="creation-reset-btn" onclick="returnToSetup()">Nuevo</button>
             </div>
         </div>
 
     </div>
 
-    <div id="qr-zoom-modal" class="qr-overlay" onclick="closeZoomQR()">
-        <img id="quizQrImgZoom" src="" alt="QR Code Ampliado">
-    </div>
-
     <script>
         const PRELOADED_SENTENCES = [];
-
         let originalCleanLines = []; 
-        let poolWords = [];
-        let slotContents = [];
-        let checkedSlotsStatus = []; 
-        let isTransitioning = false; 
+        let currentTab = 'workspace';
         
-        let orangeSlotIndex = null;
-        let orangeEmptySlotIndex = null;
+        let tokensData = []; 
+        let slotContents = [];    
+        let checkedSlotsStatus = []; 
+
+        let isTransmitMode = false;
+        let transmitSequence = []; 
 
         window.addEventListener('DOMContentLoaded', () => {
             if (Array.isArray(PRELOADED_SENTENCES) && PRELOADED_SENTENCES.length > 0) {
@@ -473,229 +255,331 @@
                 document.getElementById('setup-screen').style.display = 'none';
                 document.getElementById('creation-reset-btn').style.display = 'none'; 
                 document.getElementById('back-button-container').style.display = 'none';
-                
                 document.getElementById('student-start-screen').style.display = 'block';
-                renderQRForSelector('studentStartQr');
             } else {
                 document.getElementById('setup-screen').style.display = 'block';
             }
         });
-
-        function renderQRForSelector(elementId) {
-            let currentUrl = window.location.href;
-            if(!currentUrl || currentUrl.startsWith('file:')) {
-                currentUrl = "https://google.com"; 
-            }
-            const qrImgUrl = "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=" + encodeURIComponent(currentUrl);
-            const element = document.getElementById(elementId);
-            if(element) element.src = qrImgUrl;
-        }
 
         function startPreloadedGame() {
             document.getElementById('student-start-screen').style.display = 'none';
             setupGameSession();
         }
 
-        function parseInput(text) {
-            originalCleanLines = text.split('\n').map(s => s.trim()).filter(s => s.length > 0);
-        }
-
         function launchGame() {
             const inputText = document.getElementById('sentences-input').value.trim();
-            if (!inputText) {
-                alert('Introduce un texto o canción válido primero.');
-                return;
-            }
-            parseInput(inputText);
+            if (!inputText) return alert('Texto vacío.');
+            originalCleanLines = inputText.split('\n').map(s => s.trim()).filter(s => s.length > 0);
             document.getElementById('setup-screen').style.display = 'none';
             setupGameSession();
         }
 
         function setupGameSession() {
-            isTransitioning = false;
             document.getElementById('game-screen').style.display = 'block';
             document.getElementById('results-screen').style.display = 'none';
             
-            renderQRForSelector('quizQrImg');
-            renderQRForSelector('quizQrImgZoom');
-
-            poolWords = [...originalCleanLines];
-            do {
-                poolWords.sort(() => Math.random() - 0.5);
-            } while (poolWords.join('\n') === originalCleanLines.join('\n') && poolWords.length > 1);
-
+            tokensData = originalCleanLines.map((text, i) => {
+                return {
+                    id: i,
+                    text: text,
+                    x: 10 + (Math.random() * 40),
+                    y: 20 + (i * 45) 
+                };
+            });
+            
             slotContents = Array(originalCleanLines.length).fill(null);
             checkedSlotsStatus = Array(originalCleanLines.length).fill(null);
-            orangeSlotIndex = null;
-            orangeEmptySlotIndex = null;
-
-            document.getElementById('feedback-area').innerHTML = ""; 
-            renderBoard();
+            isTransmitMode = false;
+            transmitSequence = [];
+            document.getElementById('btn-start-transmit').style.display = 'flex';
+            switchTab('workspace');
         }
 
-        function renderBoard() {
-            const poolContainer = document.getElementById('word-pool');
-            const slotsContainer = document.getElementById('word-slots');
-            poolContainer.innerHTML = "";
-            slotsContainer.innerHTML = "";
+        function switchTab(tabName) {
+            currentTab = tabName;
+            document.getElementById('tab-workspace').classList.toggle('active', tabName === 'workspace');
+            document.getElementById('tab-challenge').classList.toggle('active', tabName === 'challenge');
+            document.getElementById('view-workspace').classList.toggle('active', tabName === 'workspace');
+            document.getElementById('view-challenge').classList.toggle('active', tabName === 'challenge');
+            
+            if (isTransmitMode && tabName !== 'workspace') {
+                cancelTransmitMode();
+            }
 
-            poolWords.forEach((line, index) => {
-                if (line === null) return; 
+            if (currentTab === 'workspace') renderCanvas();
+            else renderChallengeList();
+        }
+
+        // --- MODO TRANSMISIÓN SECUENCIAL (CON DESELECCIÓN) ---
+        function enableTransmitMode() {
+            isTransmitMode = true;
+            transmitSequence = [];
+            document.getElementById('btn-start-transmit').style.display = 'none';
+            renderCanvas();
+        }
+
+        function cancelTransmitMode() {
+            isTransmitMode = false;
+            transmitSequence = [];
+            document.getElementById('btn-start-transmit').style.display = 'flex';
+        }
+
+        function handleTransmitClick(tokenInfo) {
+            const seqIndex = transmitSequence.indexOf(tokenInfo.id);
+            
+            if (seqIndex !== -1) {
+                transmitSequence.splice(seqIndex, 1);
+            } else {
+                transmitSequence.push(tokenInfo.id);
+            }
+            
+            renderCanvas();
+
+            if (transmitSequence.length === originalCleanLines.length) {
+                slotContents = transmitSequence.map(id => tokensData.find(t => t.id === id).text);
+                checkedSlotsStatus = Array(originalCleanLines.length).fill(null); 
                 
+                setTimeout(() => {
+                    cancelTransmitMode();
+                    switchTab('challenge');
+                }, 400);
+            }
+        }
+
+        // --- RENDERIZADO DEL CANVAS LIBRE ---
+        function renderCanvas() {
+            const canvas = document.getElementById('canvas-container');
+            canvas.innerHTML = "";
+            const instr = document.getElementById('canvas-instruction');
+
+            if (isTransmitMode) {
+                instr.innerHTML = "🎯 <strong>Modo Selección:</strong> Toca las frases en orden de lectura. Pulsa una activa para desmarcar.";
+            } else {
+                instr.textContent = "Mueve e identifica libremente los grupos:";
+            }
+
+            tokensData.forEach((tokenInfo) => {
                 const token = document.createElement('div');
-                token.className = 'word-token';
-                token.textContent = line;
-                token.onclick = () => { if (!isTransitioning) handlePoolTokenClick(index); };
-                poolContainer.appendChild(token);
+                token.className = 'canvas-token';
+                token.style.left = tokenInfo.x + 'px';
+                token.style.top = tokenInfo.y + 'px';
+
+                if (isTransmitMode) {
+                    const seqIndex = transmitSequence.indexOf(tokenInfo.id);
+                    if (seqIndex !== -1) {
+                        token.className += ' transmitted-done';
+                        token.innerHTML = `<span>${tokenInfo.text}</span> <span class="transmit-badge">${seqIndex + 1}</span>`;
+                    } else {
+                        token.className += ' transmitting';
+                        token.textContent = tokenInfo.text;
+                    }
+                    token.onclick = () => handleTransmitClick(tokenInfo);
+                } else {
+                    token.textContent = tokenInfo.text;
+
+                    // Arrastre Touch Móvil Nativo
+                    let startX, startY, initialLeft, initialTop;
+                    const onTouchStart = (e) => {
+                        const touch = e.touches[0];
+                        startX = touch.clientX;
+                        startY = touch.clientY;
+                        initialLeft = tokenInfo.x;
+                        initialTop = tokenInfo.y;
+                        token.style.transform = "scale(1.05)";
+                    };
+
+                    const onTouchMove = (e) => {
+                        const touch = e.touches[0];
+                        let deltaX = touch.clientX - startX;
+                        let deltaY = touch.clientY - startY;
+
+                        let newLeft = initialLeft + deltaX;
+                        let newTop = initialTop + deltaY;
+
+                        if (newLeft < 0) newLeft = 0;
+                        if (newTop < 0) newTop = 0;
+                        if (newLeft > canvas.clientWidth - token.clientWidth) newLeft = canvas.clientWidth - token.clientWidth;
+                        if (newTop > canvas.clientHeight - token.clientHeight) newTop = canvas.clientHeight - token.clientHeight;
+
+                        token.style.left = newLeft + 'px';
+                        token.style.top = newTop + 'px';
+                        
+                        tokenInfo.x = newLeft;
+                        tokenInfo.y = newTop;
+                    };
+
+                    const onTouchEnd = () => {
+                        token.style.transform = "none";
+                        resolveCollisions(tokenInfo, token);
+                    };
+
+                    token.addEventListener('touchstart', onTouchStart, { passive: true });
+                    token.addEventListener('touchmove', onTouchMove, { passive: true });
+                    token.addEventListener('touchend', onTouchEnd, { passive: true });
+                }
+
+                canvas.appendChild(token);
+            });
+        }
+
+        function resolveCollisions(movedTokenInfo, movedElement) {
+            const canvas = document.getElementById('canvas-container');
+            let collisionDetected = true;
+            let safetyCounter = 0;
+
+            while (collisionDetected && safetyCounter < 15) {
+                collisionDetected = false;
+                const tokens = canvas.getElementsByClassName('canvas-token');
+                const index = tokensData.indexOf(movedTokenInfo);
+                const currentRect = movedElement.getBoundingClientRect();
+
+                for (let i = 0; i < tokensData.length; i++) {
+                    if (i === index) continue;
+                    const otherElement = tokens[i];
+                    if (!otherElement) continue;
+
+                    const otherRect = otherElement.getBoundingClientRect();
+                    const overlapX = Math.min(currentRect.right, otherRect.right) - Math.max(currentRect.left, otherRect.left);
+                    const overlapY = Math.min(currentRect.bottom, otherRect.bottom) - Math.max(currentRect.top, otherRect.top);
+
+                    if (overlapX > 0 && overlapY > 0) {
+                        collisionDetected = true;
+                        if (overlapX < overlapY) {
+                            movedTokenInfo.x += (movedTokenInfo.x > tokensData[i].x) ? overlapX + 4 : -overlapX - 4;
+                        } else {
+                            movedTokenInfo.y += (movedTokenInfo.y > tokensData[i].y) ? overlapY + 4 : -overlapY - 4;
+                        }
+
+                        if (movedTokenInfo.x < 0) movedTokenInfo.x = 0;
+                        if (movedTokenInfo.y < 0) movedTokenInfo.y = 0;
+
+                        movedElement.style.left = movedTokenInfo.x + 'px';
+                        movedElement.style.top = movedTokenInfo.y + 'px';
+                    }
+                }
+                safetyCounter++;
+            }
+        }
+
+        // --- TABLERO FINAL (MENÚS DESPLEGABLES CON TEXTO LIMPIO Y FILTRO DE VERDES) ---
+        function renderChallengeList() {
+            const container = document.getElementById('challenge-slots');
+            container.innerHTML = "";
+
+            const mutableIndices = [];
+            checkedSlotsStatus.forEach((status, idx) => {
+                if (status !== 'correct') {
+                    mutableIndices.push(idx);
+                }
             });
 
-            slotContents.forEach((line, index) => {
+            slotContents.forEach((lineText, index) => {
                 const wrapper = document.createElement('div');
                 wrapper.className = 'slot-wrapper';
-                if (line !== null) wrapper.className += ' has-word';
+                if (lineText !== null) wrapper.className += ' has-word';
 
-                if (line !== null) {
-                    const token = document.createElement('div');
-                    token.className = 'word-token';
-                    token.style.borderColor = '#3b82f6';
-                    token.style.background = '#eff6ff';
-                    
-                    if (orangeSlotIndex === index) {
-                        token.className += ' selected-orange';
-                    }
-                    
-                    if (checkedSlotsStatus[index] === 'correct') {
-                        token.className += ' word-correct';
-                    } else if (checkedSlotsStatus[index] === 'incorrect') {
-                        token.className += ' word-incorrect';
-                    }
-                    
-                    token.textContent = line;
-                    token.onclick = () => { if (!isTransitioning) handleSlotTokenClick(index); };
-                    wrapper.appendChild(token);
-                } else {
-                    const emptySpace = document.createElement('div');
-                    emptySpace.className = 'empty-slot-area';
-                    
-                    if (orangeEmptySlotIndex === index) {
-                        emptySpace.className += ' selected-orange-dash';
-                    }
-                    
-                    emptySpace.textContent = `${index + 1}`;
-                    emptySpace.onclick = () => { if (!isTransitioning) handleEmptySlotClick(index); };
-                    wrapper.appendChild(emptySpace);
+                const token = document.createElement('div');
+                token.className = 'list-token';
+                
+                const currentStatus = checkedSlotsStatus[index];
+                if (currentStatus) {
+                    token.className += ` word-${currentStatus}`;
                 }
+
+                const displayString = lineText ? `${index + 1}. ${lineText}` : `${index + 1}. [Vacío]`;
+                token.innerHTML = `<span style="flex:1; padding-right:5px;">${displayString}</span>`;
+
+                // DROPDOWN: Solo si tiene contenido y NO está validada como verde ('correct')
+                if (lineText && currentStatus !== 'correct') {
+                    const select = document.createElement('select');
+                    select.className = 'token-dropdown';
+                    
+                    const defaultOpt = document.createElement('option');
+                    defaultOpt.textContent = ""; 
+                    defaultOpt.disabled = true;
+                    defaultOpt.selected = true;
+                    select.appendChild(defaultOpt);
+
+                    // Poblar el dropdown SOLO con frases que no sean correctas (verdes)
+                    mutableIndices.forEach((mutIdx) => {
+                        if (mutIdx === index) return; 
+                        const opt = document.createElement('option');
+                        opt.value = mutIdx;
+                        // Muestra exclusivamente el texto de la línea sin decoraciones, comillas ni texto de ayuda
+                        opt.textContent = slotContents[mutIdx];
+                        select.appendChild(opt);
+                    });
+
+                    select.onchange = (e) => {
+                        const targetIdx = parseInt(e.target.value);
+                        clearIncorrectMarkers();
+
+                        // Intercambio
+                        const tempLine = slotContents[index];
+                        slotContents[index] = slotContents[targetIdx];
+                        slotContents[targetIdx] = tempLine;
+
+                        // Se resetea el estatus de validación de ambas fichas movidas
+                        checkedSlotsStatus[index] = null;
+                        checkedSlotsStatus[targetIdx] = null;
+
+                        renderChallengeList();
+                    };
+                    token.appendChild(select);
+                }
+
+                wrapper.appendChild(token);
+                
                 const underline = document.createElement('div');
                 underline.className = 'slot-underline';
                 wrapper.appendChild(underline);
-                slotsContainer.appendChild(wrapper);
+                container.appendChild(wrapper);
             });
         }
 
-        function handlePoolTokenClick(index) {
-            checkedSlotsStatus = Array(originalCleanLines.length).fill(null);
-            document.getElementById('feedback-area').innerHTML = ""; 
-
-            if (orangeEmptySlotIndex !== null) {
-                slotContents[orangeEmptySlotIndex] = poolWords[index];
-                poolWords[index] = null;
-                orangeEmptySlotIndex = null; 
-                renderBoard();
-                return;
-            }
-
-            const firstEmptySlot = slotContents.indexOf(null);
-            if (firstEmptySlot !== -1) {
-                slotContents[firstEmptySlot] = poolWords[index];
-                poolWords[index] = null;
-                orangeSlotIndex = null; 
-                renderBoard();
-            }
-        }
-
-        function handleSlotTokenClick(index) {
-            checkedSlotsStatus = Array(originalCleanLines.length).fill(null);
-            document.getElementById('feedback-area').innerHTML = ""; 
-            orangeEmptySlotIndex = null;
-
-            if (orangeSlotIndex === index) {
-                const lineToReturn = slotContents[index];
-                const emptyPoolIdx = poolWords.indexOf(null);
-                
-                if (emptyPoolIdx !== -1) {
-                    poolWords[emptyPoolIdx] = lineToReturn;
-                } else {
-                    poolWords.push(lineToReturn);
-                }
-                slotContents[index] = null;
-                orangeSlotIndex = null;
-            } else if (orangeSlotIndex !== null) {
-                const temp = slotContents[index];
-                slotContents[index] = slotContents[orangeSlotIndex];
-                slotContents[orangeSlotIndex] = temp;
-                orangeSlotIndex = null; 
-            } else {
-                orangeSlotIndex = index;
-            }
-            renderBoard();
-        }
-
-        function handleEmptySlotClick(index) {
-            checkedSlotsStatus = Array(originalCleanLines.length).fill(null);
-            document.getElementById('feedback-area').innerHTML = ""; 
-
-            if (orangeSlotIndex !== null) {
-                slotContents[index] = slotContents[orangeSlotIndex];
-                slotContents[orangeSlotIndex] = null;
-                orangeSlotIndex = null; 
-                renderBoard();
-            } else {
-                if (orangeEmptySlotIndex === index) {
-                    orangeEmptySlotIndex = null;
-                } else {
-                    orangeEmptySlotIndex = index;
-                }
-                renderBoard();
+        function clearIncorrectMarkers() {
+            for (let i = 0; i < checkedSlotsStatus.length; i++) {
+                if (checkedSlotsStatus[i] === 'incorrect') checkedSlotsStatus[i] = null;
             }
         }
 
         function checkCurrentAnswer() {
-            if (isTransitioning) return;
-            const feedbackArea = document.getElementById('feedback-area');
-
-            let matchesCount = 0;
+            let absoluteMatches = 0;
+            
             for (let i = 0; i < originalCleanLines.length; i++) {
-                if (slotContents[i] === originalCleanLines[i]) {
+                const currentLine = slotContents[i];
+                if (!currentLine) { checkedSlotsStatus[i] = 'incorrect'; continue; }
+
+                if (currentLine === originalCleanLines[i]) {
                     checkedSlotsStatus[i] = 'correct';
-                    matchesCount++;
-                } else {
-                    checkedSlotsStatus[i] = 'incorrect';
+                    absoluteMatches++;
+                    continue;
                 }
+
+                const originalIndex = originalCleanLines.indexOf(currentLine);
+                let isRelativelyCorrect = false;
+
+                if (originalIndex !== -1) {
+                    if (i > 0 && slotContents[i - 1] === originalCleanLines[originalIndex - 1]) isRelativelyCorrect = true;
+                    if (i < originalCleanLines.length - 1 && slotContents[i + 1] === originalCleanLines[originalIndex + 1]) isRelativelyCorrect = true;
+                }
+                checkedSlotsStatus[i] = isRelativelyCorrect ? 'connected' : 'incorrect';
             }
 
-            if (matchesCount === originalCleanLines.length) {
-                feedbackArea.innerHTML = '<span class="correct-blink">✅ ¡Perfecto!</span>';
-                isTransitioning = true;
-                renderBoard(); 
-                setTimeout(() => {
-                    stopAndScore();
-                }, 1200);
-            } else {
-                feedbackArea.innerHTML = '';
-                renderBoard();
+            renderChallengeList();
+
+            if (absoluteMatches === originalCleanLines.length) {
+                setTimeout(() => { stopAndScore(); }, 800);
             }
         }
 
         function stopAndScore() {
             document.getElementById('game-screen').style.display = 'none';
             document.getElementById('results-screen').style.display = 'block';
-            calculateAndDisplayResults();
-        }
-
-        function calculateAndDisplayResults() {
+            
             let correctCount = 0;
-            const breakdownContainer = document.getElementById('results-breakdown');
-            breakdownContainer.innerHTML = "";
+            const breakdown = document.getElementById('results-breakdown');
+            breakdown.innerHTML = "";
 
             originalCleanLines.forEach((line, index) => {
                 const userLine = slotContents[index];
@@ -704,16 +588,8 @@
 
                 const card = document.createElement('div');
                 card.className = "result-item " + (isCorrect ? 'correct' : 'incorrect');
-                
-                if (isCorrect) {
-                    card.innerHTML = `<div class="text-green">✓ Posición ${index + 1}: ${line}</div>`;
-                } else {
-                    card.innerHTML = `
-                        <div class="text-red">✗ En tu posición ${index + 1}: ${userLine || '[Vacío]'}</div>
-                        <div class="text-blue">${line}</div>
-                    `;
-                }
-                breakdownContainer.appendChild(card);
+                card.innerHTML = isCorrect ? `<div class="text-green">✓ ${line}</div>` : `<div class="text-red">✗ ${userLine || '[Vacío]'}</div><div style="color:#2563eb; font-weight:600;">${line}</div>`;
+                breakdown.appendChild(card);
             });
 
             const totalPercent = Math.round((correctCount / originalCleanLines.length) * 100);
@@ -723,40 +599,22 @@
         function returnToSetup() {
             document.getElementById('game-screen').style.display = 'none';
             document.getElementById('results-screen').style.display = 'none';
-            document.getElementById('student-start-screen').style.display = 'none';
             document.getElementById('setup-screen').style.display = 'block';
         }
 
-        function restartSameGame() { 
-            setupGameSession();
-        }
-        
-        function openZoomQR() { document.getElementById('qr-zoom-modal').style.display = 'flex'; }
-        function closeZoomQR() { document.getElementById('qr-zoom-modal').style.display = 'none'; }
+        function restartSameGame() { setupGameSession(); }
 
         function exportToHTML() {
             const inputText = document.getElementById('sentences-input').value.trim();
-            if (!inputText) {
-                alert('Escribe o pega texto en el cuadro antes de exportar.');
-                return;
-            }
-
+            if (!inputText) return alert('Escribe texto primero.');
             const linesArray = inputText.split('\n').map(s => s.trim()).filter(s => s.length > 0);
-            const jsonLines = JSON.stringify(linesArray);
-
             let currentHTML = document.documentElement.outerHTML;
-            const targetString = "const PRELOADED_SENTENCES = [];";
-            const replacementString = `const PRELOADED_SENTENCES = ${jsonLines};`;
-            
-            currentHTML = currentHTML.replace(targetString, replacementString);
-
+            currentHTML = currentHTML.replace("const PRELOADED_SENTENCES = [];", `const PRELOADED_SENTENCES = ${JSON.stringify(linesArray)};`);
             const blob = new Blob([currentHTML], { type: 'text/html;charset=utf-8' });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = 'juego_ordenar_lineas.html';
-            document.body.appendChild(a);
+            a.download = 'juego_canvas_limpio.html';
             a.click();
-            document.body.removeChild(a);
         }
     </script>
 </body>
