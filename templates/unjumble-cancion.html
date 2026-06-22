@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Unjumble Lines - Canvas Transmit Edition v4.2</title>
+    <title id="page-title">Unjumble - Canción</title>
     <style>
         :root {
             --primary: #3b82f6;
@@ -47,21 +47,73 @@
             margin-top: 10px;
             display: flex;
             flex-direction: column;
+            position: relative;
         }
 
-        h1 { font-size: 20px; text-align: center; margin-bottom: 8px; }
+        h1 { font-size: 20px; text-align: center; margin-bottom: 8px; padding-top: 5px; }
         p.subtitle { color: var(--text-light); text-align: center; margin-bottom: 15px; font-size: 13px; }
 
         #setup-screen, #student-start-screen, #game-screen, #results-screen { display: none; }
 
-        textarea { width: 100%; height: 150px; padding: 12px; border: 2px solid var(--border); border-radius: 10px; font-size: 15px; }
-
-        .tabs-container { display: flex; background: #e2e8f0; border-radius: 10px; padding: 4px; margin-bottom: 15px; gap: 4px; }
-        .tab-btn { flex: 1; padding: 12px 8px; border: none; background: transparent; color: var(--text-light); font-weight: 700; font-size: 14px; border-radius: 8px; cursor: pointer; }
-        .tab-btn.active { background: var(--card); color: var(--primary); box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+        input[type="text"], textarea { 
+            width: 100%; 
+            padding: 12px; 
+            border: 2px solid var(--border); 
+            border-radius: 10px; 
+            font-size: 15px; 
+            margin-bottom: 12px;
+        }
+        input[type="text"]:focus, textarea:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
 
         .view-section { display: none; }
         .view-section.active { display: flex; flex-direction: column; gap: 15px; }
+
+        /* QR Ajustado para evitar solapamientos en móvil */
+        .qr-container {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            cursor: pointer;
+            z-index: 50;
+            background: white;
+            padding: 4px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+        }
+        .qr-container:hover { transform: scale(1.05); }
+        .qr-container img { display: block; width: 42px; height: 42px; }
+
+        /* Ajuste específico para el título cuando el QR está presente */
+        .has-qr h1 {
+            padding-right: 55px;
+            text-align: left;
+            padding-left: 5px;
+        }
+
+        /* Lightbox para expandir el QR */
+        .qr-lightbox {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        .qr-lightbox img {
+            width: 260px;
+            height: 260px;
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
 
         /* Estilos del Lienzo Libre (Canvas) */
         .canvas-area {
@@ -72,10 +124,8 @@
             border-radius: 12px;
             position: relative;
             overflow: hidden;
-            touch-action: none; 
         }
 
-        /* Fichas compactas del canvas */
         .canvas-token {
             position: absolute;
             background: white;
@@ -98,37 +148,42 @@
         }
         .canvas-token:active { cursor: grabbing; transform: scale(1.05); z-index: 100; }
 
-        /* Estilos de fichas en modo envío secuencial */
-        .canvas-token.transmitting {
-            background-color: #eff6ff;
-            border-color: #3b82f6;
-            cursor: pointer;
-        }
-        .canvas-token.transmitted-done {
-            background-color: #e2e8f0;
-            border-color: #94a3b8;
-            border-style: dashed;
-            cursor: pointer; 
-        }
-        .transmit-badge {
-            background: var(--primary);
-            color: white;
-            border-radius: 50%;
-            width: 18px;
-            height: 18px;
-            display: flex;
+        .canvas-token.transmitting { background-color: #eff6ff; border-color: #3b82f6; cursor: pointer; }
+        .canvas-token.transmitted-done { background-color: #e2e8f0; border-color: #94a3b8; border-style: dashed; cursor: pointer; }
+        .transmit-badge { background: var(--primary); color: white; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; }
+
+        /* Pop-up instrucciones */
+        .popup-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4);
+            z-index: 1000;
             align-items: center;
             justify-content: center;
-            font-size: 10px;
-            font-weight: bold;
+            padding: 20px;
         }
+        .popup-content {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            max-width: 400px;
+            width: 100%;
+            position: relative;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            text-align: center;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .popup-close { position: absolute; top: 8px; right: 12px; background: none; border: none; font-size: 18px; font-weight: bold; color: #94a3b8; cursor: pointer; width: auto; padding: 0; }
 
-        /* Estilos del Tablero Final (Lista Estructurada) */
+        /* Estilos del Tablero Final */
         .word-slots-container { background: #f8fafc; border: 2px solid #cbd5e1; border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
         .slot-wrapper { display: flex; flex-direction: column; width: 100%; position: relative; }
         .slot-underline { width: 100%; height: 2px; background-color: #cbd5e1; margin-top: 4px; }
         .slot-wrapper.has-word .slot-underline { background-color: transparent; }
 
+        /* Fila interactiva global */
         .list-token {
             background: #eff6ff;
             border: 1px solid #3b82f6;
@@ -141,27 +196,40 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+            position: relative;
+            cursor: pointer;
         }
         
-        /* Colores de validación */
-        .list-token.word-correct { background-color: #d1fae5 !important; border-color: #10b981 !important; color: #065f46 !important; }
+        .list-token.word-correct { background-color: #d1fae5 !important; border-color: #10b981 !important; color: #065f46 !important; cursor: default; }
         .list-token.word-connected { background-color: #e0f2fe !important; border-color: #0284c7 !important; color: #0369a1 !important; }
         .list-token.word-incorrect { background-color: #fee2e2 !important; border-color: #ef4444 !important; color: #991b1b !important; }
+        .list-token.word-mutated { background-color: #ffffff !important; border-color: #cbd5e1 !important; color: #000000 !important; }
 
-        /* Menú desplegable móvil ultra-limpio sin texto inicial */
-        .token-dropdown {
-            background: transparent;
-            border: none;
-            width: 24px;
-            height: 24px;
-            font-size: 0px; 
-            color: inherit;
-            outline: none;
-            cursor: pointer;
-            text-align: center;
+        /* Dropdown invisible pero expandido a toda la celda */
+        .token-dropdown { 
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            opacity: 0; 
+            cursor: pointer; 
+            appearance: none;
+            -webkit-appearance: none;
         }
-        .token-dropdown option {
-            font-size: 13px; 
+        .token-dropdown option { 
+            font-size: 14px; 
+            color: #000000 !important; 
+            text-align: left !important;
+            padding: 8px;
+        }
+        .token-dropdown option:nth-child(even) { background-color: #f1f5f9; }
+        .token-dropdown option:nth-child(odd) { background-color: #ffffff; }
+
+        /* Indicador visual de flecha sutil a la derecha */
+        .dropdown-indicator {
+            font-size: 11px;
+            color: inherit;
+            opacity: 0.7;
+            padding-left: 5px;
+            pointer-events: none;
         }
 
         .btn-container { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
@@ -171,64 +239,72 @@
         .btn-danger { background-color: var(--danger); color: white; }
         .btn-secondary { background-color: #64748b; color: white; }
 
-        .score-display { text-align: center; font-size: 32px; font-weight: 800; margin: 15px 0; }
-        .results-list { max-height: 300px; overflow-y: auto; }
-        .result-item { padding: 10px; border-radius: 8px; margin-bottom: 8px; border-left: 5px solid transparent; font-size: 13px; }
-        .result-item.correct { border-left-color: var(--success); background: #f0fdf4; }
-        .result-item.incorrect { border-left-color: var(--danger); background: #fef2f2; }
+        /* Estilo Formato Canción de la Pantalla Final (Segoe UI + Espaciado sutil) */
+        .full-text-result-box {
+            padding: 25px 20px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 500;
+            line-height: 2;
+            white-space: pre-line;
+            margin-bottom: 15px;
+            text-align: center;
+            letter-spacing: 1px;
+        }
+        .result-box-success { background-color: #d1fae5; color: #065f46; border: 2px solid #10b981; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.1); }
+        .result-box-fail { background-color: #fee2e2; color: #991b1b; border: 2px solid #ef4444; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.1); }
+
+        .victory-trophy { font-size: 54px; text-align: center; margin-bottom: 10px; display: none; }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
 </head>
 <body>
 
-    <div class="container">
+    <div class="container" id="main-container">
         
+        <div id="qr-widget" class="qr-container" style="display: none;" onclick="openQrLightbox()">
+            <canvas id="qr-mini-canvas" style="width: 42px; height: 42px; display: block;"></canvas>
+        </div>
+
         <div id="setup-screen">
-            <h1>Generador Canvas Móvil</h1>
-            <p class="subtitle">Introduce el texto línea por línea.</p>
-            <textarea id="sentences-input" placeholder="Línea 1&#10;Línea 2&#10;Línea 3..."></textarea>
+            <h1>Unjumble: Canción</h1>
+            <p class="subtitle">Configura el título y las estrofas/líneas.</p>
+            <input type="text" id="song-title-input" placeholder="Título de la canción (Ej: Imagine)">
+            <textarea id="sentences-input" placeholder="Línea 1 del tema&#10;Línea 2 del tema&#10;Línea 3 del tema..."></textarea>
             <div class="btn-container">
                 <button class="btn-primary" onclick="launchGame()">Probar Juego</button>
                 <button class="btn-secondary" onclick="exportToHTML()">Exportar HTML</button>
             </div>
         </div>
 
-        <div id="student-start-screen" style="text-align:center;">
-            <h1>Unjumble: Canvas Libre</h1>
-            <button class="btn-success" style="margin: 30px auto;" onclick="startPreloadedGame()">¡EMPEZAR!</button>
+        <div id="student-start-screen" style="text-align:center; padding-top: 25px;">
+            <h1 id="student-game-headline" style="font-size: 24px; margin-top: 20px; margin-bottom: 10px;">Unjumble - Canción</h1>
+            <button class="btn-success" style="margin: 40px auto; min-width: 140px; font-size: 18px; letter-spacing: 1px; border-radius: 30px;" onclick="startPreloadedGame()">GO</button>
         </div>
 
         <div id="game-screen">
-            <div class="tabs-container">
-                <button id="tab-workspace" class="tab-btn active" onclick="switchTab('workspace')">🎧 Mesa Libre</button>
-                <button id="tab-challenge" class="tab-btn" onclick="switchTab('challenge')">🏆 Orden Final</button>
-            </div>
-
             <div id="view-workspace" class="view-section active">
-                <p id="canvas-instruction" class="subtitle" style="text-align: left; margin-bottom: 2px;">Mueve e identifica libremente los grupos:</p>
                 <div id="canvas-container" class="canvas-area"></div>
                 <div class="btn-container">
-                    <button id="btn-start-transmit" class="btn-primary" onclick="enableTransmitMode()">➡️ Enviar al Tablero Final</button>
+                    <button id="btn-start-transmit" class="btn-primary" onclick="enableTransmitMode()">➡️ CHECK</button>
                 </div>
             </div>
 
             <div id="view-challenge" class="view-section">
-                <p class="subtitle" style="text-align: left; margin-bottom: 2px;">Coloca aquí el orden definitivo de las piezas:</p>
                 <div id="challenge-slots" class="word-slots-container"></div>
                 <div class="btn-container">
-                    <button class="btn-success" onclick="checkCurrentAnswer()">¿COMPROBAR?</button>
-                    <button class="btn-danger" onclick="stopAndScore()">TERMINAR</button>
+                    <button class="btn-success" style="width: 100%;" onclick="checkCurrentAnswer()">CHECK</button>
                 </div>
             </div>
 
-            <div class="btn-container" id="back-button-container" style="border-top: 1px solid var(--border); padding-top: 10px;">
+            <div class="btn-container" id="back-button-container" style="border-top: 1px solid var(--border); padding-top: 10px; margin-top: 15px;">
                 <button class="btn-secondary" style="width:100%;" onclick="returnToSetup()">&larr; Volver Atrás</button>
             </div>
         </div>
 
         <div id="results-screen">
-            <h1>Resultados</h1>
-            <div class="score-display" id="final-score-value">0%</div>
-            <div class="results-list" id="results-breakdown"></div>
+            <div id="victory-emoji" class="victory-trophy">🏆</div>
+            <div id="results-full-text-box" class="full-text-result-box"></div>
             <div class="btn-container">
                 <button class="btn-primary" onclick="restartSameGame()">Reiniciar</button>
                 <button class="btn-secondary" id="creation-reset-btn" onclick="returnToSetup()">Nuevo</button>
@@ -237,9 +313,23 @@
 
     </div>
 
+    <div id="qr-lightbox-overlay" class="qr-lightbox" onclick="closeQrLightbox()">
+        <canvas id="qr-large-canvas"></canvas>
+    </div>
+
+    <div id="instruction-popup" class="popup-overlay">
+        <div class="popup-content">
+            <button class="popup-close" onclick="closePopup()">×</button>
+            <p>🎯 Confirma tu respuesta tocando los trocitos en orden del 1º al último (puedes desmarcar pulsando de nuevo).</p>
+        </div>
+    </div>
+
     <script>
         const PRELOADED_SENTENCES = [];
+        const PRELOADED_TITLE = "";
+
         let originalCleanLines = []; 
+        let currentSongTitle = "Canción";
         let currentTab = 'workspace';
         
         let tokensData = []; 
@@ -252,24 +342,56 @@
         window.addEventListener('DOMContentLoaded', () => {
             if (Array.isArray(PRELOADED_SENTENCES) && PRELOADED_SENTENCES.length > 0) {
                 originalCleanLines = [...PRELOADED_SENTENCES];
+                currentSongTitle = PRELOADED_TITLE || "Canción";
+                
+                document.getElementById('page-title').textContent = "Unjumble - " + currentSongTitle;
+                document.getElementById('student-game-headline').textContent = "Unjumble - " + currentSongTitle;
+
                 document.getElementById('setup-screen').style.display = 'none';
                 document.getElementById('creation-reset-btn').style.display = 'none'; 
                 document.getElementById('back-button-container').style.display = 'none';
                 document.getElementById('student-start-screen').style.display = 'block';
+                
+                document.getElementById('main-container').classList.add('has-qr');
+                generateQR();
             } else {
                 document.getElementById('setup-screen').style.display = 'block';
             }
         });
 
+        function generateQR() {
+            const currentUrl = window.location.href;
+            document.getElementById('qr-widget').style.display = 'block';
+            
+            QRCode.toCanvas(document.getElementById('qr-mini-canvas'), currentUrl, { width: 42, margin: 1 }, function (error) {
+                if (error) console.error(error);
+            });
+            QRCode.toCanvas(document.getElementById('qr-large-canvas'), currentUrl, { width: 260, margin: 2 }, function (error) {
+                if (error) console.error(error);
+            });
+        }
+
+        function openQrLightbox() { document.getElementById('qr-lightbox-overlay').style.display = 'flex'; }
+        function closeQrLightbox() { document.getElementById('qr-lightbox-overlay').style.display = 'none'; }
+
         function startPreloadedGame() {
             document.getElementById('student-start-screen').style.display = 'none';
+            document.getElementById('qr-widget').style.display = 'none'; 
+            document.getElementById('main-container').classList.remove('has-qr');
             setupGameSession();
         }
 
         function launchGame() {
             const inputText = document.getElementById('sentences-input').value.trim();
+            const inputTitle = document.getElementById('song-title-input').value.trim();
             if (!inputText) return alert('Texto vacío.');
+            
             originalCleanLines = inputText.split('\n').map(s => s.trim()).filter(s => s.length > 0);
+            currentSongTitle = inputTitle || "Canción";
+
+            document.getElementById('page-title').textContent = "Unjumble - " + currentSongTitle;
+            document.getElementById('student-game-headline').textContent = "Unjumble - " + currentSongTitle;
+
             document.getElementById('setup-screen').style.display = 'none';
             setupGameSession();
         }
@@ -278,12 +400,16 @@
             document.getElementById('game-screen').style.display = 'block';
             document.getElementById('results-screen').style.display = 'none';
             
+            let indicesOrder = originalCleanLines.map((_, i) => i);
+            indicesOrder.sort(() => Math.random() - 0.5);
+
             tokensData = originalCleanLines.map((text, i) => {
+                let visualPosition = indicesOrder.indexOf(i);
                 return {
                     id: i,
                     text: text,
                     x: 10 + (Math.random() * 40),
-                    y: 20 + (i * 45) 
+                    y: 20 + (visualPosition * 45) 
                 };
             });
             
@@ -297,42 +423,39 @@
 
         function switchTab(tabName) {
             currentTab = tabName;
-            document.getElementById('tab-workspace').classList.toggle('active', tabName === 'workspace');
-            document.getElementById('tab-challenge').classList.toggle('active', tabName === 'challenge');
             document.getElementById('view-workspace').classList.toggle('active', tabName === 'workspace');
             document.getElementById('view-challenge').classList.toggle('active', tabName === 'challenge');
             
-            if (isTransmitMode && tabName !== 'workspace') {
-                cancelTransmitMode();
-            }
+            if (isTransmitMode && tabName !== 'workspace') { cancelTransmitMode(); }
 
             if (currentTab === 'workspace') renderCanvas();
             else renderChallengeList();
         }
 
-        // --- MODO TRANSMISIÓN SECUENCIAL (CON DESELECCIÓN) ---
         function enableTransmitMode() {
             isTransmitMode = true;
             transmitSequence = [];
             document.getElementById('btn-start-transmit').style.display = 'none';
             renderCanvas();
+            document.getElementById('instruction-popup').style.display = 'flex'; 
         }
+
+        function closePopup() { document.getElementById('instruction-popup').style.display = 'none'; }
 
         function cancelTransmitMode() {
             isTransmitMode = false;
             transmitSequence = [];
             document.getElementById('btn-start-transmit').style.display = 'flex';
+            closePopup();
         }
 
         function handleTransmitClick(tokenInfo) {
             const seqIndex = transmitSequence.indexOf(tokenInfo.id);
-            
             if (seqIndex !== -1) {
                 transmitSequence.splice(seqIndex, 1);
             } else {
                 transmitSequence.push(tokenInfo.id);
             }
-            
             renderCanvas();
 
             if (transmitSequence.length === originalCleanLines.length) {
@@ -342,21 +465,14 @@
                 setTimeout(() => {
                     cancelTransmitMode();
                     switchTab('challenge');
+                    checkCurrentAnswer(); 
                 }, 400);
             }
         }
 
-        // --- RENDERIZADO DEL CANVAS LIBRE ---
         function renderCanvas() {
             const canvas = document.getElementById('canvas-container');
             canvas.innerHTML = "";
-            const instr = document.getElementById('canvas-instruction');
-
-            if (isTransmitMode) {
-                instr.innerHTML = "🎯 <strong>Modo Selección:</strong> Toca las frases en orden de lectura. Pulsa una activa para desmarcar.";
-            } else {
-                instr.textContent = "Mueve e identifica libremente los grupos:";
-            }
 
             tokensData.forEach((tokenInfo) => {
                 const token = document.createElement('div');
@@ -377,22 +493,23 @@
                 } else {
                     token.textContent = tokenInfo.text;
 
-                    // Arrastre Touch Móvil Nativo
+                    // Lógica unificada para Ratón y Pantallas Táctiles
                     let startX, startY, initialLeft, initialTop;
-                    const onTouchStart = (e) => {
-                        const touch = e.touches[0];
-                        startX = touch.clientX;
-                        startY = touch.clientY;
+                    let isDragging = false;
+
+                    const dragStart = (clientX, clientY) => {
+                        isDragging = true;
+                        startX = clientX;
+                        startY = clientY;
                         initialLeft = tokenInfo.x;
                         initialTop = tokenInfo.y;
                         token.style.transform = "scale(1.05)";
                     };
 
-                    const onTouchMove = (e) => {
-                        const touch = e.touches[0];
-                        let deltaX = touch.clientX - startX;
-                        let deltaY = touch.clientY - startY;
-
+                    const dragMove = (clientX, clientY) => {
+                        if (!isDragging) return;
+                        let deltaX = clientX - startX;
+                        let deltaY = clientY - startY;
                         let newLeft = initialLeft + deltaX;
                         let newTop = initialTop + deltaY;
 
@@ -403,21 +520,30 @@
 
                         token.style.left = newLeft + 'px';
                         token.style.top = newTop + 'px';
-                        
                         tokenInfo.x = newLeft;
                         tokenInfo.y = newTop;
                     };
 
-                    const onTouchEnd = () => {
+                    const dragEnd = () => {
+                        if (!isDragging) return;
+                        isDragging = false;
                         token.style.transform = "none";
                         resolveCollisions(tokenInfo, token);
                     };
 
-                    token.addEventListener('touchstart', onTouchStart, { passive: true });
-                    token.addEventListener('touchmove', onTouchMove, { passive: true });
-                    token.addEventListener('touchend', onTouchEnd, { passive: true });
-                }
+                    // Eventos táctiles móviles
+                    token.addEventListener('touchstart', (e) => dragStart(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
+                    window.addEventListener('touchmove', (e) => { if(isDragging) dragMove(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
+                    window.addEventListener('touchend', dragEnd);
 
+                    // Eventos de ratón escritorio
+                    token.addEventListener('mousedown', (e) => {
+                        e.preventDefault();
+                        dragStart(e.clientX, e.clientY);
+                    });
+                    window.addEventListener('mousemove', (e) => { if(isDragging) dragMove(e.clientX, e.clientY); });
+                    window.addEventListener('mouseup', dragEnd);
+                }
                 canvas.appendChild(token);
             });
         }
@@ -449,7 +575,6 @@
                         } else {
                             movedTokenInfo.y += (movedTokenInfo.y > tokensData[i].y) ? overlapY + 4 : -overlapY - 4;
                         }
-
                         if (movedTokenInfo.x < 0) movedTokenInfo.x = 0;
                         if (movedTokenInfo.y < 0) movedTokenInfo.y = 0;
 
@@ -461,7 +586,6 @@
             }
         }
 
-        // --- TABLERO FINAL (MENÚS DESPLEGABLES CON TEXTO LIMPIO Y FILTRO DE VERDES) ---
         function renderChallengeList() {
             const container = document.getElementById('challenge-slots');
             container.innerHTML = "";
@@ -487,9 +611,9 @@
                 }
 
                 const displayString = lineText ? `${index + 1}. ${lineText}` : `${index + 1}. [Vacío]`;
-                token.innerHTML = `<span style="flex:1; padding-right:5px;">${displayString}</span>`;
+                const indicatorHtml = (lineText && currentStatus !== 'correct') ? `<span class="dropdown-indicator">▼</span>` : '';
+                token.innerHTML = `<span style="flex:1; padding-right:5px; text-align: left;">${displayString}</span> ${indicatorHtml}`;
 
-                // DROPDOWN: Solo si tiene contenido y NO está validada como verde ('correct')
                 if (lineText && currentStatus !== 'correct') {
                     const select = document.createElement('select');
                     select.className = 'token-dropdown';
@@ -500,13 +624,11 @@
                     defaultOpt.selected = true;
                     select.appendChild(defaultOpt);
 
-                    // Poblar el dropdown SOLO con frases que no sean correctas (verdes)
                     mutableIndices.forEach((mutIdx) => {
                         if (mutIdx === index) return; 
                         const opt = document.createElement('option');
                         opt.value = mutIdx;
-                        // Muestra exclusivamente el texto de la línea sin decoraciones, comillas ni texto de ayuda
-                        opt.textContent = slotContents[mutIdx];
+                        opt.textContent = `${slotContents[mutIdx]}`;
                         select.appendChild(opt);
                     });
 
@@ -514,14 +636,12 @@
                         const targetIdx = parseInt(e.target.value);
                         clearIncorrectMarkers();
 
-                        // Intercambio
                         const tempLine = slotContents[index];
                         slotContents[index] = slotContents[targetIdx];
                         slotContents[targetIdx] = tempLine;
 
-                        // Se resetea el estatus de validación de ambas fichas movidas
-                        checkedSlotsStatus[index] = null;
-                        checkedSlotsStatus[targetIdx] = null;
+                        checkedSlotsStatus[index] = 'mutated';
+                        checkedSlotsStatus[targetIdx] = 'mutated';
 
                         renderChallengeList();
                     };
@@ -539,7 +659,7 @@
 
         function clearIncorrectMarkers() {
             for (let i = 0; i < checkedSlotsStatus.length; i++) {
-                if (checkedSlotsStatus[i] === 'incorrect') checkedSlotsStatus[i] = null;
+                if (checkedSlotsStatus[i] === 'incorrect' || checkedSlotsStatus[i] === 'mutated') checkedSlotsStatus[i] = null;
             }
         }
 
@@ -569,51 +689,65 @@
             renderChallengeList();
 
             if (absoluteMatches === originalCleanLines.length) {
-                setTimeout(() => { stopAndScore(); }, 800);
+                setTimeout(() => { stopAndScore(true); }, 800);
             }
         }
 
-        function stopAndScore() {
+        function stopAndScore(isVictory) {
             document.getElementById('game-screen').style.display = 'none';
             document.getElementById('results-screen').style.display = 'block';
             
-            let correctCount = 0;
-            const breakdown = document.getElementById('results-breakdown');
-            breakdown.innerHTML = "";
-
+            const fullTextLines = [];
             originalCleanLines.forEach((line, index) => {
                 const userLine = slotContents[index];
-                const isCorrect = userLine === line;
-                if (isCorrect) correctCount++;
-
-                const card = document.createElement('div');
-                card.className = "result-item " + (isCorrect ? 'correct' : 'incorrect');
-                card.innerHTML = isCorrect ? `<div class="text-green">✓ ${line}</div>` : `<div class="text-red">✗ ${userLine || '[Vacío]'}</div><div style="color:#2563eb; font-weight:600;">${line}</div>`;
-                breakdown.appendChild(card);
+                fullTextLines.push(userLine || '[Vacío]');
             });
 
-            const totalPercent = Math.round((correctCount / originalCleanLines.length) * 100);
-            document.getElementById('final-score-value').innerText = `${correctCount} / ${originalCleanLines.length} (${totalPercent}%)`;
+            const resultBox = document.getElementById('results-full-text-box');
+            resultBox.innerText = fullTextLines.join('\n');
+
+            const trophy = document.getElementById('victory-emoji');
+
+            if (isVictory) {
+                resultBox.className = "full-text-result-box result-box-success";
+                trophy.style.display = "block"; 
+            } else {
+                resultBox.className = "full-text-result-box result-box-fail";
+                trophy.style.display = "none";
+            }
         }
 
         function returnToSetup() {
             document.getElementById('game-screen').style.display = 'none';
             document.getElementById('results-screen').style.display = 'none';
             document.getElementById('setup-screen').style.display = 'block';
+            document.getElementById('qr-widget').style.display = 'none';
+            document.getElementById('main-container').classList.remove('has-qr');
+            document.getElementById('page-title').textContent = "Unjumble - Canción";
         }
 
         function restartSameGame() { setupGameSession(); }
 
         function exportToHTML() {
             const inputText = document.getElementById('sentences-input').value.trim();
+            const inputTitle = document.getElementById('song-title-input').value.trim() || "cancion";
             if (!inputText) return alert('Escribe texto primero.');
+            
             const linesArray = inputText.split('\n').map(s => s.trim()).filter(s => s.length > 0);
             let currentHTML = document.documentElement.outerHTML;
+            
             currentHTML = currentHTML.replace("const PRELOADED_SENTENCES = [];", `const PRELOADED_SENTENCES = ${JSON.stringify(linesArray)};`);
+            currentHTML = currentHTML.replace('const PRELOADED_TITLE = "";', `const PRELOADED_TITLE = ${JSON.stringify(inputTitle)};`);
+            
+            const safeTitle = inputTitle
+                .toLowerCase()
+                .replace(/\s+/g, '_')
+                .replace(/[^a-z0-9_]/g, '');
+
             const blob = new Blob([currentHTML], { type: 'text/html;charset=utf-8' });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = 'juego_canvas_limpio.html';
+            a.download = `unjumble-${safeTitle}.html`;
             a.click();
         }
     </script>
