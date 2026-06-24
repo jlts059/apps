@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de TIR - Cartera Indexada</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --border: #e2e8f0;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #0f172a;
+        }
+
+        .description {
+            font-size: 0.9rem;
+            color: #64748b;
+            margin-bottom: 20px;
+            line-height: 1.4;
+        }
+
+        .row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+
+        input, select {
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.95rem;
+        }
+
+        input[type="date"] {
+            flex: 1;
+        }
+
+        input[type="number"] {
+            flex: 1.5;
+        }
+
+        select {
+            flex: 1;
+        }
+
+        button {
+            cursor: pointer;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 500;
+            border: none;
+            transition: background 0.2s;
+        }
+
+        .btn-add {
+            background-color: #ecfdf5;
+            color: #065f46;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .btn-add:hover { background-color: #d1fae5; }
+
+        .btn-remove {
+            background-color: #fef2f2;
+            color: #991b1b;
+        }
+
+        .btn-remove:hover { background-color: #fee2e2; }
+
+        .btn-calc {
+            background-color: var(--primary);
+            color: white;
+            width: 100%;
+            font-size: 1rem;
+            padding: 12px;
+            margin-top: 10px;
+        }
+
+        .btn-calc:hover { background-color: var(--primary-hover); }
+
+        .result-box {
+            margin-top: 25px;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: #f1f5f9;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            display: none;
+        }
+
+        .result-box.success {
+            background-color: #f0fdf4;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+        
+        .result-box.error {
+            background-color: #fef2f2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+            font-size: 0.95rem;
+        }
+
+        .final-val-section {
+            border-top: 2px dashed var(--border);
+            padding-top: 20px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Calculadora de TIR (XIRR)</h1>
+    <p class="description">
+        Introduce los movimientos de tu cartera. Las <b>aportaciones</b> suman dinero a la inversión y las <b>retiradas</b> lo extraen. Al final, añade la fecha actual y la valoración total de tu cartera.
+    </p>
+
+    <form id="tirForm">
+        <div id="transactions-container">
+            <label>Movimientos (Aportaciones / Retiradas)</label>
+            <div class="row transaction-row">
+                <input type="date" required>
+                <input type="number" step="0.01" placeholder="Cantidad (€)" min="0.01" required>
+                <select>
+                    <option value="aportacion">Aportación</option>
+                    <option value="retirada">Retirada</option>
+                </select>
+                <button type="button" class="btn-remove" onclick="removeRow(this)">X</button>
+            </div>
+        </div>
+
+        <button type="button" class="btn-add" onclick="addRow()">+ Añadir Movimiento</button>
+
+        <div class="final-val-section">
+            <label for="final-date">Fecha de Valoración Final</label>
+            <div class="row">
+                <input type="date" id="final-date" required>
+            </div>
+            
+            <label for="final-value">Valor Actual de la Cartera</label>
+            <div class="row">
+                <input type="number" id="final-value" step="0.01" placeholder="Ej: 15430.50" min="0" required>
+            </div>
+        </div>
+
+        <button type="submit" class="btn-calc">Calcular TIR Anualizada</button>
+    </form>
+
+    <div id="result" class="result-box"></div>
+</div>
+
+<script>
+    // Añadir una nueva fila de movimiento
+    function addRow() {
+        const container = document.getElementById('transactions-container');
+        const newRow = document.createElement('div');
+        newRow.className = 'row transaction-row';
+        newRow.innerHTML = `
+            <input type="date" required>
+            <input type="number" step="0.01" placeholder="Cantidad (€)" min="0.01" required>
+            <select>
+                <option value="aportacion">Aportación</option>
+                <option value="retirada">Retirada</option>
+            </select>
+            <button type="button" class="btn-remove" onclick="removeRow(this)">X</button>
+        `;
+        container.appendChild(newRow);
+    }
+
+    // Eliminar una fila
+    function removeRow(button) {
+        const rows = document.querySelectorAll('.transaction-row');
+        if (rows.length > 1) {
+            button.parentElement.remove();
+        } else {
+            alert("Debes mantener al menos un movimiento inicial.");
+        }
+    }
+
+    // Lógica matemática: Algoritmo XIRR (Newton-Raphson)
+    function dataToXirr(cashFlows, dates) {
+        let guess = 0.1; // Estimación inicial del 10%
+        const maxIterations = 100;
+        const precision = 1e-6;
+
+        for (let i = 0; i < maxIterations; i++) {
+            let f = 0;
+            let df = 0;
+
+            for (let j = 0; j < cashFlows.length; j++) {
+                const days = (dates[j] - dates[0]) / (1000 * 60 * 60 * 24);
+                const exp = days / 365;
+                
+                f += cashFlows[j] / Math.pow(1 + guess, exp);
+                df -= (exp * cashFlows[j]) / Math.pow(1 + guess, exp + 1);
+            }
+
+            if (Math.abs(df) < 1e-12) break;
+
+            const newGuess = guess - f / df;
+            
+            if (Math.abs(newGuess - guess) < precision) {
+                return newGuess;
+            }
+            guess = newGuess;
+        }
+        return null; // Si no converge
+    }
+
+    // Procesar el formulario
+    document.getElementById('tirForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const cashFlows = [];
+        const dates = [];
+
+        // 1. Recoger datos de las filas de movimientos
+        const rows = document.querySelectorAll('.transaction-row');
+        rows.forEach(row => {
+            const dateVal = new Date(row.cells ? null : row.querySelector('input[type="date"]').value);
+            const amountInput = parseFloat(row.querySelector('input[type="number"]').value);
+            const type = row.querySelector('select').value;
+
+            // Las aportaciones son flujos NEGATIVOS (dinero que sale de tu bolsillo hacia la cartera)
+            // Las retiradas son flujos POSITIVOS (dinero que vuelve a tu bolsillo)
+            const amount = type === 'aportacion' ? -amountInput : amountInput;
+
+            cashFlows.push(amount);
+            dates.push(dateVal);
+        });
+
+        // 2. Recoger datos de la valoración final
+        const finalDate = new Date(document.getElementById('final-date').value);
+        const finalValue = parseFloat(document.getElementById('final-value').value);
+
+        // La valoración final actúa como una gran "retirada ficticia" (flujo POSITIVO)
+        cashFlows.push(finalValue);
+        dates.push(finalDate);
+
+        // Ordenar cronológicamente (necesario para el cálculo correcto)
+        const combined = dates.map((d, i) => ({ date: d, amount: cashFlows[i] }));
+        combined.sort((a, b) => a.date - b.date);
+
+        const sortedFlows = combined.map(c => c.amount);
+        const sortedDates = combined.map(c => c.date);
+
+        // 3. Calcular
+        const resultDiv = document.getElementById('result');
+        const tir = dataToXirr(sortedFlows, sortedDates);
+
+        resultDiv.style.display = 'block';
+        if (tir !== null && !isNaN(tir)) {
+            const porcentaje = (tir * 100).toFixed(2);
+            resultDiv.className = 'result-box success';
+            resultDiv.innerHTML = `Tu TIR Anualizada es del <b>${porcentaje}%</b>`;
+        } else {
+            resultDiv.className = 'result-box error';
+            resultDiv.innerHTML = `No se pudo calcular la TIR. Asegúrate de que las fechas tengan sentido y la valoración final guarde relación con los flujos.`;
+        }
+    });
+</script>
+
+</body>
+</html>
