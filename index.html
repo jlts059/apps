@@ -97,15 +97,16 @@
             'varios': '📦'
         };
 
-        // Clasificación de rutas con soporte para subgrupos en Varios
+        // 1. Clasificación 100% automática basada en lo que encuentre en tu repositorio
 function analizarRuta(path) {
     const pathParts = path.split('/');
     let nombreTab = 'Home';
-    let subGrupo = ''; // Guardará el nombre de la subcarpeta (ej: "versiones_antiguas")
+    let subGrupo = ''; 
 
     if (pathParts.length > 1) {
         const rootFolder = pathParts[0].toLowerCase();
         
+        // Mapeo especial para los idiomas: se agrupan por idioma y usan el segundo nivel como subtítulo
         if (rootFolder === 'aleman' || rootFolder === 'al_') {
             nombreTab = 'aleman';
             subGrupo = pathParts[1]; 
@@ -114,19 +115,61 @@ function analizarRuta(path) {
             nombreTab = 'ingles';
             subGrupo = pathParts[1];
         } 
-        else if (['plantillas', 'utilidades', 'self'].includes(rootFolder)) {
-            nombreTab = rootFolder;
-        } 
+        // CASO AUTOMÁTICO: Cualquier otra carpeta raíz se convierte en su propia PESTAÑA principal
         else {
-            nombreTab = 'varios';
-            // Si está dentro de una subcarpeta en varios (ej: "versiones_antiguas/app.html")
-            // guardamos el nombre de esa subcarpeta como subgrupo
+            nombreTab = rootFolder;
+            // Si además tiene subcarpetas dentro (ej: utilidades/conversores/app.html), creamos el subtítulo
             if (pathParts.length > 2) {
                 subGrupo = pathParts[1];
             }
         }
     }
     return { nombreTab, subGrupo };
+}
+
+// 2. Carga de proyectos modificada para detectar dinámicamente las pestañas
+async function cargarProyectos() {
+    inyectarNotasDesdeTxt();
+    
+    try {
+        const url = `https://api.github.com/repos/${repoOwner}/${repoName}/git/trees/main?recursive=1`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error("API bloqueada");
+        const data = await response.json();
+        const items = data.tree || [];
+
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('menu-wrapper').style.display = 'block';
+
+        // Creamos la pestaña Home fija
+        createTab('Home');
+
+        // Filtramos los archivos HTML
+        const htmlFiles = items.filter(item => 
+            item.type === 'blob' && 
+            item.path.endsWith('.html') && 
+            !item.path.toLowerCase().endsWith('index.html')
+        );
+
+        // FASE 1: Descubrir y crear automáticamente los botones de las pestañas reales que existan
+        htmlFiles.forEach(item => {
+            const info = analizarRuta(item.path);
+            createTab(info.nombreTab);
+        });
+
+        // FASE 2: Inyectar los enlaces dentro de sus pestañas correspondientes
+        htmlFiles.forEach(item => {
+            const info = analizarRuta(item.path);
+            renderFile(item, info.nombreTab, info.subGrupo);
+        });
+
+        // Abrir Home por defecto
+        openTab('Home');
+
+    } catch (error) {
+        console.error(error);
+        document.getElementById('loading').innerText = "Cargando tus aplicaciones...";
+    }
 }
 
         async function cargarProyectos() {
