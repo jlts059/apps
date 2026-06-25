@@ -72,7 +72,6 @@
         <div id="block-al-container">
             <div class="block-title">🍺 DE ALEMÁN</div>
             <div id="tabs-al" class="tabs"></div>
-        }
         </div>
         <div id="block-in-container">
             <div class="block-title">☕ GB INGLÉS</div>
@@ -110,57 +109,53 @@
             inyectarNotasDesdeTxt();
             
             try {
-                // Usamos la API de Git Trees con el parámetro recursive=1 para traer todo el árbol de archivos
                 const url = `https://api.github.com/repos/${repoOwner}/${repoName}/git/trees/main?recursive=1`;
                 const response = await fetch(url);
                 if (!response.ok) throw new Error("API bloqueada temporalmente.");
                 const data = await response.json();
-                
-                // Si tu rama principal se llama 'master' en vez de 'main', descomenta la línea de abajo si falla:
-                // if (!response.ok) { ... reintentar con 'master' ... }
-                
                 const items = data.tree || [];
 
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('blocks-wrapper').style.display = 'flex';
 
+                // Crear siempre la pestaña Home por defecto
                 createTab('Home', 'other');
 
-                // Buscaremos todos los archivos .html que no sean index.html
-                for (const item of items) {
-                    if (item.type === 'blob' && item.path.endsWith('.html') && !item.path.toLowerCase().endsWith('index.html')) {
-                        
-                        // Analizamos la ruta del archivo (Ejemplo: "de_aleman/flash/index.html" o "al_flash/game.html")
-                        const pathParts = item.path.split('/');
-                        
-                        let bloque = 'other';
-                        let nombreTab = 'Home';
-                        
-                        if (pathParts.length > 1) {
-                            // La carpeta raíz que contiene todo (ej: "de_aleman" o "al_flash")
-                            const rootFolder = pathParts[0].toLowerCase();
-                            
-                            // Determinamos el bloque visual según la carpeta raíz
-                            if (rootFolder.startsWith('al_') || rootFolder.includes('aleman')) {
-                                bloque = 'al';
-                            } else if (rootFolder.startsWith('in_') || rootFolder.includes('ingles') || rootFolder.includes('english')) {
-                                bloque = 'in';
-                            }
+                // Filtrar solo los archivos HTML válidos (ignorando los index.html)
+                const htmlFiles = items.filter(item => 
+                    item.type === 'blob' && 
+                    item.path.endsWith('.html') && 
+                    !item.path.toLowerCase().endsWith('index.html')
+                );
 
-                            // El nombre de la pestaña será la carpeta inmediata superior al archivo HTML
-                            // Así, si la ruta es "de_aleman/flash/index.html", la pestaña se llamará "flash"
-                            nombreTab = pathParts[pathParts.length - 2];
+                // FASE 1: Identificar y crear todas las pestañas necesarias primero
+                htmlFiles.forEach(item => {
+                    const pathParts = item.path.split('/');
+                    let bloque = 'other';
+                    let nombreTab = 'Home';
+
+                    if (pathParts.length > 1) {
+                        const rootFolder = pathParts[0].toLowerCase();
+                        if (rootFolder.startsWith('al_') || rootFolder.includes('aleman')) {
+                            bloque = 'al';
+                        } else if (rootFolder.startsWith('in_') || rootFolder.includes('ingles') || rootFolder.includes('english')) {
+                            bloque = 'in';
                         }
-
-                        // Creamos la pestaña si no existe
-                        createTab(nombreTab, bloque);
-                        
-                        // Renderizamos el archivo directamente pasando su objeto y la ruta completa calculada
-                        renderFile(item, nombreTab);
+                        // La pestaña será la carpeta que contiene directamente al archivo html
+                        nombreTab = pathParts[pathParts.length - 2];
                     }
-                }
+                    
+                    createTab(nombreTab, bloque);
+                });
 
-                // Ocultar bloques vacíos si los hubiera
+                // FASE 2: Ahora que todas las pestañas existen en el HTML, meter los archivos dentro
+                htmlFiles.forEach(item => {
+                    const pathParts = item.path.split('/');
+                    const nombreTab = pathParts.length > 1 ? pathParts[pathParts.length - 2] : 'Home';
+                    renderFile(item, nombreTab);
+                });
+
+                // Ocultar bloques que se hayan quedado completamente vacíos
                 if (document.getElementById('tabs-al').children.length === 0) document.getElementById('block-al-container').style.display = 'none';
                 if (document.getElementById('tabs-in').children.length === 0) document.getElementById('block-in-container').style.display = 'none';
                 if (document.getElementById('tabs-other').children.length === 0) document.getElementById('block-other-container').style.display = 'none';
@@ -175,6 +170,7 @@
             const tabsContainer = document.getElementById(`tabs-${bloque}`);
             const contentsContainer = document.getElementById('contents-container');
             
+            // Si la pestaña ya existe, no la duplicamos
             if (document.getElementById(`btn-${name}`)) return;
 
             const cleanKeyForEmoji = name.toLowerCase().replace(/^al_/, '').replace(/^in_/, '');
@@ -199,11 +195,9 @@
             if (!container) return;
 
             const link = document.createElement('a');
-            // La propiedad .path ya contiene la ruta correcta estructurada (ej: "de_aleman/flash/app.html")
             link.href = file.path;
             link.className = 'app-link';
             
-            // Extraer solo el nombre del archivo final para el icono e interfaz
             const fileName = file.path.split('/').pop();
             
             let fileIcon = '📄';
@@ -228,7 +222,6 @@
             if(targetBtn) targetBtn.classList.add('active');
         }
 
-        // --- SISTEMA DE INYECCIÓN DE TEXTO SEGURO ---
         async function inyectarNotasDesdeTxt() {
             const target = document.getElementById('diagram-target');
             const section = document.getElementById('diagram-section');
