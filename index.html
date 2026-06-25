@@ -97,32 +97,37 @@
             'varios': '📦'
         };
 
-        // Clasificación de rutas directa a las pestañas solicitadas
-        function analizarRuta(path) {
-            const pathParts = path.split('/');
-            let nombreTab = 'Home';
-            let subGrupo = ''; // Guardará el nombre de la subcarpeta si existe (ej: "gramatica")
+        // Clasificación de rutas con soporte para subgrupos en Varios
+function analizarRuta(path) {
+    const pathParts = path.split('/');
+    let nombreTab = 'Home';
+    let subGrupo = ''; // Guardará el nombre de la subcarpeta (ej: "versiones_antiguas")
 
-            if (pathParts.length > 1) {
-                const rootFolder = pathParts[0].toLowerCase();
-                
-                if (rootFolder === 'aleman' || rootFolder === 'al_') {
-                    nombreTab = 'aleman';
-                    subGrupo = pathParts[1]; 
-                } 
-                else if (rootFolder === 'ingles' || rootFolder === 'in_') {
-                    nombreTab = 'ingles';
-                    subGrupo = pathParts[1];
-                } 
-                else if (['plantillas', 'utilidades', 'self'].includes(rootFolder)) {
-                    nombreTab = rootFolder;
-                } 
-                else {
-                    nombreTab = 'varios';
-                }
+    if (pathParts.length > 1) {
+        const rootFolder = pathParts[0].toLowerCase();
+        
+        if (rootFolder === 'aleman' || rootFolder === 'al_') {
+            nombreTab = 'aleman';
+            subGrupo = pathParts[1]; 
+        } 
+        else if (rootFolder === 'ingles' || rootFolder === 'in_') {
+            nombreTab = 'ingles';
+            subGrupo = pathParts[1];
+        } 
+        else if (['plantillas', 'utilidades', 'self'].includes(rootFolder)) {
+            nombreTab = rootFolder;
+        } 
+        else {
+            nombreTab = 'varios';
+            // Si está dentro de una subcarpeta en varios (ej: "versiones_antiguas/app.html")
+            // guardamos el nombre de esa subcarpeta como subgrupo
+            if (pathParts.length > 2) {
+                subGrupo = pathParts[1];
             }
-            return { nombreTab, subGrupo };
         }
+    }
+    return { nombreTab, subGrupo };
+}
 
         async function cargarProyectos() {
             inyectarNotasDesdeTxt();
