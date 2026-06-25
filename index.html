@@ -30,14 +30,45 @@
         .tab-content { display: none; animation: fadeIn 0.5s; }
         .tab-content.active { display: block; }
 
+        /* Estilos para los bloques Collapsibles (Subcarpetas) */
+        details.app-group {
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            overflow: hidden;
+            transition: border-color 0.2s;
+        }
+        details.app-group:hover { border-color: #0366d6; }
+        
+        summary.app-group-title {
+            padding: 14px;
+            font-size: 0.95em;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: #334155;
+            cursor: pointer;
+            user-select: none;
+            background: #e2e8f0;
+            letter-spacing: 0.5px;
+            outline: none;
+        }
+        details.app-group[open] summary.app-group-title {
+            border-bottom: 1px solid #cbd5e1;
+            background: #cbd5e1;
+        }
+        
+        .app-group-content {
+            padding: 12px 12px 4px 12px;
+        }
+
         /* Estilos de los enlaces de las apps */
-        .app-group-title { font-size: 0.9em; text-transform: uppercase; color: #555; margin: 15px 0 5px 0; font-weight: bold; letter-spacing: 0.5px; }
         .app-link {
             display: flex; align-items: center; padding: 12px; margin-bottom: 8px;
             background: white; text-decoration: none; color: #333;
-            border-radius: 8px; border: 1px solid #ddd; font-weight: 500; transition: 0.2s;
+            border-radius: 8px; border: 1px solid #e2e8f0; font-weight: 500; transition: 0.2s;
         }
-        .app-link:hover { transform: translateX(5px); border-color: #0366d6; box-shadow: 2px 2px 10px rgba(0,0,0,0.1); }
+        .app-link:hover { transform: translateX(5px); border-color: #0366d6; box-shadow: 2px 2px 10px rgba(0,0,0,0.06); }
         .icon { margin-right: 15px; font-size: 1.2em; }
 
         /* Estilos para tu panel visual de Notas */
@@ -86,9 +117,8 @@
         const repoOwner = 'jlts059';
         const repoName = 'apps';
 
-        // Emojis personalizados para tus pestañas principales
+        // Emojis personalizados para tus pestañas principales automáticas
         const tabEmojis = {
-            'home': '🏠',
             'aleman': '🍺',
             'ingles': '☕',
             'plantillas': '📋',
@@ -97,80 +127,35 @@
             'varios': '📦'
         };
 
-        // 1. Clasificación 100% automática basada en lo que encuentre en tu repositorio
-function analizarRuta(path) {
-    const pathParts = path.split('/');
-    let nombreTab = 'Home';
-    let subGrupo = ''; 
+        // Clasificación inteligente y 100% automatizada
+        function analizarRuta(path) {
+            const pathParts = path.split('/');
+            let nombreTab = 'varios';
+            let subGrupo = ''; 
 
-    if (pathParts.length > 1) {
-        const rootFolder = pathParts[0].toLowerCase();
-        
-        // Mapeo especial para los idiomas: se agrupan por idioma y usan el segundo nivel como subtítulo
-        if (rootFolder === 'aleman' || rootFolder === 'al_') {
-            nombreTab = 'aleman';
-            subGrupo = pathParts[1]; 
-        } 
-        else if (rootFolder === 'ingles' || rootFolder === 'in_') {
-            nombreTab = 'ingles';
-            subGrupo = pathParts[1];
-        } 
-        // CASO AUTOMÁTICO: Cualquier otra carpeta raíz se convierte en su propia PESTAÑA principal
-        else {
-            nombreTab = rootFolder;
-            // Si además tiene subcarpetas dentro (ej: utilidades/conversores/app.html), creamos el subtítulo
-            if (pathParts.length > 2) {
-                subGrupo = pathParts[1];
+            if (pathParts.length > 1) {
+                const rootFolder = pathParts[0].toLowerCase();
+                
+                // Agrupación especial para idiomas (raíz como pestaña, segundo nivel como subgrupo)
+                if (rootFolder === 'aleman' || rootFolder === 'al_') {
+                    nombreTab = 'aleman';
+                    subGrupo = pathParts[1]; 
+                } 
+                else if (rootFolder === 'ingles' || rootFolder === 'in_') {
+                    nombreTab = 'ingles';
+                    subGrupo = pathParts[1];
+                } 
+                // Cualquier otra carpeta raíz se vuelve su propia pestaña
+                else {
+                    nombreTab = rootFolder;
+                    // Si además tiene subcarpetas dentro, se vuelven subgrupos collapsibles
+                    if (pathParts.length > 2) {
+                        subGrupo = pathParts[1];
+                    }
+                }
             }
+            return { nombreTab, subGrupo };
         }
-    }
-    return { nombreTab, subGrupo };
-}
-
-// 2. Carga de proyectos modificada para detectar dinámicamente las pestañas
-async function cargarProyectos() {
-    inyectarNotasDesdeTxt();
-    
-    try {
-        const url = `https://api.github.com/repos/${repoOwner}/${repoName}/git/trees/main?recursive=1`;
-        const response = await fetch(url);
-        if (!response.ok) throw new Error("API bloqueada");
-        const data = await response.json();
-        const items = data.tree || [];
-
-        document.getElementById('loading').style.display = 'none';
-        document.getElementById('menu-wrapper').style.display = 'block';
-
-        // Creamos la pestaña Home fija
-        createTab('Home');
-
-        // Filtramos los archivos HTML
-        const htmlFiles = items.filter(item => 
-            item.type === 'blob' && 
-            item.path.endsWith('.html') && 
-            !item.path.toLowerCase().endsWith('index.html')
-        );
-
-        // FASE 1: Descubrir y crear automáticamente los botones de las pestañas reales que existan
-        htmlFiles.forEach(item => {
-            const info = analizarRuta(item.path);
-            createTab(info.nombreTab);
-        });
-
-        // FASE 2: Inyectar los enlaces dentro de sus pestañas correspondientes
-        htmlFiles.forEach(item => {
-            const info = analizarRuta(item.path);
-            renderFile(item, info.nombreTab, info.subGrupo);
-        });
-
-        // Abrir Home por defecto
-        openTab('Home');
-
-    } catch (error) {
-        console.error(error);
-        document.getElementById('loading').innerText = "Cargando tus aplicaciones...";
-    }
-}
 
         async function cargarProyectos() {
             inyectarNotasDesdeTxt();
@@ -185,34 +170,34 @@ async function cargarProyectos() {
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('menu-wrapper').style.display = 'block';
 
-                // Forzar la creación de tus pestañas deseadas en orden estricto
-                const pestañasDeseadas = ['Home', 'aleman', 'ingles', 'plantillas', 'utilidades', 'self', 'varios'];
-                pestañasDeseadas.forEach(tab => createTab(tab));
-
-                // Filtrar archivos HTML válidos
+                // Filtrar archivos HTML válidos (ignorando el index principal)
                 const htmlFiles = items.filter(item => 
                     item.type === 'blob' && 
                     item.path.endsWith('.html') && 
                     !item.path.toLowerCase().endsWith('index.html')
                 );
 
-                // Renderizar los archivos directamente en su pestaña correspondiente
+                // FASE 1: Descubrir y crear automáticamente los botones de las pestañas reales que existan
+                const listasCreadas = new Set();
+                htmlFiles.forEach(item => {
+                    const info = analizarRuta(item.path);
+                    if (!listasCreadas.has(info.nombreTab)) {
+                        createTab(info.nombreTab);
+                        listasCreadas.add(info.nombreTab);
+                    }
+                });
+
+                // FASE 2: Inyectar los archivos dentro de sus pestañas (creando los acordeones cerrados por defecto)
                 htmlFiles.forEach(item => {
                     const info = analizarRuta(item.path);
                     renderFile(item, info.nombreTab, info.subGrupo);
                 });
 
-                // Ocultar de la vista los botones de pestañas que hayan quedado vacías
-                pestañasDeseadas.forEach(tab => {
-                    const contentDiv = document.getElementById(tab);
-                    if (tab !== 'Home' && contentDiv && contentDiv.children.length === 0) {
-                        const btn = document.getElementById(`btn-${tab}`);
-                        if (btn) btn.style.display = 'none';
-                    }
-                });
-
-                // Abrir Home por defecto
-                openTab('Home');
+                // Abrir la primera pestaña que se haya generado de forma automática
+                if (listasCreadas.size > 0) {
+                    const primeraTab = Array.from(listasCreadas)[0];
+                    openTab(primeraTab);
+                }
 
             } catch (error) {
                 console.error(error);
@@ -228,7 +213,6 @@ async function cargarProyectos() {
 
             const cleanKey = name.toLowerCase();
             const emoji = tabEmojis[cleanKey] || '📁';
-            // Formatear el texto de la pestaña de forma bonita
             const displayName = name.charAt(0).toUpperCase() + name.slice(1).replace(/_/g, ' ');
 
             const btn = document.createElement('button');
@@ -248,24 +232,31 @@ async function cargarProyectos() {
             const container = document.getElementById(containerId);
             if (!container) return;
 
-            // Si el archivo pertenece a un subgrupo (ej: "gramatica" dentro de alemán), creamos un subtítulo visual
+            // Si el archivo pertenece a una subcarpeta, se crea el acordeón collapsible cerrado por defecto
             if (subGrupo) {
                 const subGrupoId = `${containerId}-group-${subGrupo}`;
-                let subContainer = document.getElementById(subGrupoId);
+                let subGroupContent = document.getElementById(`${subGrupoId}-content`);
                 
-                if (!subContainer) {
-                    subContainer = document.createElement('div');
-                    subContainer.id = subGrupoId;
+                if (!subGroupContent) {
+                    const detailsWrapper = document.createElement('details');
+                    detailsWrapper.className = 'app-group';
+                    detailsWrapper.id = subGrupoId; // Nota: Al no llevar el atributo 'open', empieza cerrado por defecto.
                     
-                    const title = document.createElement('div');
-                    title.className = 'app-group-title';
-                    title.innerText = subGrupo.replace(/_/g, ' ').toUpperCase();
+                    const summaryTitle = document.createElement('summary');
+                    summaryTitle.className = 'app-group-title';
+                    summaryTitle.innerText = `📂 ${subGrupo.replace(/_/g, ' ')}`;
                     
-                    container.appendChild(title);
-                    container.appendChild(subContainer);
+                    subGroupContent = document.createElement('div');
+                    subGroupContent.className = 'app-group-content';
+                    subGroupContent.id = `${subGrupoId}-content`;
+                    
+                    detailsWrapper.appendChild(summaryTitle);
+                    detailsWrapper.appendChild(subGroupContent);
+                    container.appendChild(detailsWrapper);
                 }
-                renderLinkElement(file, subContainer);
+                renderLinkElement(file, subGroupContent);
             } else {
+                // Si el archivo está suelto directo en la pestaña raíz, se dibuja libre sin acordeón
                 renderLinkElement(file, container);
             }
         }
