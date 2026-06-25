@@ -72,6 +72,7 @@
         <div id="block-al-container">
             <div class="block-title">🍺 DE ALEMÁN</div>
             <div id="tabs-al" class="tabs"></div>
+        }
         </div>
         <div id="block-in-container">
             <div class="block-title">☕ GB INGLÉS</div>
@@ -106,44 +107,60 @@
         };
 
         async function cargarProyectos() {
-            // Primero disparamos la carga de tus notas externas
             inyectarNotasDesdeTxt();
             
             try {
-                const url = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/`;
+                // Usamos la API de Git Trees con el parámetro recursive=1 para traer todo el árbol de archivos
+                const url = `https://api.github.com/repos/${repoOwner}/${repoName}/git/trees/main?recursive=1`;
                 const response = await fetch(url);
                 if (!response.ok) throw new Error("API bloqueada temporalmente.");
-                const items = await response.json();
+                const data = await response.json();
                 
+                // Si tu rama principal se llama 'master' en vez de 'main', descomenta la línea de abajo si falla:
+                // if (!response.ok) { ... reintentar con 'master' ... }
+                
+                const items = data.tree || [];
+
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('blocks-wrapper').style.display = 'flex';
 
                 createTab('Home', 'other');
 
+                // Buscaremos todos los archivos .html que no sean index.html
                 for (const item of items) {
-                    if (item.type === 'dir') {
+                    if (item.type === 'blob' && item.path.endsWith('.html') && !item.path.toLowerCase().endsWith('index.html')) {
+                        
+                        // Analizamos la ruta del archivo (Ejemplo: "de_aleman/flash/index.html" o "al_flash/game.html")
+                        const pathParts = item.path.split('/');
+                        
                         let bloque = 'other';
-                        const lowerName = item.name.toLowerCase();
+                        let nombreTab = 'Home';
                         
-                        if (lowerName.startsWith('al_')) {
-                            bloque = 'al';
-                        } else if (lowerName.startsWith('in_')) {
-                            bloque = 'in';
+                        if (pathParts.length > 1) {
+                            // La carpeta raíz que contiene todo (ej: "de_aleman" o "al_flash")
+                            const rootFolder = pathParts[0].toLowerCase();
+                            
+                            // Determinamos el bloque visual según la carpeta raíz
+                            if (rootFolder.startsWith('al_') || rootFolder.includes('aleman')) {
+                                bloque = 'al';
+                            } else if (rootFolder.startsWith('in_') || rootFolder.includes('ingles') || rootFolder.includes('english')) {
+                                bloque = 'in';
+                            }
+
+                            // El nombre de la pestaña será la carpeta inmediata superior al archivo HTML
+                            // Así, si la ruta es "de_aleman/flash/index.html", la pestaña se llamará "flash"
+                            nombreTab = pathParts[pathParts.length - 2];
                         }
 
-                        createTab(item.name, bloque);
+                        // Creamos la pestaña si no existe
+                        createTab(nombreTab, bloque);
                         
-                        const subRes = await fetch(item.url);
-                        if (subRes.ok) {
-                            const files = await subRes.json();
-                            renderFiles(files, item.name);
-                        }
-
-                    } else if (item.type === 'file' && item.name.endsWith('.html') && item.name.toLowerCase() !== 'index.html') {
-                        renderFiles([item], 'Home');
+                        // Renderizamos el archivo directamente pasando su objeto y la ruta completa calculada
+                        renderFile(item, nombreTab);
                     }
                 }
 
+                // Ocultar bloques vacíos si los hubiera
                 if (document.getElementById('tabs-al').children.length === 0) document.getElementById('block-al-container').style.display = 'none';
                 if (document.getElementById('tabs-in').children.length === 0) document.getElementById('block-in-container').style.display = 'none';
                 if (document.getElementById('tabs-other').children.length === 0) document.getElementById('block-other-container').style.display = 'none';
@@ -162,7 +179,7 @@
 
             const cleanKeyForEmoji = name.toLowerCase().replace(/^al_/, '').replace(/^in_/, '');
             const emoji = folderEmojis[cleanKeyForEmoji] || folderEmojis['default'];
-            const displayName = name.replace(/^al_|^in_/i, '');
+            const displayName = name.replace(/^al_|^in_/i, '').replace(/_/g, ' ');
 
             const btn = document.createElement('button');
             btn.className = 'tab-button';
@@ -177,27 +194,27 @@
             contentsContainer.appendChild(contentDiv);
         }
 
-        function renderFiles(files, containerId) {
+        function renderFile(file, containerId) {
             const container = document.getElementById(containerId);
             if (!container) return;
 
-            files.forEach(file => {
-                if (file.name.endsWith('.html') && file.name.toLowerCase() !== 'index.html') {
-                    const link = document.createElement('a');
-                    link.href = containerId === 'Home' ? file.name : `${containerId}/${file.name}`;
-                    link.className = 'app-link';
-                    
-                    let fileIcon = '📄';
-                    const n = file.name.toLowerCase();
-                    if (n.includes('ruleta') || n.includes('wheel')) fileIcon = '🎲';
-                    if (n.includes('quiz')) fileIcon = '📝';
-                    if (n.includes('qr') || n.includes('drive')) fileIcon = '🔳';
+            const link = document.createElement('a');
+            // La propiedad .path ya contiene la ruta correcta estructurada (ej: "de_aleman/flash/app.html")
+            link.href = file.path;
+            link.className = 'app-link';
+            
+            // Extraer solo el nombre del archivo final para el icono e interfaz
+            const fileName = file.path.split('/').pop();
+            
+            let fileIcon = '📄';
+            const n = fileName.toLowerCase();
+            if (n.includes('ruleta') || n.includes('wheel')) fileIcon = '🎲';
+            if (n.includes('quiz')) fileIcon = '📝';
+            if (n.includes('qr') || n.includes('drive')) fileIcon = '🔳';
 
-                    const cleanName = file.name.replace('.html', '').replace(/-/g, ' ');
-                    link.innerHTML = `<span class="icon">${fileIcon}</span> ${cleanName}`;
-                    container.appendChild(link);
-                }
-            });
+            const cleanName = fileName.replace('.html', '').replace(/-/g, ' ');
+            link.innerHTML = `<span class="icon">${fileIcon}</span> ${cleanName}`;
+            container.appendChild(link);
         }
 
         function openTab(tabId) {
@@ -217,21 +234,15 @@
             const section = document.getElementById('diagram-section');
             
             try {
-                // Buscamos tu archivo limpio sin guion bajo y rompemos la caché
                 const response = await fetch('vault/input-output.txt?v=' + new Date().getTime());
                 if (!response.ok) throw new Error("No disponible");
                 
                 const textoRaw = await response.text();
                 
                 if (textoRaw.trim().length > 0) {
-                    // Mostramos la caja de notas
                     section.style.display = 'block';
-                    
-                    // Convertimos el div en un nodo oficial de Mermaid insertando la clase y el texto
                     target.className = "mermaid";
                     target.textContent = textoRaw;
-                    
-                    // Le decimos a Mermaid que procese el elemento ahora que ya tiene el texto dentro
                     await mermaid.run();
                 }
             } catch (err) {
