@@ -4,12 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tile Panel</title>
-    <!-- Librería para generar códigos QR de forma local y limpia -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root {
             --bg-color: #f4f6f9;
-            --text-muted: #7f8c8d;
         }
 
         *, *::before, *::after {
@@ -82,18 +79,20 @@
             background-color: #d35400;
         }
 
-        /* Contenedor del QR corregido para evitar cualquier deformación */
+        /* CONTENEDOR QR: Limpio, inmune a deformaciones y perfectamente cuadrado */
         #qr-container {
             position: absolute;
             top: 20px;
             right: 20px;
             background: white;
             padding: 8px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
             cursor: pointer;
             transition: transform 0.3s ease;
             z-index: 100;
+            width: 96px;
+            height: 96px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -103,12 +102,12 @@
             transform: scale(1.05);
         }
 
-        /* Asegurar proporciones estrictas 1:1 en la imagen renderizada del QR */
-        #qrcode img, #qrcode canvas {
-            display: block !important;
-            width: 80px !important;
-            height: 80px !important;
-            object-fit: contain;
+        /* La imagen nativa del QR mantiene su proporción cuadrada de forma estricta */
+        .qr-image {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: contain !important;
+            display: block;
         }
 
         /* QR en pantalla completa (Modal) */
@@ -126,17 +125,12 @@
         #qr-large {
             background: white;
             padding: 20px;
-            border-radius: 12px;
+            border-radius: 16px;
+            width: 280px;
+            height: 280px;
             display: flex;
             justify-content: center;
             align-items: center;
-        }
-
-        #qr-large img, #qr-large canvas {
-            display: block !important;
-            width: 260px !important;
-            height: 260px !important;
-            object-fit: contain;
         }
 
         /* Grid de Azulejos Autoadaptable */
@@ -191,7 +185,6 @@
 </head>
 <body>
 
-    <!-- BLOQUE ADMINISTRADOR -->
     <div id="admin-panel">
         <div class="input-group">
             <label for="drive-url">gDrive link</label>
@@ -215,25 +208,27 @@
         <div id="status-message"></div>
     </div>
 
-    <!-- CÓDIGO QR -->
     <div id="qr-container" onclick="abrirQR()" title="Click para agrandar">
-        <div id="qrcode"></div>
+        <img id="qrcode" class="qr-image" alt="QR Link" />
     </div>
 
-    <!-- MODAL PARA QR AGRANDADO -->
     <div id="qr-overlay" onclick="cerrarQR()">
-        <div id="qr-large"></div>
+        <div id="qr-large">
+            <img id="qrcode-large" class="qr-image" alt="QR Link Grande" />
+        </div>
     </div>
 
-    <!-- CUADRÍCULA DE AZULEJOS -->
     <div id="tiles-grid"></div>
 
     <script>
-        const API_KEY = 'TU_API_KEY_REAL_AQUI'; 
+        // Recuerda colocar aquí tu API key de Google Cloud
+        const API_KEY = 'AIzaSyBRCdldYI0cb2FQrSGdm4yYVEcYfy8o7bg'; 
 
         const urlActual = window.location.href;
-        new QRCode(document.getElementById("qrcode"), { text: urlActual, width: 80, height: 80 });
-        new QRCode(document.getElementById("qr-large"), { text: urlActual, width: 260, height: 260 });
+        const qrUrlBase = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(urlActual)}`;
+        
+        document.getElementById("qrcode").src = qrUrlBase;
+        document.getElementById("qrcode-large").src = qrUrlBase;
 
         function abrirQR() { document.getElementById('qr-overlay').style.display = 'flex'; }
         function cerrarQR() { document.getElementById('qr-overlay').style.display = 'none'; }
@@ -372,8 +367,9 @@
             if(scriptAdmin) {
                 scriptAdmin.text = `
                     const urlActual = window.location.href;
-                    new QRCode(document.getElementById("qrcode"), { text: urlActual, width: 80, height: 80 });
-                    new QRCode(document.getElementById("qr-large"), { text: urlActual, width: 260, height: 260 });
+                    const qrUrlBase = \`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=\${encodeURIComponent(urlActual)}\`;
+                    document.getElementById("qrcode").src = qrUrlBase;
+                    document.getElementById("qrcode-large").src = qrUrlBase;
 
                     function abrirQR() { document.getElementById('qr-overlay').style.display = 'flex'; }
                     function cerrarQR() { document.getElementById('qr-overlay').style.display = 'none'; }
