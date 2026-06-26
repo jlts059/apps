@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Interactive Pro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #f39c12;
+            --success: #2ecc71;
+            --error: #e74c3c;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+        }
+
+        * { box-sizing: border-box; }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--bg); 
+            color: var(--text);
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            margin: 0;
+            min-height: 100vh;
+            padding: 20px 15px;
+        }
+
+        .container { 
+            background: var(--card-bg); 
+            padding: 30px 20px; 
+            border-radius: 20px; 
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); 
+            width: 100%; 
+            max-width: 850px; 
+            position: relative;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .title-badge { 
+            background: var(--accent); 
+            color: white; 
+            padding: 10px 20px; 
+            border-radius: 10px; 
+            font-weight: 700; 
+            font-size: 1rem; 
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(243, 156, 18, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 20px;
+            display: inline-block;
+        }
+
+        .qr-header-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+        
+        .qr-box {
+            background: white;
+            padding: 10px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            display: inline-block;
+        }
+        
+        .qr-box img {
+            width: 110px;
+            height: 110px;
+            display: block;
+        }
+
+        .input-group { text-align: left; margin-bottom: 25px; }
+        label { font-weight: 600; display: block; margin-bottom: 10px; color: var(--primary); font-size: 0.95rem; }
+        
+        input[type="text"], textarea { 
+            width: 100%; 
+            padding: 14px; 
+            border: 2px solid #e2e8f0; 
+            border-radius: 12px; 
+            font-size: 1rem; 
+            transition: border-color 0.2s;
+            font-family: inherit;
+        }
+
+        textarea { height: 180px; font-family: 'Courier New', Courier, monospace; font-size: 0.9rem; }
+        
+        .controls { margin-top: 20px; display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; width: 100%; }
+        
+        .btn { 
+            padding: 14px 28px; 
+            border: none; 
+            border-radius: 50px; 
+            font-weight: 700; 
+            cursor: pointer; 
+            font-size: 0.95rem; 
+            transition: transform 0.2s, box-shadow 0.2s; 
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        .btn-generate { background-color: var(--success); color: white; }
+        .btn-download { background-color: #3498db; color: white; }
+        .btn-stop { background-color: #8e44ad; color: white; } 
+
+        .live-score-panel {
+            background: #edf2f7;
+            border: 2px solid #cbd5e0;
+            border-radius: 15px;
+            padding: 18px 15px;
+            margin-top: 20px;
+            width: 100%;
+            text-align: center;
+        }
+        
+        .live-score-flex {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            font-size: 1.4rem;
+            font-weight: 700;
+        }
+
+        .score-box {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 25px;
+            width: 100%;
+        }
+        
+        .btn-score {
+            flex: 1;
+            max-width: 180px;
+            padding: 12px 15px;
+            font-size: 1rem;
+            border-radius: 12px;
+            border: none;
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-align: center;
+        }
+        
+        .btn-score:hover { transform: scale(1.05); box-shadow: 0 6px 12px rgba(0,0,0,0.1); }
+        .btn-score-a { background-color: #2980b9; }
+        .btn-score-b { background-color: #e67e22; }
+        .btn-score-both { background-color: #9b59b6; }
+
+        #quiz-area { 
+            display: none; 
+            width: 100%; 
+            max-width: 850px; 
+            position: relative; 
+            margin-top: 20px; 
+        }
+
+        .question-card { 
+            background: white; 
+            padding: 25px; 
+            border-radius: 20px; 
+            position: relative; 
+            min-height: 300px; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+            width: 100%;
+        }
+
+        .question-text { 
+            font-size: 1.8rem; 
+            font-weight: 700; 
+            margin-bottom: 25px; 
+            color: var(--primary); 
+            text-align: center; 
+            word-break: break-word;
+        }
+
+        .options-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
+            gap: 15px; 
+            width: 100%;
+        }
+        
+        .option { 
+            padding: 20px; 
+            border-radius: 15px; 
+            color: white; 
+            font-weight: 700; 
+            font-size: 1.1rem; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            opacity: 0.95;
+            word-break: break-word;
+        }
+
+        .color-A { background-color: var(--success); } 
+        .color-B { background-color: var(--error); } 
+        .color-C { background-color: #3498db; } 
+        .color-D { background-color: #f1c40f; color: #333 !important; } 
+        
+        .is-correct { 
+            opacity: 1 !important; 
+            transform: scale(1.02); 
+            box-shadow: 0 0 0 6px rgba(46, 204, 113, 0.4), 0 15px 20px -5px rgba(0, 0, 0, 0.15); 
+            z-index: 5; 
+        }
+
+        .icon { font-size: 1.5rem; visibility: hidden; } 
+        .show-icon { visibility: visible; }
+
+        #timer-bar-container { width: 100%; background: #e2e8f0; height: 10px; border-radius: 6px; margin-bottom: 25px; overflow: hidden; }
+        #timer-bar { height: 100%; background: var(--success); width: 100%; transition: width 5s linear; } 
+
+        #mystery-overlay { 
+            position: absolute; top: 0; left: 0; font-size: 6rem; color: #000; 
+            background: rgba(255,255,255,0.7); backdrop-filter: blur(8px); 
+            width: 100%; height: 100%; display: none; align-items: center; 
+            justify-content: center; border-radius: 20px; z-index: 10; font-weight: 800;
+        }
+        
+        .opaque-answers .option { opacity: 0.45; }
+        .hidden { display: none !important; }
+
+        @media (max-width: 600px) {
+            .question-text { font-size: 1.4rem; margin-bottom: 20px; }
+            .option { padding: 15px; font-size: 1rem; }
+            .btn { padding: 12px 20px; font-size: 0.85rem; }
+            .btn-score { font-size: 0.85rem; padding: 10px; }
+            #mystery-overlay { font-size: 4rem; }
+            .options-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container" id="setup">
+        <div id="live-title-badge" class="title-badge">NUEVO QUIZ</div>
+        <div class="input-group">
+            <label for="quiz-title-input">TÍTULO DEL QUIZ</label>
+            <input type="text" id="quiz-title-input" placeholder="Ej: Las Partes del Cuerpo" oninput="updateLiveTitle()">
+        </div>
+        <div class="input-group">
+            <label>DATOS (Pegar desde Excel)</label>
+            <textarea id="data-input" placeholder="Pregunta	Op1	Op2	Op3	Op4	Correcta"></textarea>
+        </div>
+        <div class="controls">
+            <button class="btn btn-generate" onclick="startQuiz(false)">Generar e Iniciar</button>
+            <button class="btn btn-generate" style="background-color: #8e44ad;" onclick="startQuiz(true)">Generar e Iniciar (Shuffle)</button>
+            <button class="btn btn-download" onclick="downloadHTML()">Descargar HTML</button>
+        </div>
+    </div>
+
+    <div id="global-qr-area" class="qr-header-container" style="display: none;">
+        <div class="qr-box">
+            <img id="quizQrImg" src="" alt="QR Code">
+        </div>
+    </div>
+
+    <div id="start-container" style="display:none; text-align: center; margin-top: 5vh; width: 100%; max-width: 600px;">
+        <h1 id="final-title-display" style="font-size: 2.5rem; color: var(--primary); margin-bottom: 30px; word-wrap: break-word; text-transform: uppercase;">QUIZ INTERACTIVO</h1>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 15px; width: 100%;">
+            <button class="btn btn-generate" style="font-size: 2rem; padding: 20px 50px; border-radius: 50px; width: 80%;" onclick="realStart(false)">START</button>
+            <button class="btn btn-generate" style="font-size: 1.5rem; padding: 15px 35px; border-radius: 50px; background-color: #8e44ad; width: 80%;" onclick="realStart(true)">SHUFFLE</button>
+        </div>
+    </div>
+
+    <div id="quiz-area">
+        <div id="timer-bar-container"><div id="timer-bar"></div></div>
+        <div id="card-target"></div>
+        <div class="controls">
+            <button id="main-action-btn" class="btn btn-stop" onclick="togglePause()">STOP & SCORE</button>
+        </div>
+    </div>
+
+    <script>
+        let questions = [];
+        let currentIdx = 0;
+        let isPaused = false;
+        let t1;
+        let countdownTimers = [];
+        
+        let scoreA = 0;
+        let scoreB = 0;
+
+        window.onload = () => {
+            const dataBox = document.getElementById('data-input');
+            const setupView = document.getElementById('setup');
+            const startView = document.getElementById('start-container');
+            const titleInput = document.getElementById('quiz-title-input');
+
+            if (dataBox.value && dataBox.value.trim() !== "") {
+                setupView.classList.add('hidden');
+                startView.style.display = 'block';
+                if(titleInput && titleInput.value) {
+                    document.getElementById('final-title-display').innerText = titleInput.value.toUpperCase();
+                }
+                questions = parseData(dataBox.value);
+                
+                document.getElementById('global-qr-area').style.display = 'flex';
+                generateQuizQR();
+            }
+        };
+
+        function generateQuizQR() {
+            let currentUrl = window.location.href;
+            if(currentUrl.startsWith("file://")) {
+                currentUrl = "https://github.com"; 
+            }
+            document.getElementById('quizQrImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(currentUrl)}`;
+        }
+
+        function updateLiveTitle() {
+            const val = document.getElementById('quiz-title-input').value;
+            const badge = document.getElementById('live-title-badge');
+            if(badge) badge.innerText = val.toUpperCase() || "NUEVO QUIZ";
+        }
+
+        function parseData(text) {
+            const lines = text.trim().split('\n');
+            const result = [];
+            let start = (lines[0].toLowerCase().includes('pregunta')) ? 1 : 0;
+            for(let i = start; i < lines.length; i++) {
+                const c = lines[i].split('\t');
+                if(c.length >= 6) {
+                    result.push({ 
+                        q: c[0], 
+                        options: [c[1].trim(), c[2].trim(), c[3].trim(), c[4].trim()],
+                        correctText: c[5].trim() 
+                    });
+                }
+            }
+            return result;
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function startQuiz(shouldShuffle) {
+            const raw = document.getElementById('data-input').value;
+            questions = parseData(raw);
+            if(questions.length === 0) return alert("Introduce datos válidos.");
+            if(shouldShuffle) {
+                questions = shuffleArray(questions);
+            }
+            document.getElementById('setup').classList.add('hidden');
+            document.getElementById('global-qr-area').style.display = 'flex';
+            document.getElementById('quiz-area').style.display = 'block';
+            
+            scoreA = 0; scoreB = 0;
+            generateQuizQR();
+            render();
+        }
+
+        function realStart(shouldShuffle) {
+            if(shouldShuffle) {
+                questions = shuffleArray(questions);
+            }
+            document.getElementById('start-container').style.setProperty('display', 'none', 'important');
+            document.getElementById('quiz-area').style.display = 'block';
+            
+            scoreA = 0; scoreB = 0;
+            render();
+        }
+
+        function render() {
+            if(currentIdx >= questions.length) {
+                let badgeA = scoreA > scoreB ? "🏆" : "";
+                let badgeB = scoreB > scoreA ? "🏆" : "";
+                let endStatusText = (scoreA === scoreB) ? "<h3 style='font-size:1.8rem; margin-bottom:30px; color:#9b59b6;'>¡EMPATE! 🤝</h3>" : "";
+
+                document.getElementById('global-qr-area').style.display = 'none';
+                document.getElementById('quiz-area').innerHTML = `
+                    <div class='question-card' style='text-align:center;'>
+                        <h2 style='font-size:2.2rem; margin-bottom:10px;'>¡FIN DEL JUEGO!</h2>
+                        <hr style='border:1px solid #e2e8f0; width:100%; margin-bottom:25px;'>
+                        <div style='display:flex; justify-content:space-around; margin-bottom:30px; font-size:1.6rem; font-weight:bold; flex-wrap:wrap; gap:20px;'>
+                            <div style='color:#2980b9;'>A: ${scoreA} ${badgeA}</div>
+                            <div style='color:#e67e22;'>B: ${scoreB} ${badgeB}</div>
+                        </div>
+                        ${endStatusText}
+                        <button class='btn btn-generate' style='margin: 0 auto; display:block;' onclick='location.reload()'>REINICIAR</button>
+                    </div>`;
+                return;
+            }
+            const item = questions[currentIdx];
+            const titleText = document.getElementById('quiz-title-input').value || "QUIZ";
+            document.getElementById('card-target').innerHTML = 
+                '<div class="title-badge" style="display:block; margin: 0 auto 20px auto; max-width:max-content;">' + titleText + '</div>' +
+                '<div class="question-card"><div id="mystery-overlay">3</div><div class="question-text">' + item.q + '</div>' +
+                '<div class="options-grid" id="options-wrapper">' +
+                '<div class="option color-A" data-text="' + item.options[0] + '">A. ' + item.options[0] + ' <span class="icon">✔</span></div>' +
+                '<div class="option color-B" data-text="' + item.options[1] + '">B. ' + item.options[1] + ' <span class="icon">✔</span></div>' +
+                '<div class="option color-C" data-text="' + item.options[2] + '">C. ' + item.options[2] + ' <span class="icon">✔</span></div>' +
+                '<div class="option color-D" data-text="' + item.options[3] + '">D. ' + item.options[3] + ' <span class="icon">✔</span></div>' + 
+                '</div>' +
+                '<div id="score-buttons-area"></div>' +
+                '</div>';
+            if(!isPaused) startFlow();
+        }
+
+        function startFlow() {
+            const mainBtn = document.getElementById('main-action-btn');
+            mainBtn.style.display = 'inline-block';
+            mainBtn.innerText = "STOP & SCORE";
+            mainBtn.className = "btn btn-stop";
+            
+            const bar = document.getElementById('timer-bar');
+            bar.style.transition = 'none'; bar.style.width = '100%';
+            setTimeout(() => { bar.style.transition = 'width 5s linear'; bar.style.width = '0%'; }, 50);
+            
+            t1 = setTimeout(() => {
+                const overlay = document.getElementById('mystery-overlay');
+                document.getElementById('options-wrapper').classList.add('opaque-answers'); 
+                
+                overlay.innerText = "3";
+                overlay.style.display = 'flex';
+                
+                countdownTimers.push(setTimeout(() => { overlay.innerText = "2"; }, 750));
+                countdownTimers.push(setTimeout(() => { overlay.innerText = "1"; }, 1500));
+                countdownTimers.push(setTimeout(() => { overlay.innerText = "?"; }, 2250));
+                countdownTimers.push(setTimeout(() => { overlay.innerText = " "; }, 3000));
+                // Ahora se esperan 1000ms (1 segundo entero) desde que aparece la "?" hasta la revelación final
+                countdownTimers.push(setTimeout(revealAnswer, 4000)); 
+            }, 5000); 
+        }
+
+        function revealAnswer() {
+            const overlay = document.getElementById('mystery-overlay');
+            if(overlay) overlay.style.display = 'none';
+            
+            const wrapper = document.getElementById('options-wrapper');
+            if(wrapper) wrapper.classList.remove('opaque-answers');
+
+            const correctText = questions[currentIdx].correctText;
+            
+            document.querySelectorAll('.option').forEach(opt => {
+                if (opt.getAttribute('data-text') === correctText) {
+                    opt.classList.add('is-correct');
+                    opt.querySelector('.icon').classList.add('show-icon');
+                    opt.style.setProperty('visibility', 'visible', 'important');
+                } else {
+                    opt.style.setProperty('visibility', isPaused ? 'visible' : 'hidden', 'important');
+                }
+            });
+
+            if (isPaused) return;
+
+            document.getElementById('main-action-btn').style.display = 'none';
+            document.getElementById('score-buttons-area').innerHTML = `
+                <div class="score-box">
+                    <button class="btn-score btn-score-a" onclick="addScore('A')">⭐ A</button>
+                    <button class="btn-score btn-score-both" onclick="addScore('AB')">⭐ A&B</button>
+                    <button class="btn-score btn-score-b" onclick="addScore('B')">⭐ B</button>
+                </div>`;
+        }
+
+        function addScore(team) {
+            if (team === 'A') scoreA++;
+            else if (team === 'B') scoreB++;
+            else if (team === 'AB') { scoreA++; scoreB++; }
+            currentIdx++;
+            render();
+        }
+
+        function clearAllTimers() {
+            clearTimeout(t1);
+            countdownTimers.forEach(t => clearTimeout(t));
+            countdownTimers = [];
+        }
+
+        function togglePause() {
+            const btn = document.getElementById('main-action-btn');
+            if (!isPaused) {
+                isPaused = true; 
+                btn.innerText = "SEGUIR"; 
+                btn.className = "btn btn-generate";
+                
+                clearAllTimers(); 
+                revealAnswer(); 
+                
+                document.querySelectorAll('.option').forEach(opt => opt.style.setProperty('visibility', 'visible', 'important'));
+                document.getElementById('timer-bar').style.transition = 'none';
+                document.getElementById('timer-bar').style.width = '0%';
+
+                let liveBadgeA = scoreA > scoreB ? "🏆" : "";
+                let liveBadgeB = scoreB > scoreA ? "🏆" : "";
+                document.getElementById('score-buttons-area').innerHTML = `
+                    <div class="live-score-panel">
+                        <div class="live-score-flex">
+                            <div style="color:#2980b9; font-weight:700;">A: ${scoreA} ${liveBadgeA}</div>
+                            <div style="color:#e67e22; font-weight:700;">B: ${scoreB} ${liveBadgeB}</div>
+                        </div>
+                    </div>`;
+            } else {
+                isPaused = false; 
+                revealAnswer();
+            }
+        }
+
+        function downloadHTML() {
+            const title = document.getElementById('quiz-title-input').value || "QUIZ";
+            const data = document.getElementById('data-input').value;
+            if(!data.trim()) return alert("¡Por favor, añade preguntas antes de guardar!");
+
+            let currentHtml = document.documentElement.outerHTML;
+            
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(currentHtml, 'text/html');
+
+            doc.querySelector('#quiz-title-input').setAttribute('value', title);
+            doc.querySelector('#data-input').textContent = data;
+            
+            doc.querySelector('#setup').classList.add('hidden');
+            doc.querySelector('#start-container').style.display = 'block';
+
+            const blob = new Blob([doc.documentElement.outerHTML], { type: 'text/html' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            
+            const cleanTitle = title.replace(/\s+/g, '_').toLowerCase();
+            a.download = 'quiz_' + cleanTitle + '.html';
+            a.click();
+        }
+    </script>
+</body>
+</html>

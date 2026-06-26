@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Grupos</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --border: #e2e8f0;
+            --sitio-libre: #0284c7;
+            --repetido-color: #ef4444;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 900px;
+            width: 100%;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            margin-top: 20px;
+            box-sizing: border-box;
+        }
+
+        .section { margin-bottom: 25px; }
+        
+        .label-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+
+        label.main-label { 
+            font-weight: bold; 
+            display: block; 
+        }
+        
+        .counter-badge {
+            color: var(--sitio-libre);
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        .combos-preview-text {
+            color: #64748b;
+            font-size: 1rem;
+            font-weight: normal;
+            margin-left: 4px;
+        }
+        
+        textarea {
+            width: 100%;
+            height: 38px;
+            padding: 8px 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            resize: vertical;
+            box-sizing: border-box;
+            font-family: inherit;
+            line-height: 20px;
+        }
+
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .option-card-row {
+            border: 1px solid var(--border);
+            padding: 12px 20px;
+            border-radius: 8px;
+            background: #f1f5f9;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+        }
+
+        .option-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-grow: 1;
+            flex-wrap: wrap;
+        }
+
+        .option-card-row h3 { 
+            margin: 0; 
+            color: #334155; 
+            font-size: 1.05rem; 
+            min-width: 140px;
+        }
+
+        .input-inline-label {
+            margin: 0;
+            font-weight: normal;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.95rem;
+            white-space: nowrap;
+        }
+
+        input[type="number"] {
+            width: 60px;
+            padding: 5px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+
+        button:hover { background: var(--primary-hover); }
+        button.secondary { background: #64748b; margin-top: 15px; width: 100%; }
+        button.secondary:hover { background: #475569; }
+        
+        .nav-buttons-container {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .nav-buttons-container button {
+            flex: 1;
+            margin-top: 0;
+        }
+        button.btn-back-step { background: #94a3b8; }
+        button.btn-back-step:hover { background: #64748b; }
+
+        .top-nav-bar {
+            display: none;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f1f5f9;
+        }
+
+        #btn-back {
+            background: #0ea5e9;
+            padding: 8px 14px;
+            font-size: 0.9rem;
+        }
+        #btn-back:hover { background: #0284c7; }
+
+        .top-nav-info {
+            font-size: 1.05rem;
+            font-weight: bold;
+            color: var(--text);
+        }
+
+        .free-slot {
+            color: var(--sitio-libre);
+            font-style: italic;
+            font-weight: bold;
+        }
+
+        .repeated-player {
+            color: var(--repetido-color);
+            font-weight: bold;
+        }
+
+        .error-message {
+            color: var(--repetido-color);
+            font-weight: bold;
+            font-size: 1.2rem;
+            text-align: center;
+            padding: 30px;
+            border: 1px dashed var(--repetido-color);
+            background: #fef2f2;
+            border-radius: 8px;
+        }
+
+        .output-container {
+            margin-top: 15px;
+            padding: 0px;
+            cursor: zoom-in;
+            transition: all 0.3s ease;
+        }
+
+        .output-container.active {
+            border: 2px dashed var(--border);
+            border-radius: 8px;
+            padding: 25px;
+            background: #fff;
+        }
+
+        .output-container.fullscreen {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 9999;
+            margin: 0;
+            border: none;
+            border-radius: 0;
+            overflow-y: auto;
+            cursor: zoom-out;
+            background: #ffffff;
+            padding: 40px;
+        }
+
+        .output-container.fullscreen .top-nav-bar {
+            display: flex !important;
+        }
+
+        .grid-output {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .group-box {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .group-box h4 {
+            margin: 0 0 10px 0;
+            color: var(--primary);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 5px;
+        }
+
+        .group-box ul { list-style: none; padding: 0; margin: 0; }
+        .group-box li { padding: 4px 0; border-bottom: 1px dashed #f1f5f9; font-size: 0.95rem; }
+        
+        .sub-pair-title {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            color: #64748b;
+            margin: 8px 0 2px 0;
+            font-weight: bold;
+        }
+
+        .lineup-container { text-align: center; }
+        .lineup-1 { font-size: 3rem; font-weight: bold; color: var(--primary); margin-bottom: 20px; cursor: pointer; }
+        .lineup-2-3 { font-size: 1.9rem; color: #475569; margin-bottom: 30px; display: flex; justify-content: center; gap: 50px; }
+        .lineup-rest { font-size: 1.3rem; color: #64748b; display: flex; flex-direction: column; gap: 8px; }
+        .lineup-shifted { color: #cbd5e1; text-decoration: line-through; font-size: 1.1rem; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    
+    <div id="input-section" class="section">
+        <div class="label-container">
+            <label class="main-label" for="inputData">Lista de nombres o nº</label>
+            <span id="student-counter" class="counter-badge"></span>
+            <span id="combos-preview" class="combos-preview-text"></span>
+        </div>
+        <textarea id="inputData" oninput="actualizarAnalisisInterfaz()"></textarea>
+    </div>
+
+    <div id="top-navigation" class="top-nav-bar">
+        <button id="btn-back" onclick="restaurarOpciones()">← Volver a cambiar lista u opciones</button>
+        <div id="top-info-text" class="top-nav-info"></div>
+    </div>
+
+    <div id="options-panel" class="options-list">
+        
+        <div class="option-card-row">
+            <div class="option-left">
+                <h3>Grupos</h3>
+                <label class="input-inline-label">Tamaño: <input type="number" id="opt1-val" value="3" min="2" max="10" oninput="actualizarAnalisisInterfaz()"></label>
+            </div>
+            <button onclick="ejecutarOpcion(1, generarOpcion1)">Generar / Re-mezclar</button>
+        </div>
+
+        <div class="option-card-row">
+            <div class="option-left">
+                <h3>Dividir en X Grupos</h3>
+                <label class="input-inline-label">Grupos: <input type="number" id="opt2-val" value="4" min="1"></label>
+            </div>
+            <button onclick="ejecutarOpcion(2, generarOpcion2)">Dividir</button>
+        </div>
+
+        <div class="option-card-row">
+            <div class="option-left">
+                <h3>Line-up</h3>
+            </div>
+            <button onclick="ejecutarOpcion(3, generarOpcion3)">Crear Lista</button>
+        </div>
+
+        <div class="option-card-row">
+            <div class="option-left">
+                <h3>Grupos Rotativos</h3>
+                <label class="input-inline-label">Tamaño: <input type="number" id="opt4-val" value="3" min="2" max="10"></label>
+            </div>
+            <button onclick="ejecutarOpcion(4, generarOpcion4)">Iniciar Rotación</button>
+        </div>
+
+        <div class="option-card-row">
+            <div class="option-left">
+                <h3>Parejas cruzadas (Grupos de 4)</h3>
+            </div>
+            <button onclick="ejecutarOpcion(5, generarOpcion5)">Emparejar Doble</button>
+        </div>
+    </div>
+
+    <div id="output" class="output-container" onclick="toggleFullscreen(event)"></div>
+</div>
+
+<script>
+    let historialParejas = new Set(); 
+    let datosRotacionRondas = []; 
+    let cachePoolAlumnosRotacion = []; 
+    let listaLineUpActual = [];
+    let alumnosPasadosLineUp = [];
+
+    function obtenerAlumnos() {
+        const rawInput = document.getElementById('inputData').value.trim();
+        if (!rawInput) return [];
+        if (!isNaN(rawInput)) {
+            const num = parseInt(rawInput);
+            let lista = [];
+            for(let i = 1; i <= num; i++) lista.push(`Alumno ${i}`);
+            return lista;
+        }
+        return rawInput.split('\n').map(n => n.trim()).filter(n => n.length > 0);
+    }
+
+    function actualizarAnalisisInterfaz() {
+        const total = obtenerAlumnos().length;
+        const counterBadge = document.getElementById('student-counter');
+        const combosPreview = document.getElementById('combos-preview');
+        
+        if (total === 0) {
+            counterBadge.innerHTML = '';
+            combosPreview.innerText = '';
+            return;
+        }
+        
+        counterBadge.innerHTML = `(${total} alumnos) `;
+
+        let combinacionesUnicas = new Set();
+        for (let t = 3; t <= 6; t++) {
+            let nG = Math.ceil(total / t);
+            let tB = Math.floor(total / nG);
+            let aS = total % nG;
+            if (aS > 0 && (nG - aS) > 0) combinacionesUnicas.add(`${aS}x${tB + 1}+${nG - aS}x${tB}`);
+            else if (aS > 0) combinacionesUnicas.add(`${aS}x${tB + 1}`);
+            else combinacionesUnicas.add(`${nG}x${tB}`);
+        }
+        combosPreview.innerText = Array.from(combinacionesUnicas).join(', ');
+    }
+
+    function obtenerTextoResumenGrupos(totalAlumnos, tamanoMax) {
+        if (totalAlumnos === 0) return "";
+        let numGrupos = Math.ceil(totalAlumnos / tamanoMax);
+        let tamanoBase = Math.floor(totalAlumnos / numGrupos);
+        let alumnosSobrantes = totalAlumnos % numGrupos;
+
+        let nGruposGrandes = alumnosSobrantes;
+        let nGruposBase = numGrupos - alumnosSobrantes;
+
+        let fragmentoTexto = "";
+        if (nGruposGrandes > 0 && nGruposBase > 0) {
+            fragmentoTexto = `${nGruposGrandes} de ${tamanoBase + 1} y ${nGruposBase} de ${tamanoBase}`;
+        } else if (nGruposGrandes > 0) {
+            fragmentoTexto = `${nGruposGrandes} de ${tamanoBase + 1}`;
+        } else {
+            fragmentoTexto = `${nGruposBase} de ${tamanoBase}`;
+        }
+        return `Lista de nombres o nº (${totalAlumnos} alumnos) - ${numGrupos} ${numGrupos === 1 ? 'grupo' : 'grupos'}: ${fragmentoTexto}`;
+    }
+
+    function mezclar(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    function inyectarCabeceraUnificada(textoInfo) {
+        document.getElementById('top-info-text').innerHTML = textoInfo;
+    }
+
+    function ejecutarOpcion(idOpcion, funcionGeneradora) {
+        let alumnos = obtenerAlumnos();
+        if (alumnos.length === 0) {
+            alert("Por favor, introduce nombres o un número.");
+            return;
+        }
+
+        document.getElementById('input-section').style.display = 'none';
+        document.getElementById('options-panel').style.display = 'none';
+        document.getElementById('top-navigation').style.display = 'flex';
+        document.getElementById('output').classList.add('active');
+        
+        funcionGeneradora(alumnos);
+    }
+
+    function restaurarOpciones() {
+        document.getElementById('input-section').style.display = 'block';
+        document.getElementById('options-panel').style.display = 'flex';
+        document.getElementById('top-navigation').style.display = 'none';
+        
+        const out = document.getElementById('output');
+        out.classList.remove('fullscreen', 'active');
+        out.innerHTML = '';
+        actualizarAnalisisInterfaz();
+    }
+
+    // CORRECCIÓN PARA MÓVILES: Ignora el zoom si se pulsa un botón o elemento de navegación
+    function toggleFullscreen(e) {
+        if (e.target.tagName === 'BUTTON' || 
+            e.target.closest('button') || 
+            e.target.closest('.nav-buttons-container') || 
+            e.target.classList.contains('lineup-1')) {
+            return;
+        }
+        const out = document.getElementById('output');
+        if (!out.classList.contains('active')) return;
+        out.classList.toggle('fullscreen');
+    }
+
+    function formatearNombreConEstilo(nombre, esRepetido = false) {
+        if (nombre === "[Sitio Libre]") {
+            return `<span class="free-slot">[Sitio Libre]</span>`;
+        }
+        if (esRepetido) {
+            return `<span class="repeated-player">${nombre}</span>`;
+        }
+        return nombre;
+    }
+
+    // ==========================================
+    // OPCIÓN 1: GRUPOS EQUILIBRADOS 
+    // ==========================================
+    function generarOpcion1(alumnos) {
+        const tamanoMax = parseInt(document.getElementById('opt1-val').value) || 3;
+        let mejoresGrupos = [];
+        let menosRepeticiones = Infinity;
+        
+        const numGrupos = Math.ceil(alumnos.length / tamanoMax);
+        const tamanoBase = Math.floor(alumnos.length / numGrupos);
+        let alumnosSobrantes = alumnos.length % numGrupos;
+
+        for (let intento = 0; intento < 50; intento++) {
+            let copiaAlumnos = mezclar([...alumnos]);
+            let gruposTemporales = [];
+            for (let g = 0; g < numGrupos; g++) {
+                let miembrosAAsignar = tamanoBase + (g < alumnosSobrantes ? 1 : 0);
+                gruposTemporales.push(copiaAlumnos.splice(0, miembrosAAsignar));
+            }
+
+            let repeticionesIntento = 0;
+            gruposTemporales.forEach(grupo => {
+                for(let i=0; i<grupo.length; i++) {
+                    for(let j=i+1; j<grupo.length; j++) {
+                        if (historialParejas.has([grupo[i], group[j]].sort().join('|'))) repeticionesIntento++;
+                    }
+                }
+            });
+
+            if (repeticionesIntento < menosRepeticiones) {
+                menosRepeticiones = repeticionesIntento;
+                mejoresGrupos = gruposTemporales;
+                if (menosRepeticiones === 0) break; 
+            }
+        }
+
+        mejoresGrupos.forEach(grupo => {
+            for(let i=0; i<grupo.length; i++) {
+                for(let j=i+1; j<grupo.length; j++) {
+                    historialParejas.add([grupo[i], grupo[j]].sort().join('|'));
+                }
+            }
+        });
+
+        let resumen = obtenerTextoResumenGrupos(alumnos.length, tamanoMax);
+        inyectarCabeceraUnificada(resumen);
+
+        let html = `<h3>Grupos Aleatorios</h3><div class="grid-output">`;
+        mejoresGrupos.forEach((g, index) => {
+            html += `<div class="group-box"><h4>Grupo ${index+1}</h4><ul>`;
+            g.forEach(al => html += `<li>${al}</li>`);
+            html += `</ul></div>`;
+        });
+        html += `</div>`;
+        html += `<button class="secondary" onclick="generarOpcion1(obtenerAlumnos())">Volver a mezclar esta opción</button>`;
+        document.getElementById('output').innerHTML = html;
+    }
+
+    // ==========================================
+    // OPCIÓN 2: DIVIDIR EN X GRUPOS
+    // ==========================================
+    function generarOpcion2(alumnos) {
+        let alumnosMezclados = mezclar([...alumnos]);
+        const numGrupos = parseInt(document.getElementById('opt2-val').value) || 4;
+        let grupos = Array.from({ length: numGrupos }, () => []);
+
+        alumnosMezclados.forEach((alumno, index) => {
+            grupos[index % numGrupos].push(alumno);
+        });
+
+        let tamanoMaxEquivalente = Math.ceil(alumnos.length / numGrupos);
+        let resumen = obtenerTextoResumenGrupos(alumnos.length, tamanoMaxEquivalente);
+        inyectarCabeceraUnificada(resumen);
+
+        let html = `<div class="grid-output">`;
+        grupos.forEach((g, index) => {
+            html += `<div class="group-box"><h4>Grupo ${index+1}</h4><ul>`;
+            g.forEach(al => html += `<li>${al}</li>`);
+            html += `</ul></div>`;
+        });
+        html += `</div>`;
+        document.getElementById('output').innerHTML = html;
+    }
+
+    // ==========================================
+    // OPCIÓN 3: LINE-UP
+    // ==========================================
+    function generarOpcion3(alumnos) {
+        listaLineUpActual = mezclar([...alumnos]);
+        alumnosPasadosLineUp = [];
+        renderLineUp();
+    }
+
+    function desplazarLineUp() {
+        if (listaLineUpActual.length === 0) return;
+        let removido = listaLineUpActual.shift();
+        alumnosPasadosLineUp.push(removido);
+        renderLineUp();
+    }
+
+    function renderLineUp() {
+        let totalAlumnos = obtenerAlumnos().length;
+        inyectarCabeceraUnificada(`Lista de nombres o nº (${totalAlumnos} alumnos)`);
+
+        let html = `<div class="lineup-container"><h3>Orden Aleatorio (Line-up)</h3>`;
+        if (listaLineUpActual.length > 0) {
+            html += `<div class="lineup-1" onclick="desplazarLineUp()" title="Haga clic para mover al final">${listaLineUpActual[0]}</div>`;
+        } else {
+            html += `<div class="lineup-1" style="color:#cbd5e1; cursor:default;">Fin de la lista</div>`;
+        }
+        html += `<div class="lineup-2-3">`;
+        html += `<div>${listaLineUpActual[1] ? '2. ' + listaLineUpActual[1] : ''}</div>`;
+        html += `<div>${listaLineUpActual[2] ? '3. ' + listaLineUpActual[2] : ''}</div>`;
+        html += `</div>`;
+        html += `<div class="lineup-rest">`;
+        for (let i = 3; i < listaLineUpActual.length; i++) {
+            html += `<div>${i + 1}. ${listaLineUpActual[i]}</div>`;
+        }
+        alumnosPasadosLineUp.forEach(al => {
+            html += `<div class="lineup-shifted">${al}</div>`;
+        });
+        html += `</div></div>`;
+        document.getElementById('output').innerHTML = html;
+    }
+
+    // ==========================================
+    // OPCIÓN 4: GRUPOS ROTATIVOS
+    // ==========================================
+    function generarOpcion4(alumnos) {
+        let copiaAlumnos = mezclar([...alumnos]);
+        const tamanoDeseado = parseInt(document.getElementById('opt4-val').value) || 3;
+        
+        const numGruposFijos = Math.ceil(copiaAlumnos.length / tamanoDeseado);
+        const totalSlots = numGruposFijos * tamanoDeseado;
+
+        while(copiaAlumnos.length < totalSlots) {
+            copiaAlumnos.push("[Sitio Libre]");
+        }
+
+        let letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        let cuadriculaBase = Array.from({ length: tamanoDeseado }, () => Array(numGruposFijos).fill(null));
+        
+        let pointer = 0;
+        for (let r = 0; r < tamanoDeseado; r++) {
+            for (let c = 0; c < numGruposFijos; c++) {
+                let numId = r + 1;
+                let letraId = letters[c];
+                cuadriculaBase[r][c] = {
+                    nombre: copiaAlumnos[pointer++],
+                    numId: numId,
+                    letraId: letraId,
+                    codigo: `${numId}${letraId}`
+                };
+            }
+        }
+
+        cachePoolAlumnosRotacion = cuadriculaBase.flat();
+        datosRotacionRondas = [];
+
+        // RONDA 1
+        let ronda1 = [];
+        for (let c = 0; c < numGruposFijos; c++) {
+            let miembros = [];
+            for (let r = 0; r < tamanoDeseado; r++) {
+                miembros.push(cuadriculaBase[r][c]);
+            }
+            ronda1.push({ titulo: `Grupo ${letters[c]}`, miembros: miembros });
+        }
+        datosRotacionRondas.push(ronda1);
+
+        // RONDA 2
+        let ronda2 = [];
+        for (let c = 0; c < numGruposFijos; c++) {
+            let miembros = [];
+            for (let r = 0; r < tamanoDeseado; r++) {
+                let shiftCol = (c + r) % numGruposFijos;
+                miembros.push(cuadriculaBase[r][shiftCol]);
+            }
+            ronda2.push({ titulo: `Grupo ${c + 1}`, miembros: miembros });
+        }
+        datosRotacionRondas.push(ronda2);
+
+        // RONDA 3
+        let ronda3 = [];
+        for (let c = 0; c < numGruposFijos; c++) {
+            let miembros = [];
+            for (let r = 0; r < tamanoDeseado; r++) {
+                let shiftCol = (c + (r * 2)) % numGruposFijos;
+                miembros.push(cuadriculaBase[r][shiftCol]);
+            }
+            ronda3.push({ titulo: `Grupo ${c + 1}`, miembros: miembros });
+        }
+        datosRotacionRondas.push(ronda3);
+
+        mostrarPantallaIds();
+    }
+
+    function mostrarPantallaIds() {
+        let totalAlumnos = obtenerAlumnos().length;
+        inyectarCabeceraUnificada(`Lista de nombres o nº (${totalAlumnos} alumnos)`);
+
+        let html = `<h3>IDs Asignados</h3><div class="grid-output">`;
+        cachePoolAlumnosRotacion.forEach(m => {
+            html += `<div class="group-box" style="padding:10px; text-align:center;">
+                        <strong>${m.codigo}</strong><br><span style="font-size:0.9rem;">${formatearNombreConEstilo(m.nombre)}</span>
+                     </div>`;
+        });
+        html += `</div>
+                 <div class="nav-buttons-container">
+                    <button class="secondary" onclick="mostrarRondaRotacion(0)">Ver Ronda 1</button>
+                 </div>`;
+        document.getElementById('output').innerHTML = html;
+    }
+
+    function revisarHistorialParejasRotacion(nombreA, nombreB, hastaRondaIndex) {
+        if (nombreA === "[Sitio Libre]" || nombreB === "[Sitio Libre]" || nombreA === nombreB) return false;
+        
+        for (let r = 0; r < hastaRondaIndex; r++) {
+            let rondaAnterior = datosRotacionRondas[r];
+            for (let sala of rondaAnterior) {
+                let nombresEnSala = sala.miembros.map(m => m.nombre);
+                if (nombresEnSala.includes(nombreA) && nombresEnSala.includes(nombreB)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    function mostrarRondaRotacion(indexRonda) {
+        const rondasTitulos = ["Ronda 1", "Ronda 2", "Ronda 3: Mix"];
+        let datosRonda = datosRotacionRondas[indexRonda];
+        
+        let alumnosReales = obtenerAlumnos().length;
+        let tamanoDeseado = parseInt(document.getElementById('opt4-val').value) || 3;
+        
+        let resumen = obtenerTextoResumenGrupos(alumnosReales, tamanoDeseado);
+        inyectarCabeceraUnificada(resumen);
+
+        let html = `<h3>${rondasTitulos[indexRonda]}</h3><div class="grid-output">`;
+        
+        datosRonda.forEach((sala) => {
+            html += `<div class="group-box"><h4>${sala.titulo}</h4><ul>`;
+            sala.miembros.forEach(m => {
+                let esRepetido = false;
+                if (indexRonda > 0) {
+                    for (let compañero of sala.miembros) {
+                        if (revisarHistorialParejasRotacion(m.nombre, compañero.nombre, indexRonda)) {
+                            esRepetido = true;
+                            break;
+                        }
+                    }
+                }
+                html += `<li><strong>${m.codigo}</strong> - ${formatearNombreConEstilo(m.nombre, esRepetido)}</li>`;
+            });
+            html += `</ul></div>`;
+        });
+        html += `</div>`;
+
+        html += `<div class="nav-buttons-container">`;
+        if (indexRonda === 0) {
+            html += `<button class="secondary btn-back-step" onclick="mostrarPantallaIds()">← Volver a IDs</button>`;
+            html += `<button class="secondary" onclick="mostrarRondaRotacion(1)">Ver Ronda 2</button>`;
+        } else if (indexRonda === 1) {
+            html += `<button class="secondary btn-back-step" onclick="mostrarRondaRotacion(0)">← Volver a Ronda 1</button>`;
+            html += `<button class="secondary" onclick="mostrarRondaRotacion(2)">Ver Ronda 3</button>`;
+        } else if (indexRonda === 2) {
+            html += `<button class="secondary btn-back-step" onclick="mostrarRondaRotacion(1)">← Volver a Ronda 2</button>`;
+            html += `<button class="secondary" onclick="restaurarOpciones()">Finalizar Rotación</button>`;
+        }
+        html += `</div>`;
+        document.getElementById('output').innerHTML = html;
+    }
+
+    // ==========================================
+    // OPCIÓN 5: PAREJAS CRUZADAS
+    // ==========================================
+    function generarOpcion5(alumnos) {
+        const total = alumnos.length;
+        
+        if (total % 4 !== 0) {
+            inyectarCabeceraUnificada(`Lista de nombres o nº (${total} alumnos)`);
+            document.getElementById('output').innerHTML = `<div class="error-message">Grouping not possible</div>`;
+            return;
+        }
+
+        let resumen = `(${total} alumnos) - ${total / 4} grupos de 4 (compuestos por parejas)`;
+        inyectarCabeceraUnificada(`Lista de nombres o nº ` + resumen);
+
+        let copiaAlumnos = mezclar([...alumnos]);
+        let html = `<h3>Parejas Cruzadas (Grupos de 4)</h3><div class="grid-output">`;
+
+        let indexGrupo = 1;
+        while (copiaAlumnos.length > 0) {
+            let p1_a = copiaAlumnos.shift();
+            let p1_b = copiaAlumnos.shift();
+            let p2_a = copiaAlumnos.shift();
+            let p2_b = copiaAlumnos.shift();
+
+            html += `<div class="group-box">
+                        <h4>Grupo ${indexGrupo}</h4>
+                        <div class="sub-pair-title">Pareja A</div>
+                        <ul>
+                            <li>${p1_a}</li>
+                            <li>${p1_b}</li>
+                        </ul>
+                        <div class="sub-pair-title">Pareja B</div>
+                        <ul>
+                            <li>${p2_a}</li>
+                            <li>${p2_b}</li>
+                        </ul>
+                     </div>`;
+            indexGrupo++;
+        }
+        html += `</div>`;
+        html += `<button class="secondary" onclick="generarOpcion5(obtenerAlumnos())">Volver a mezclar esta opción</button>`;
+        document.getElementById('output').innerHTML = html;
+    }
+</script>
+
+</body>
+</html>

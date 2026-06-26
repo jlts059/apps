@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drive QR Generator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; padding: 40px; }
+        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 500px; }
+        h2 { color: #1a73e8; margin-top: 0; text-align: center; }
+        label { display: block; margin-bottom: 8px; font-size: 0.9rem; color: #5f6368; font-weight: bold; }
+        textarea { width: 100%; height: 120px; padding: 12px; margin-bottom: 20px; border: 2px solid #e8eaed; border-radius: 8px; box-sizing: border-box; resize: vertical; font-family: monospace; }
+        textarea:focus { border-color: #1a73e8; outline: none; }
+        button { width: 100%; padding: 12px; background-color: #1a73e8; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 1rem; }
+        button:hover { background-color: #1765cc; }
+        #qr-display { display: flex; justify-content: center; margin-top: 30px; gap: 20px; flex-wrap: wrap; }
+        .qr-box { text-align: center; background: #fafafa; padding: 15px; border-radius: 8px; border: 1px solid #eee; transition: transform 0.2s; }
+        .qr-box p { margin: 0 0 10px 0; font-size: 0.75rem; font-weight: bold; color: #1a73e8; text-transform: uppercase; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Drive QR Generator</h2>
+    
+    <label>Paste Links (One per line)</label>
+    <textarea id="linksInput" placeholder="Link1&#10;Link2"></textarea>
+    
+    <button onclick="generate()">Generate QR Codes</button>
+
+    <div id="qr-display"></div>
+</div>
+
+<script>
+    function formatToPreview(url) {
+        if (!url) return '';
+        // Extract ID and force preview mode
+        const match = url.match(/\/d\/(.+?)(\/|$)/);
+        if (match && match[1]) {
+            return `https://drive.google.com/file/d/${match[1]}/preview`;
+        }
+        return url;
+    }
+
+    function generate() {
+        const display = document.getElementById("qr-display");
+        const rawInput = document.getElementById("linksInput").value;
+        
+        // Clear previous results
+        display.innerHTML = "";
+
+        // Split by new lines and remove empty lines
+        const lines = rawInput.split(/\r?\n/).map(line => line.trim()).filter(line => line.length > 0);
+
+        lines.forEach((line, index) => {
+            // Create the wrapper box
+            const box = document.createElement("div");
+            box.className = "qr-box";
+            
+            // Add a label (Doc 1, Doc 2, etc.)
+            const label = document.createElement("p");
+            label.innerText = `Document ${index + 1}`;
+            box.appendChild(label);
+
+            // Create the div that will hold the QR
+            const qrDiv = document.createElement("div");
+            qrDiv.id = `qr-${index}`;
+            box.appendChild(qrDiv);
+
+            display.appendChild(box);
+
+            // Generate the QR code inside the new div
+            new QRCode(qrDiv, {
+                text: formatToPreview(line),
+                width: 140,
+                height: 140,
+                colorDark : "#000000",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
+            });
+        });
+    }
+</script>
+
+</body>
+</html>

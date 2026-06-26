@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Interactive Pro - Generator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #f39c12;
+            --success: #2ecc71;
+            --error: #e74c3c;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--bg); 
+            color: var(--text);
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            margin: 0;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container { 
+            background: var(--card-bg); 
+            padding: 40px; 
+            border-radius: 20px; 
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); 
+            width: 100%; 
+            max-width: 850px; 
+            position: relative;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .title-badge { 
+            position: absolute; 
+            top: 0; 
+            right: 0; 
+            background: var(--accent); 
+            color: white; 
+            padding: 12px 30px; 
+            border-radius: 0 20px 0 20px; 
+            font-weight: 700; 
+            font-size: 1.1rem; 
+            min-width: 180px; 
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(243, 156, 18, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .input-group { text-align: left; margin-bottom: 25px; }
+        label { font-weight: 600; display: block; margin-bottom: 10px; color: var(--primary); font-size: 0.95rem; }
+        
+        input[type="text"], textarea { 
+            width: 100%; 
+            padding: 14px; 
+            border: 2px solid #e2e8f0; 
+            border-radius: 12px; 
+            font-size: 1rem; 
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+            font-family: inherit;
+        }
+
+        textarea { height: 180px; font-family: 'Courier New', Courier, monospace; font-size: 0.9rem; }
+        
+        .controls { margin-top: 30px; display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
+        
+        .btn { 
+            padding: 16px 35px; 
+            border: none; 
+            border-radius: 50px; 
+            font-weight: 700; 
+            cursor: pointer; 
+            font-size: 1rem; 
+            transition: transform 0.2s, box-shadow 0.2s; 
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        .btn-generate { background-color: var(--success); color: white; }
+        .btn-download { background-color: #3498db; color: white; }
+        .btn-stop { background-color: var(--primary); color: white; }
+
+        #quiz-area { 
+            display: none; 
+            width: 100%; 
+            max-width: 850px; 
+            position: relative; 
+            margin-top: 100px !important; 
+        }
+
+        .question-card { 
+            background: white; 
+            padding: 40px; 
+            border-radius: 20px; 
+            position: relative; 
+            min-height: 350px; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+        }
+
+        .question-text { 
+            font-size: 2.2rem; 
+            font-weight: 700; 
+            margin-bottom: 35px; 
+            color: var(--primary); 
+            text-align: center; 
+        }
+
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        
+        .option { 
+            padding: 30px; 
+            border-radius: 15px; 
+            color: white; 
+            font-weight: 700; 
+            font-size: 1.3rem; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            opacity: 0.95;
+            /* Se eliminó la transición de opacidad/visibilidad para evitar el parpadeo y lograr el cambio inmediato en el mismo segundo */
+        }
+
+        .color-A { background-color: var(--success); } 
+        .color-B { background-color: var(--error); } 
+        .color-C { background-color: #3498db; } 
+        .color-D { background-color: #f1c40f; color: #333 !important; } 
+        
+        .is-correct { 
+            opacity: 1 !important; 
+            transform: scale(1.03); 
+            box-shadow: 0 0 0 8px rgba(46, 204, 113, 0.4), 0 20px 25px -5px rgba(0, 0, 0, 0.2); 
+            z-index: 5; 
+        }
+
+        .icon { font-size: 1.8rem; visibility: hidden; } 
+        .show-icon { visibility: visible; }
+
+        #timer-bar-container { width: 100%; background: #e2e8f0; height: 12px; border-radius: 6px; margin-bottom: 30px; overflow: hidden; }
+        #timer-bar { height: 100%; background: var(--success); width: 100%; transition: width 7s linear; } 
+
+        #mystery-overlay { 
+            position: absolute; top: 0; left: 0; font-size: 10rem; color: #000; 
+            background: rgba(255,255,255,0.7); backdrop-filter: blur(8px); 
+            width: 100%; height: 100%; display: none; align-items: center; 
+            justify-content: center; border-radius: 20px; z-index: 10; font-weight: 800;
+        }
+        
+        .opaque-answers .option {
+            opacity: 0.45;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container" id="setup">
+        <div id="live-title-badge" class="title-badge">NUEVO QUIZ</div>
+        <div class="input-group" style="margin-top: 20px;">
+            <label for="quiz-title-input">TÍTULO DEL QUIZ</label>
+            <input type="text" id="quiz-title-input" placeholder="Ej: Las Partes del Cuerpo" oninput="updateLiveTitle()">
+        </div>
+        <div class="input-group">
+            <label>DATOS (Pegar desde Excel)</label>
+            <textarea id="data-input" placeholder="Pregunta	Op1	Op2	Op3	Op4	Correcta"></textarea>
+        </div>
+        <div class="controls">
+            <button class="btn btn-generate" onclick="startQuiz(false)">Generar e Iniciar</button>
+            <button class="btn btn-generate" style="background-color: #8e44ad;" onclick="startQuiz(true)">Generar e Iniciar (Shuffle)</button>
+            <button class="btn btn-download" onclick="downloadHTML()">Descargar HTML</button>
+        </div>
+    </div>
+
+    <div id="start-container" style="display:none; text-align: center; margin-top: 15vh;">
+        <h1 id="final-title-display" style="font-size: 4rem; color: var(--primary); margin-bottom: 50px;"></h1>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 20px;">
+            <button class="btn btn-generate" style="font-size: 3.5rem; padding: 40px 90px; border-radius: 100px;" onclick="realStart(false)">START</button>
+            <button class="btn btn-generate" style="font-size: 2.2rem; padding: 25px 60px; border-radius: 100px; background-color: #8e44ad;" onclick="realStart(true)">SHUFFLE</button>
+        </div>
+    </div>
+
+    <div id="quiz-area">
+        <div id="timer-bar-container"><div id="timer-bar"></div></div>
+        <div id="card-target"></div>
+        <div class="controls">
+            <button id="main-action-btn" class="btn btn-stop" onclick="togglePause()">STOP</button>
+        </div>
+    </div>
+
+    <script id="main-logic">
+        let questions = [];
+        let currentIdx = 0;
+        let isPaused = false;
+        let t1, t2, t3;
+
+        function updateLiveTitle() {
+            const val = document.getElementById('quiz-title-input').value;
+            document.getElementById('live-title-badge').innerText = val.toUpperCase() || "NUEVO QUIZ";
+        }
+
+        function parseData(text) {
+            const lines = text.trim().split('\n');
+            const result = [];
+            let start = (lines[0].toLowerCase().includes('pregunta')) ? 1 : 0;
+            for(let i = start; i < lines.length; i++) {
+                const c = lines[i].split('\t');
+                if(c.length >= 6) {
+                    result.push({ 
+                        q: c[0], 
+                        options: [c[1].trim(), c[2].trim(), c[3].trim(), c[4].trim()],
+                        correctText: c[5].trim() 
+                    });
+                }
+            }
+            return result;
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function startQuiz(shouldShuffle) {
+            const raw = document.getElementById('data-input').value;
+            questions = parseData(raw);
+            if(questions.length === 0) return alert("Introduce datos válidos.");
+            if(shouldShuffle) {
+                questions = shuffleArray(questions);
+            }
+            document.getElementById('setup').style.display = 'none';
+            document.getElementById('quiz-area').style.display = 'block';
+            render();
+        }
+
+        function realStart(shouldShuffle) {
+            if(shouldShuffle) {
+                questions = shuffleArray(questions);
+            }
+            document.getElementById('start-container').style.setProperty('display', 'none', 'important');
+            document.getElementById('quiz-area').style.display = 'block';
+            render();
+        }
+
+        function render() {
+            if(currentIdx >= questions.length) {
+                document.getElementById('quiz-area').innerHTML = "<h2 style='text-align:center; font-size:3rem;'>¡FIN!</h2><button class='btn btn-generate' onclick='location.reload()'>REINICIAR</button>";
+                return;
+            }
+            const item = questions[currentIdx];
+            const titleText = document.getElementById('quiz-title-input').value || "QUIZ";
+            document.getElementById('card-target').innerHTML = 
+                '<div class="title-badge" style="position: absolute; top: -65px; right: 0;">' + titleText + '</div>' +
+                '<div class="question-card"><div id="mystery-overlay">?</div><div class="question-text">' + item.q + '</div>' +
+                '<div class="options-grid" id="options-wrapper">' +
+                '<div class="option color-A" data-text="' + item.options[0] + '">A. ' + item.options[0] + ' <span class="icon">✔</span></div>' +
+                '<div class="option color-B" data-text="' + item.options[1] + '">B. ' + item.options[1] + ' <span class="icon">✔</span></div>' +
+                '<div class="option color-C" data-text="' + item.options[2] + '">C. ' + item.options[2] + ' <span class="icon">✔</span></div>' +
+                '<div class="option color-D" data-text="' + item.options[3] + '">D. ' + item.options[3] + ' <span class="icon">✔</span></div>' + 
+                '</div></div>';
+            if(!isPaused) startFlow();
+        }
+
+        function startFlow() {
+            const bar = document.getElementById('timer-bar');
+            bar.style.transition = 'none'; bar.style.width = '100%';
+            setTimeout(() => { bar.style.transition = 'width 7s linear'; bar.style.width = '0%'; }, 50);
+            
+            t1 = setTimeout(() => {
+                document.getElementById('mystery-overlay').style.display = 'flex';
+                document.getElementById('options-wrapper').classList.add('opaque-answers'); 
+                t2 = setTimeout(revealAnswer, 2000);
+            }, 7000); 
+        }
+
+        function revealAnswer() {
+            const overlay = document.getElementById('mystery-overlay');
+            if(overlay) overlay.style.display = 'none';
+            
+            const wrapper = document.getElementById('options-wrapper');
+            if(wrapper) wrapper.classList.remove('opaque-answers');
+
+            const correctText = questions[currentIdx].correctText;
+            
+            document.querySelectorAll('.option').forEach(opt => {
+                if (opt.getAttribute('data-text') === correctText) {
+                    opt.classList.add('is-correct');
+                    opt.querySelector('.icon').classList.add('show-icon');
+                    opt.style.setProperty('visibility', 'visible', 'important');
+                } else {
+                    // Si NO está pausado, desaparecen en el mismo instante exacto.
+                    // Si está pausado (por pulsar STOP), se mantienen visibles para revisión.
+                    if (!isPaused) {
+                        opt.style.setProperty('visibility', 'hidden', 'important');
+                    } else {
+                        opt.style.setProperty('visibility', 'visible', 'important');
+                    }
+                }
+            });
+            if(!isPaused) t3 = setTimeout(() => { currentIdx++; render(); }, 3000);
+        }
+
+        function togglePause() {
+            const btn = document.getElementById('main-action-btn');
+            if (!isPaused) {
+                isPaused = true; 
+                btn.innerText = "SEGUIR"; 
+                btn.className = "btn btn-generate";
+                
+                clearTimeout(t1); 
+                clearTimeout(t2); 
+                clearTimeout(t3);
+                
+                revealAnswer(); 
+                // Al pausar de manera manual, forzamos que las incorrectas vuelvan / sigan visibles
+                document.querySelectorAll('.option').forEach(opt => opt.style.setProperty('visibility', 'visible', 'important'));
+                document.getElementById('timer-bar').style.transition = 'none';
+                document.getElementById('timer-bar').style.width = '0%';
+            } else {
+                isPaused = false; 
+                btn.innerText = "STOP"; 
+                btn.className = "btn btn-stop";
+                currentIdx++; 
+                render();
+            }
+        }
+
+        function downloadHTML() {
+            const title = document.getElementById('quiz-title-input').value || "QUIZ";
+            const data = document.getElementById('data-input').value;
+            const head = document.head.innerHTML;
+            const script = document.getElementById('main-logic').innerHTML;
+            
+            const htmlContent = '<!DOCTYPE html><html><head><meta charset="UTF-8">' + head + '</head><body>' +
+                '<div style="display:none;"><input type="text" id="quiz-title-input" value="' + title + '"><textarea id="data-input">' + data + '</textarea></div>' +
+                '<div id="start-container" style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; background:#f4f7f6; position:fixed; top:0; left:0; width:100%; z-index:9999; gap:20px;">' +
+                '<h1 style="font-size: 4rem; color:#2c3e50; margin-bottom:30px; font-family:sans-serif; font-weight:800;">' + title.toUpperCase() + '</h1>' +
+                '<button class="btn btn-generate" style="font-size: 3.5rem; padding: 40px 90px; border-radius: 100px;" onclick="realStart(false)">START</button>' +
+                '<button class="btn btn-generate" style="font-size: 2.2rem; padding: 25px 60px; border-radius: 100px; background-color: #8e44ad;" onclick="realStart(true)">SHUFFLE</button></div>' +
+                '<div id="quiz-area" style="display:none; width: 100%; max-width: 850px; margin: 100px auto 40px auto; position: relative;">' +
+                '<div id="timer-bar-container"><div id="timer-bar"></div></div><div id="card-target"></div>' +
+                '<div class="controls"><button id="main-action-btn" class="btn btn-stop" onclick="togglePause()">STOP</button></div></div>' +
+                '<script>' + script + '\n window.onload = () => { questions = parseData(document.getElementById("data-input").value); }; <\/script></body></html>';
+            
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            
+            const cleanTitle = title.replace(/\s+/g, '');
+            a.download = 'quizgrupo' + cleanTitle + '.html';
+            a.click();
+        }
+    </script>
+</body>
+</html>

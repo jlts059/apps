@@ -1,0 +1,367 @@
+<html lang="en"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pro Flashcard Study Tool</title>
+
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: #f0f2f5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+    overflow-x: hidden;
+  }
+
+  /* SETUP VIEW */
+  #setup-container {
+    background: white;
+    padding: 2rem;
+    border-radius: 24px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+    max-width: 600px;
+    width: 90%;
+    text-align: center;
+  }
+
+  textarea {
+    width: 100%;
+    height: 200px;
+    margin: 1rem 0;
+    padding: 10px;
+    border: 2px solid #e0e6ed;
+    border-radius: 12px;
+    font-family: inherit;
+    box-sizing: border-box;
+  }
+
+  /* FLASHCARD VIEW */
+  #flashcard-view {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+  }
+
+  #classroom-qr-container {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 120px;
+    height: 120px;
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px;
+    box-sizing: border-box;
+  }
+
+  #classroom-qr-container img { max-width: 100%; height: auto; }
+
+  @media (max-width: 900px) {
+    #classroom-qr-container { display: none; }
+  }
+
+  #instruction {
+    margin-bottom: 0.5rem;
+    color: #546e7a;
+    font-weight: 500;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .progress { margin-bottom: 15px; font-size: 0.9rem; color: #90a4ae; font-weight: bold; }
+
+  #card {
+    background: white;
+    border-radius: 24px;
+    padding: 2.5rem 1.5rem;
+    max-width: 550px;
+    width: 90%;
+    min-height: 280px;
+    display: flex;
+    flex-direction: column; 
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 1.6rem;
+    line-height: 1.4;
+    cursor: pointer;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+    transition: transform 0.1s ease, background 0.3s ease;
+    border-bottom: 8px solid #2c3e50;
+    margin-bottom: 30px;
+    color: #2c3e50;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  #card:active { transform: scale(0.98); }
+
+  .controls { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; max-width: 600px; }
+
+  button {
+    padding: 0.7rem 1.1rem;
+    font-size: 0.85rem;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.2s;
+  }
+
+  .btn-next { background: #2c3e50; color: white; box-shadow: 0 4px 0 #1a252f; }
+  .btn-start { background: #27ae60; color: white; width: 100%; font-size: 1.1rem; }
+  .btn-discard { background: #e74c3c; color: white; box-shadow: 0 4px 0 #c0392b; }
+  .btn-secondary { background: #e0e6ed; color: #2c3e50; }
+  .btn-save { background: #3498db; color: white; }
+  .btn-review { background: #f39c12; color: white; display: none; }
+
+  button:active { transform: translateY(2px); box-shadow: none; }
+  button:disabled { background: #ccc; cursor: not-allowed; box-shadow: none; }
+
+  /* MODAL (LIST VIEW) */
+  #list-modal {
+    display: none;
+    position: fixed;
+    z-index: 100;
+    left: 0; top: 0; width: 100%; height: 100%;
+    background-color: rgba(0,0,0,0.5);
+  }
+  .modal-content {
+    background-color: white;
+    margin: 5% auto;
+    padding: 20px;
+    border-radius: 15px;
+    width: 80%;
+    max-width: 700px;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+  table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+  th, td { border: 1px solid #ddd; padding: 12px; text-align: left; font-size: 0.9rem; }
+  th { background-color: #f8f9fa; }
+</style>
+<style>
+  .imageye-selected {
+    outline: 2px solid black !important;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5) !important;
+  }
+</style></head>
+<body>
+
+  <div id="setup-container" style="display: none;">
+    <h2 style="color: #2c3e50; margin-top: 0;">Create Your Deck</h2>
+    <textarea id="csv-input" placeholder="Term [TAB] Definition"></textarea>
+    <button class="btn-start" onclick="loadCustomDeck()">Generate Flashcards ➔</button>
+    <p style="font-size: 0.8rem; color: #7f8c8d; margin-top: 10px;">Shortcut: [Z] Next | [X] Discard | [Space] Flip</p>
+  </div>
+
+  <div id="flashcard-view" style="display: flex;">
+    <div id="classroom-qr-container"><img src="https://quickchart.io/qr?text=https%3A%2F%2Fjlts059.github.io%2FTareas%2Fflashcardscp.html&amp;size=200&amp;margin=1"></div>
+    <div id="instruction">Tap the card to flip (or Space)</div>
+    <div class="progress" id="progress">Card 1 of 10</div>
+    
+    <div id="card" onclick="flipCard()" style="background: white; color: rgb(44, 62, 80);"><div>Während sie frühstücken, sprechen sie viel.</div></div>
+    
+    <div class="controls">
+      <button class="btn-next" id="nextBtn" onclick="nextCard()">Next Card (Z) ➔</button>
+      <button class="btn-discard" id="discardBtn" onclick="discardCard()">🗑 Discard (X)</button>
+      <button class="btn-secondary" onclick="showList()">👁 Show List</button>
+      <button class="btn-secondary" onclick="resetDeck()">🔀 Shuffle All</button>
+      <button class="btn-review" id="reviewBtn" onclick="reviewRemaining()" style="display: none;">🔥 Review Remaining</button>
+      <button class="btn-save" onclick="downloadCurrentDeck()">💾 Save Deck</button>
+      <button class="btn-secondary" onclick="location.reload()">↺ New List</button>
+    </div>
+  </div>
+
+  <div id="list-modal" onclick="closeList(event)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <div style="display:flex; justify-content: space-between; align-items: center;">
+        <h3 style="margin:0">Vocabulary List</h3>
+        <button class="btn-secondary" onclick="closeList()">Close</button>
+      </div>
+      <table id="vocab-table">
+        <thead><tr><th>Column 1</th><th>Column 2</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+<script>
+let originalDeck = [{"sideA":"Wenn ich esse, lese ich nicht.","sideB":"Beim Essen lese ich nicht."},{"sideA":"Während wir arbeiten, hören wir Musik.","sideB":"Bei der Arbeit hören wir Musik."},{"sideA":"Als er ankam, hat es geregnet.","sideB":"Bei seiner Ankunft hat es geregnet."},{"sideA":"Wenn du fährst, musst du vorsichtig sein.","sideB":"Bei der Fahrt musst du vorsichtig sein."},{"sideA":"Während sie frühstücken, sprechen sie viel.","sideB":"Beim Frühstück sprechen sie viel."},{"sideA":"Als der Kurs begann, waren alle da.","sideB":"Bei Kursbeginn waren alle da."},{"sideA":"Wenn es regnet, bleibe ich zu Hause.","sideB":"Bei Regen bleibe ich zu Hause."},{"sideA":"Während man Sport treibt, trinkt man Wasser.","sideB":"Beim Sport trinkt man Wasser."},{"sideA":"Als wir das Haus kauften, waren wir glücklich.","sideB":"Beim Hauskauf waren wir glücklich."},{"sideA":"Wenn ihr Fragen habt, helfe ich euch.","sideB":"Bei Fragen helfe ich euch."}]; 
+let activeDeck = []; 
+let currentIndex = 0;
+let isFlipped = false;
+
+window.onload = function() {
+    if (originalDeck.length > 0) startApp();
+};
+
+// --- KEYBOARD SHORTCUTS ---
+document.addEventListener('keydown', function(event) {
+  // Ignorar si el usuario está escribiendo en el textarea
+  if (event.target.tagName === 'TEXTAREA') return;
+
+  const key = event.key.toLowerCase();
+  
+  if (key === 'z') {
+    const btn = document.getElementById("nextBtn");
+    if (!btn.disabled) nextCard();
+  } 
+  else if (key === 'x') {
+    const btn = document.getElementById("discardBtn");
+    if (!btn.disabled) discardCard();
+  } 
+  else if (key === ' ') {
+    event.preventDefault(); // Evita scroll
+    flipCard();
+  }
+});
+
+function loadCustomDeck() {
+  const input = document.getElementById('csv-input').value.trim();
+  if (!input) return alert("Please paste some data first!");
+  const lines = input.split('\n');
+  originalDeck = lines.map(line => {
+    const parts = line.split('\t');
+    return { sideA: parts[0] ? parts[0].trim() : "", sideB: parts[1] ? parts[1].trim() : "" };
+  }).filter(item => item.sideA || item.sideB);
+  if (originalDeck.length === 0) return alert("No valid data found.");
+  startApp();
+}
+
+function startApp() {
+  document.getElementById('setup-container').style.display = 'none';
+  document.getElementById('flashcard-view').style.display = 'flex';
+  generateClassroomQR();
+  resetDeck();
+}
+
+function resetDeck() {
+  activeDeck = [...originalDeck].sort(() => Math.random() - 0.5);
+  document.getElementById('reviewBtn').style.display = 'none';
+  initSession();
+}
+
+function reviewRemaining() {
+  if (activeDeck.length === 0) return resetDeck();
+  activeDeck = [...activeDeck].sort(() => Math.random() - 0.5);
+  document.getElementById('reviewBtn').style.display = 'none';
+  initSession();
+}
+
+function initSession() {
+  currentIndex = 0;
+  isFlipped = false;
+  document.getElementById("nextBtn").disabled = false;
+  document.getElementById("discardBtn").disabled = false;
+  updateDisplay();
+}
+
+function updateDisplay() {
+  const current = activeDeck[currentIndex];
+  const card = document.getElementById("card");
+  
+  if (!current || activeDeck.length === 0 || currentIndex >= activeDeck.length) {
+    card.innerHTML = "<b>Excellent!</b><br>Session finished.";
+    card.style.background = "#d4edda";
+    document.getElementById("nextBtn").disabled = true;
+    document.getElementById("discardBtn").disabled = true;
+    
+    if (activeDeck.length > 0) {
+        document.getElementById('reviewBtn').style.display = 'inline-block';
+    }
+    return;
+  }
+
+  document.getElementById("progress").textContent = `Card ${currentIndex + 1} of ${activeDeck.length}`;
+  
+  if (!isFlipped) {
+    card.innerHTML = `<div>${current.sideA}</div>`; 
+    card.style.background = "white";
+    card.style.color = "#2c3e50";
+  } else {
+    card.innerHTML = `<div>${current.sideB}</div>`;
+    card.style.background = "#eef6ff";
+    card.style.color = "#1565c0";
+  }
+}
+
+function flipCard() {
+  if (currentIndex >= activeDeck.length) return;
+  isFlipped = !isFlipped;
+  updateDisplay();
+}
+
+function nextCard() {
+  if (currentIndex < activeDeck.length - 1) {
+    currentIndex++;
+    isFlipped = false;
+    updateDisplay();
+  } else {
+    currentIndex = activeDeck.length;
+    updateDisplay();
+  }
+}
+
+function discardCard() {
+  activeDeck.splice(currentIndex, 1);
+  if (activeDeck.length === 0) {
+    updateDisplay();
+  } else {
+    if (currentIndex >= activeDeck.length) {
+        currentIndex = activeDeck.length;
+    }
+    isFlipped = false;
+    updateDisplay();
+  }
+}
+
+function showList() {
+  const tbody = document.querySelector("#vocab-table tbody");
+  tbody.innerHTML = "";
+  originalDeck.forEach(item => {
+    const row = tbody.insertRow();
+    row.insertCell(0).innerHTML = item.sideA;
+    row.insertCell(1).innerHTML = item.sideB;
+  });
+  document.getElementById("list-modal").style.display = "block";
+}
+
+function closeList() { document.getElementById("list-modal").style.display = "none"; }
+
+function generateClassroomQR() {
+  const currentUrl = window.location.href;
+  const qrApiUrl = `https://quickchart.io/qr?text=${encodeURIComponent(currentUrl)}&size=200&margin=1`;
+  const qrImg = new Image();
+  qrImg.src = qrApiUrl;
+  qrImg.onload = function() {
+    const container = document.getElementById("classroom-qr-container");
+    if(container) { container.innerHTML = ""; container.appendChild(qrImg); }
+  };
+}
+
+function downloadCurrentDeck() {
+    let docHtml = document.documentElement.outerHTML;
+    const dataString = `let originalDeck = ${JSON.stringify(originalDeck)};`;
+    const finalHtml = docHtml.replace(/let originalDeck = \[\];/, dataString);
+    const blob = new Blob([finalHtml], { type: 'text/html' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'MyFlashcards.html';
+    a.click();
+}
+</script>
+
+
+
+</body><text-blaze-app-reference style="display: contents !important;" role="none"></text-blaze-app-reference></html>

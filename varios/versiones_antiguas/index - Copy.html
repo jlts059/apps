@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Apps Dashboard</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; line-height: 1.6; max-width: 800px; margin: auto; background-color: #f9f9f9; }
+        h1 { border-bottom: 2px solid #333; padding-bottom: 10px; text-align: center; color: #2c3e50; }
+        
+        .tabs { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 20px; border-bottom: 2px solid #ddd; padding-bottom: 10px; }
+        .tab-button { 
+            padding: 10px 20px; cursor: pointer; border: none; background: #eee; 
+            border-radius: 8px 8px 0 0; font-weight: bold; transition: 0.3s;
+        }
+        .tab-button.active { background: #0366d6; color: white; }
+        .tab-button:hover:not(.active) { background: #ddd; }
+
+        .tab-content { display: none; animation: fadeIn 0.5s; }
+        .tab-content.active { display: block; }
+
+        .app-link { 
+            display: flex; align-items: center; padding: 12px; margin-bottom: 8px; 
+            background: white; text-decoration: none; color: #333; 
+            border-radius: 8px; border: 1px solid #ddd; font-weight: 500; transition: 0.2s;
+        }
+        .app-link:hover { transform: translateX(5px); border-color: #0366d6; box-shadow: 2px 2px 10px rgba(0,0,0,0.1); }
+        .icon { margin-right: 15px; font-size: 1.2em; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        #loading { text-align: center; color: #666; font-style: italic; margin-top: 50px; }
+    </style>
+</head>
+<body>
+
+    <h1>🚀 My Apps Dashboard</h1>
+    
+    <div id="loading">Organizando tus herramientas...</div>
+    
+    <div id="tabs-container" class="tabs"></div>
+    <div id="contents-container"></div>
+
+    <script>
+        const repoOwner = 'jlts059';
+        const repoName = 'apps';
+
+        const folderEmojis = {
+            'home': '🏠',
+            'juegos': '🎮',
+            'estudios': '📚',
+            'utilidades': '🛠️',
+            'quiz': '📝',
+            'default': '📁'
+        };
+
+        async function cargarProyectos() {
+            const url = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/`;
+            
+            try {
+                const response = await fetch(url);
+                const items = await response.json();
+                
+                const tabsContainer = document.getElementById('tabs-container');
+                const contentsContainer = document.getElementById('contents-container');
+                document.getElementById('loading').style.display = 'none';
+
+                // 1. Crear la pestaña HOME para archivos sueltos
+                createTab('Home', true);
+
+                for (const item of items) {
+                    if (item.type === 'dir') {
+                        // Es una carpeta: Crear pestaña y buscar dentro
+                        createTab(item.name, false);
+                        const subRes = await fetch(item.url);
+                        const files = await subRes.json();
+                        renderFiles(files, item.name);
+                    } else if (item.type === 'file' && item.name.endsWith('.html') && item.name.toLowerCase() !== 'index.html') {
+                        // Es un archivo suelto: Renderizar en la pestaña Home
+                        renderFiles([item], 'Home');
+                    }
+                }
+
+                // Si la pestaña Home se quedó vacía, podrías ocultarla, 
+                // pero por ahora abrimos la primera pestaña disponible
+                if (tabsContainer.firstChild) tabsContainer.firstChild.click();
+
+            } catch (error) {
+                console.error("Error:", error);
+                document.getElementById('loading').innerText = "Error al conectar con GitHub.";
+            }
+        }
+
+        function createTab(name, isHome) {
+            const tabsContainer = document.getElementById('tabs-container');
+            const contentsContainer = document.getElementById('contents-container');
+            
+            if (document.getElementById(`btn-${name}`)) return; // Evitar duplicados
+
+            const emoji = folderEmojis[name.toLowerCase()] || folderEmojis['default'];
+            const btn = document.createElement('button');
+            btn.className = 'tab-button';
+            btn.id = `btn-${name}`;
+            btn.innerHTML = `${emoji} ${name}`;
+            btn.onclick = () => openTab(name);
+            tabsContainer.appendChild(btn);
+
+            const contentDiv = document.createElement('div');
+            contentDiv.id = name;
+            contentDiv.className = 'tab-content';
+            contentsContainer.appendChild(contentDiv);
+        }
+
+        function renderFiles(files, containerId) {
+            const container = document.getElementById(containerId);
+            files.forEach(file => {
+                if (file.name.endsWith('.html') && file.name.toLowerCase() !== 'index.html') {
+                    const link = document.createElement('a');
+                    // Si el contenedor es 'Home', el link es directo. Si no, lleva el nombre de la carpeta delante.
+                    link.href = containerId === 'Home' ? file.name : `${containerId}/${file.name}`;
+                    link.className = 'app-link';
+                    
+                    let fileIcon = '📄';
+                    const n = file.name.toLowerCase();
+                    if (n.includes('ruleta')) fileIcon = '🎲';
+                    if (n.includes('quiz')) fileIcon = '📝';
+                    if (n.includes('qr') || n.includes('drive')) fileIcon = '🔳';
+
+                    const cleanName = file.name.replace('.html', '').replace(/-/g, ' ');
+                    link.innerHTML = `<span class="icon">${fileIcon}</span> ${cleanName}`;
+                    container.appendChild(link);
+                }
+            });
+        }
+
+        function openTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+            document.querySelectorAll('.tab-button').forEach(tb => tb.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            document.getElementById(`btn-${tabId}`).classList.add('active');
+        }
+
+        cargarProyectos();
+    </script>
+</body>
+</html>

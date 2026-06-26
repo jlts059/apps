@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Vocab Race Master</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f4f8; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .container { background: white; padding: 2rem; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 600px; text-align: center; }
+        textarea { width: 100%; height: 200px; margin: 15px 0; padding: 10px; border: 2px solid #cbd5e0; border-radius: 10px; box-sizing: border-box; font-family: inherit; }
+        button { background: #38a169; color: white; border: none; padding: 15px 30px; font-weight: bold; border-radius: 10px; cursor: pointer; font-size: 1.1rem; }
+        button:hover { background: #2f855a; }
+        p { color: #666; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Vocab Race Master</h2>
+        <p>Paste your data (Definition [TAB] Word), then download the student file.</p>
+        <textarea id="inputData" placeholder="cambiar [TAB] wechseln"></textarea>
+        <br>
+        <button onclick="generateFile()">Download Student HTML File 💾</button>
+    </div>
+
+    <script>
+        function generateFile() {
+            const raw = document.getElementById('inputData').value.trim();
+            if (!raw) return alert("Please paste your data first!");
+            
+            const deck = raw.split('\n').map(line => {
+                const p = line.split('\t');
+                return { d: p[0]?.trim(), w: p[1]?.trim() };
+            }).filter(item => item.d && item.w);
+
+            if (deck.length === 0) return alert("Format error: Ensure there is a TAB between the definition and the word.");
+
+            const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Vocab Race</title>
+    <style>
+        body { font-family: sans-serif; background: #f0f4f8; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .box { background: white; padding: 2rem; border-radius: 24px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); width: 90%; max-width: 500px; text-align: center; }
+        .timer { font-size: 1.5rem; color: #e53e3e; font-weight: bold; margin-bottom: 10px; }
+        .def { font-size: 1.6rem; margin: 20px 0; min-height: 60px; line-height: 1.4; color: #2d3748; }
+        input { width: 90%; padding: 12px; font-size: 1.2rem; border: 3px solid #edf2f7; border-radius: 10px; text-align: center; outline: none; }
+        input:focus { border-color: #4299e1; }
+        .btn-go { background: #e53e3e; color: white; padding: 20px 60px; font-size: 2rem; border-radius: 15px; cursor: pointer; border: none; font-weight: bold; }
+        .btn-go:hover { background: #c53030; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; text-align: left; }
+        th, td { padding: 10px; border-bottom: 1px solid #eee; font-size: 0.9rem; }
+        .tick { color: #38a169; } .cross { color: #e53e3e; }
+        .cor { color: #38a169; font-weight: bold; display: block; font-size: 0.85rem; margin-top: 4px; }
+        .old { text-decoration: line-through; color: #a0aec0; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <div id="s1">
+            <h2 style="margin-top:0">Ready?</h2>
+            <p style="color:#718096">The timer starts when you click GO.</p>
+            <button class="btn-go" onclick="start()">GO!</button>
+        </div>
+
+        <div id="s2" style="display:none">
+            <div class="timer" id="t">0.0s</div>
+            <div id="p" style="color:#718096; font-size: 0.9rem; margin-bottom: 10px;"></div>
+            <div class="def" id="d"></div>
+            <input type="text" id="i" autocomplete="off" onkeydown="if(event.key==='Enter') next()">
+        </div>
+
+        <div id="s3" style="display:none">
+            <h2 style="margin-top:0">Race Complete!</h2>
+            <div id="sc" style="font-weight:bold; font-size:1.3rem; margin-bottom: 10px;"></div>
+            <div style="max-height:350px; overflow-y:auto; border: 1px solid #e2e8f0; border-radius: 10px;">
+                <table>
+                    <thead><tr><th>Status</th><th>Def</th><th>Answer</th></tr></thead>
+                    <tbody id="tb"></tbody>
+                </table>
+            </div>
+            <br>
+            <button onclick="location.reload()" style="background:#4299e1; color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer;">Try Again</button>
+        </div>
+    </div>
+
+    <script>
+        // Data injected here
+        const deck = ${JSON.stringify(deck)};
+        let idx = 0;
+        let timeStart;
+        let timerTicker;
+        let logs = [];
+        
+        function start() {
+            document.getElementById('s1').style.display = 'none';
+            document.getElementById('s2').style.display = 'block';
+            timeStart = Date.now();
+            timerTicker = setInterval(() => {
+                const elapsed = (Date.now() - timeStart) / 1000;
+                document.getElementById('t').innerText = elapsed.toFixed(1) + 's';
+            }, 100);
+            render();
+        }
+
+        function render() {
+            if (idx >= deck.length) {
+                end();
+                return;
+            }
+            document.getElementById('d').innerText = deck[idx].d;
+            document.getElementById('p').innerText = "Item " + (idx + 1) + " of " + deck.length;
+            document.getElementById('i').value = '';
+            document.getElementById('i').focus();
+        }
+
+        function next() {
+            let val = document.getElementById('i').value.trim();
+            logs.push({
+                d: deck[idx].d, 
+                c: deck[idx].w, 
+                u: val, 
+                ok: val.toLowerCase() === deck[idx].w.toLowerCase()
+            });
+            idx++;
+            render();
+        }
+
+        function end() {
+            clearInterval(timerTicker);
+            document.getElementById('s2').style.display = 'none';
+            document.getElementById('s3').style.display = 'block';
+            
+            const okCount = logs.filter(l => l.ok).length;
+            document.getElementById('sc').innerText = "Score: " + okCount + " / " + logs.length + " | Time: " + document.getElementById('t').innerText;
+            
+            let rows = "";
+            logs.forEach(l => {
+                let display = l.ok ? 
+                    '<span class="tick">' + l.u + '</span>' : 
+                    '<span class="old">' + (l.u || '-') + '</span><span class="cor">✔ ' + l.c + '</span>';
+                
+                rows += '<tr>' +
+                    '<td style="text-align:center">' + (l.ok ? '✔' : '✘') + '</td>' +
+                    '<td>' + l.d + '</td>' +
+                    '<td>' + display + '</td>' +
+                '</tr>';
+            });
+            document.getElementById('tb').innerHTML = rows;
+        }
+    <\/script>
+</body>
+</html>`;
+
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'Vocab_Race_Student.html';
+            link.click();
+        }
+    </script>
+</body>
+</html>

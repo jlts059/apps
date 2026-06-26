@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ruleta Pro Adaptativa</title>
+    <style>
+        :root {
+            --bg: #fdfdfd;
+            --text: #475569;
+            --accent: #e2e8f0;
+            --result-color: #ec4899; /* Rosa del ejemplo */
+            --needle-color: #94a3b8;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+            margin: 0;
+            padding: 15px;
+            box-sizing: border-box;
+            overflow-x: hidden;
+        }
+
+        /* Título Principal */
+        #main-title {
+            font-size: 1.8rem; /* Tamaño base */
+            color: var(--text);
+            font-weight: 800;
+            margin-top: 20px;
+            margin-bottom: 15px;
+            text-align: center;
+            width: 100%;
+            line-height: 1.2;
+            padding: 0 10px;
+            box-sizing: border-box;
+        }
+
+        /* QR Contenedor: Responsive */
+        .qr-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+        .qr-container img {
+            width: 70px;
+            height: 70px;
+            padding: 5px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        /* Media Query para pantallas grandes: QR a la esquina */
+        @media (min-width: 992px) {
+            .qr-container {
+                position: absolute;
+                top: 20px;
+                right: 20px;
+                width: auto;
+                margin-bottom: 0;
+            }
+            .qr-container img {
+                width: 80px;
+                height: 80px;
+            }
+            #main-title {
+                margin-top: 50px;
+                padding-right: 120px; /* Espacio para el QR */
+            }
+        }
+
+        /* Área de resultado con tamaño de texto adaptable */
+        #resultado-display {
+            height: 120px; /* Altura fija para reservar espacio */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            width: 100%;
+            padding: 0 15px;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+        }
+
+        /* El texto del resultado en sí */
+        #resultado-texto {
+            font-size: 2rem; /* Tamaño máximo inicial */
+            font-weight: 800;
+            color: var(--result-color);
+            line-height: 1.1;
+            /* Asegura que el texto no se rompa en palabras nuevas */
+            white-space: normal; 
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 3; /* Máximo 3 líneas */
+            -webkit-box-orient: vertical;
+        }
+
+        /* Contenedor de la ruleta */
+        #ruleta-wrapper {
+            position: relative;
+            margin: 15px 0;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        #aguja {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-left: 14px solid transparent;
+            border-right: 14px solid transparent;
+            border-top: 22px solid var(--needle-color);
+            z-index: 10;
+        }
+
+        .parpadeo-aguja {
+            animation: blink 0.4s infinite alternate;
+            border-top-color: var(--result-color) !important;
+        }
+
+        @keyframes blink {
+            from { opacity: 1; transform: translateX(-50%) scale(1.1); }
+            to { opacity: 0.5; transform: translateX(-50%) scale(1); }
+        }
+
+        #ruleta-circulo {
+            width: 170px;
+            height: 170px;
+            border-radius: 50%;
+            border: 6px solid var(--accent);
+            background: linear-gradient(135deg, #f8fafc 0%, #cbd5e1 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 4s cubic-bezier(0.15, 0, 0.15, 1);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+        }
+
+        #ruleta-circulo::after {
+            content: "↻";
+            font-size: 2.2rem;
+            color: white;
+            opacity: 0.6;
+        }
+
+        /* Configuración inferior */
+        .setup-container {
+            width: 100%;
+            max-width: 350px;
+            margin-top: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        textarea {
+            width: 100%;
+            height: 90px;
+            padding: 12px;
+            border: 1px solid var(--accent);
+            border-radius: 12px;
+            font-size: 1rem;
+            background: #fff;
+            color: var(--text);
+            box-sizing: border-box;
+            resize: none;
+            margin-bottom: 10px;
+        }
+
+        .btn-download {
+            background: #f1f5f9;
+            border: 1px solid var(--accent);
+            color: #64748b;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 8px 18px;
+            border-radius: 20px;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+
+        .contador {
+            margin-top: 10px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #94a3b8;
+            letter-spacing: 1px;
+        }
+
+        .hidden { display: none !important; }
+
+        /* Ajustes para tablets */
+        @media (min-width: 768px) {
+            #main-title { font-size: 2.2rem; }
+            #ruleta-circulo { width: 210px; height: 210px; }
+            #resultado-texto { font-size: 3rem; }
+            #resultado-display { height: 150px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="qr-container" id="qrSection">
+        <img id="qrCode" src="" alt="QR">
+    </div>
+
+    <div id="main-title"></div>
+
+    <div id="resultado-display">
+        <span id="resultado-texto">Toca la ruleta para girar</span>
+    </div>
+
+    <div id="ruleta-wrapper" onclick="girar()">
+        <div id="aguja"></div>
+        <div id="ruleta-circulo"></div>
+    </div>
+
+    <div id="setup" class="setup-container">
+        <textarea id="inputFrases" placeholder="Frases (una por línea)..."></textarea>
+        <button class="btn-download" onclick="descargarHTML()">Guardar .html</button>
+        <div id="contador-vivos" class="contador"></div>
+    </div>
+
+    <script>
+        let frasesOriginales = "";
+        let frases = [];
+        let anguloActual = 0;
+        let ultimaGanadora = null;
+        let configurado = false;
+        let girando = false;
+
+        // Función para adaptar el tamaño del texto al contenedor
+        function adaptarTexto() {
+            const textoSpan = document.getElementById('resultado-texto');
+            const contenedor = document.getElementById('resultado-display');
+            
+            // Tamaño de fuente máximo inicial (según CSS para PC/Móvil)
+            let fontSize = window.innerWidth >= 768 ? 48 : 32; // 3rem o 2rem en px
+            textoSpan.style.fontSize = fontSize + 'px';
+
+            // Reduce el tamaño de fuente hasta que el texto quepa en el contenedor (ancho y alto)
+            while (
+                (textoSpan.offsetWidth > contenedor.offsetWidth - 30 || // -30px de padding total
+                 textoSpan.offsetHeight > contenedor.offsetHeight) && 
+                fontSize > 12 // Tamaño mínimo de fuente
+            ) {
+                fontSize -= 1;
+                textoSpan.style.fontSize = fontSize + 'px';
+            }
+        }
+
+        window.onload = () => {
+            const titleDiv = document.getElementById('main-title');
+            if (!titleDiv.innerText.trim()) {
+                const promptTitle = prompt("¿Título de la ruleta?");
+                if (promptTitle) titleDiv.innerText = promptTitle;
+            }
+            document.getElementById('qrCode').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(window.location.href)}`;
+            
+            // Adaptar texto inicial por seguridad
+            adaptarTexto();
+            // Re-adaptar si cambian el tamaño de la ventana
+            window.addEventListener('resize', adaptarTexto);
+        };
+
+        function girar() {
+            if (girando) return;
+
+            const input = document.getElementById('inputFrases');
+            const setupDiv = document.getElementById('setup');
+            const displayTexto = document.getElementById('resultado-texto');
+            const ruleta = document.getElementById('ruleta-circulo');
+            const aguja = document.getElementById('aguja');
+            const contador = document.getElementById('contador-vivos');
+
+            if (!configurado) {
+                frasesOriginales = input.value;
+                frases = input.value.split('\n').filter(f => f.trim() !== "");
+                if (frases.length === 0) return alert("Añade frases primero.");
+                setupDiv.classList.add('hidden');
+                configurado = true;
+            }
+
+            if (ultimaGanadora) {
+                const idx = frases.indexOf(ultimaGanadora);
+                if (idx > -1) frases.splice(idx, 1);
+            }
+
+            if (frases.length === 0) {
+                displayTexto.innerText = "¡FIN!";
+                displayTexto.style.fontSize = "2rem"; // Reset para el FIN
+                contador.innerText = "Lista vacía.";
+                return;
+            }
+
+            girando = true;
+            aguja.classList.add('parpadeo-aguja');
+            displayTexto.style.opacity = "0.2";
+            
+            anguloActual += 1440 + Math.floor(Math.random() * 1440);
+            ruleta.style.transform = `rotate(${anguloActual}deg)`;
+
+            setTimeout(() => {
+                girando = false;
+                aguja.classList.remove('parpadeo-aguja');
+                
+                const indice = Math.floor(Math.random() * frases.length);
+                ultimaGanadora = frases[indice];
+                
+                // 1. Ponemos el texto
+                displayTexto.innerText = ultimaGanadora;
+                // 2. Esperamos un instante a que el navegador lo dibuje y ejecutamos la adaptación
+                requestAnimationFrame(adaptarTexto);
+                
+                displayTexto.style.opacity = "1";
+                contador.innerText = `${frases.length - 1} RESTANTES`;
+            }, 4000);
+        }
+
+        function descargarHTML() {
+            const contentToSave = configurado ? frasesOriginales : document.getElementById('inputFrases').value;
+            const currentTitle = document.getElementById('main-title').innerText;
+            const docClone = document.documentElement.cloneNode(true);
+            
+            docClone.querySelector('#inputFrases').textContent = contentToSave;
+            docClone.querySelector('#main-title').textContent = currentTitle;
+            docClone.querySelector('#setup').classList.remove('hidden');
+            docClone.querySelector('#resultado-texto').innerText = "Girar";
+            docClone.querySelector('#contador-vivos').innerText = "";
+            
+            const blob = new Blob([docClone.outerHTML], { type: 'text/html' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'ruleta_adaptativa.html';
+            a.click();
+        }
+    </script>
+</body>
+</html>

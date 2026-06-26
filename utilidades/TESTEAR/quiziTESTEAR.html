@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Interactivo Pro - Feedback Visual</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 700px;
+            text-align: center;
+        }
+        textarea {
+            width: 100%;
+            height: 120px;
+            margin: 15px 0;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 14px;
+            resize: none;
+        }
+        .main-btn {
+            background-color: #2c3e50;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+        .main-btn:hover { background-color: #34495e; }
+
+        #quiz-area { width: 100%; max-width: 700px; margin-top: 20px; }
+        
+        .question-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+
+        .question-text {
+            font-size: 1.4rem;
+            font-weight: bold;
+            margin-bottom: 25px;
+            color: #333;
+            line-height: 1.4;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .option {
+            position: relative;
+            padding: 22px 18px;
+            border-radius: 12px;
+            border: 4px solid transparent;
+            cursor: pointer;
+            color: white;
+            font-weight: bold;
+            font-size: 1.1rem;
+            text-align: left;
+            transition: all 0.2s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            outline: none;
+        }
+
+        .green { background-color: #e74c3c; }
+        .red { background-color: #2ecc71; }
+        .blue { background-color: #3498db; }
+        .yellow { background-color: #f1c40f; color: #333 !important; }
+
+        /* ESTADOS DE FEEDBACK */
+        
+        /* Cuando aciertas o se muestra la correcta */
+        .correct-highlight {
+            border-color: #27ae60 !important;
+            transform: scale(1.03);
+            box-shadow: 0 0 20px rgba(46, 204, 113, 0.6);
+            z-index: 2;
+            animation: pulse-green 0.6s infinite alternate;
+        }
+
+        /* Cuando fallas */
+        .wrong-highlight {
+            border-color: #962d22 !important;
+            opacity: 0.8;
+            transform: scale(0.98);
+        }
+
+        @keyframes pulse-green {
+            from { box-shadow: 0 0 10px #2ecc71; }
+            to { box-shadow: 0 0 25px #2ecc71; }
+        }
+
+        .icon { font-size: 1.5rem; font-weight: 900; }
+        .score-board { margin-bottom: 10px; font-weight: bold; font-size: 1.2rem; color: #7f8c8d; }
+    </style>
+</head>
+<body>
+
+    <div class="container" id="setup">
+        <h2>Generador de Quiz</h2>
+        <p>Copia y pega el contenido de tu Excel/Sheets aquí:</p>
+        <textarea id="data-input" placeholder="Pregunta	A	B	C	D	Respuesta"></textarea>
+        <button class="main-btn" onclick="startQuiz()">Generar Quiz</button>
+    </div>
+
+    <div id="quiz-area" style="display:none;">
+        <div class="score-board" id="score">Puntos: 0</div>
+        <div id="card-target"></div>
+    </div>
+
+    <script>
+        let questions = [];
+        let currentIdx = 0;
+        let score = 0;
+
+        function startQuiz() {
+            const raw = document.getElementById('data-input').value.trim();
+            if(!raw) return alert("Por favor, pega los datos de tu tabla.");
+
+            const rows = raw.split('\n');
+            questions = [];
+            
+            // Saltar encabezados si detecta palabras clave
+            let start = 0;
+            if (rows[0].toLowerCase().includes('pregunta') || rows[0].toLowerCase().includes('respuesta')) {
+                start = 1;
+            }
+
+            for(let i = start; i < rows.length; i++) {
+                const c = rows[i].split('\t');
+                if(c.length >= 6) {
+                    questions.push({ 
+                        q: c[0], 
+                        a: c[1], 
+                        b: c[2], 
+                        c: c[3], 
+                        d: c[4], 
+                        ok: c[5].trim().toUpperCase() 
+                    });
+                }
+            }
+
+            if(questions.length === 0) return alert("No se pudo leer el formato. Asegúrate de copiar las 6 columnas.");
+            
+            document.getElementById('setup').style.display = 'none';
+            document.getElementById('quiz-area').style.display = 'block';
+            render();
+        }
+
+        function render() {
+            const target = document.getElementById('card-target');
+            if(currentIdx >= questions.length) {
+                target.innerHTML = `
+                    <div class="question-card">
+                        <h2>¡Quiz Completado!</h2>
+                        <p style="font-size: 1.5rem;">Tu puntaje final: <strong>${score} / ${questions.length}</strong></p>
+                        <button class="main-btn" onclick="location.reload()">Empezar de nuevo</button>
+                    </div>`;
+                return;
+            }
+
+            const item = questions[currentIdx];
+            target.innerHTML = `
+                <div class="question-card">
+                    <div class="question-text">${item.q}</div>
+                    <div class="options-grid">
+                        <button class="option red" id="opt-A" onclick="handleSelect('A')">A. ${item.a} <span class="icon"></span></button>
+                        <button class="option green" id="opt-B" onclick="handleSelect('B')">B. ${item.b} <span class="icon"></span></button>
+                        <button class="option blue" id="opt-C" onclick="handleSelect('C')">C. ${item.c} <span class="icon"></span></button>
+                        <button class="option yellow" id="opt-D" onclick="handleSelect('D')">D. ${item.d} <span class="icon"></span></button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function handleSelect(choice) {
+            const correct = questions[currentIdx].ok;
+            const btns = document.querySelectorAll('.option');
+            const selectedBtn = document.getElementById('opt-' + choice);
+            const correctBtn = document.getElementById('opt-' + correct);
+
+            // Bloquear todos los botones
+            btns.forEach(b => b.disabled = true);
+
+            if(choice === correct) {
+                // Acierto: solo brilla el seleccionado
+                selectedBtn.classList.add('correct-highlight');
+                selectedBtn.querySelector('.icon').innerText = '✔';
+                score++;
+                document.getElementById('score').innerText = `Puntos: ${score}`;
+            } else {
+                // Error: el seleccionado se marca mal y el correcto brilla con tick
+                selectedBtn.classList.add('wrong-highlight');
+                selectedBtn.querySelector('.icon').innerText = '✖';
+                
+                correctBtn.classList.add('correct-highlight');
+                correctBtn.querySelector('.icon').innerText = '✔';
+            }
+
+            // Tiempo de espera para ver el feedback antes de la siguiente
+            setTimeout(() => {
+                currentIdx++;
+                render();
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

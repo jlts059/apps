@@ -1,0 +1,43 @@
+graph LR
+    I1["📝 Quiz (6 columns)"]
+    I2["📖 Word + Definition"]
+    I3["🔤 Single Word"]
+
+    %% Conexiones de la Categoría 1 (Quiz -> Azul)
+    I1 --> G1("👥 Plenary Game with Colour Cards")
+    I1 --> G2("👤 Individual Game")
+    I1 --> G3("⚔️ Versus Game")
+    
+    %% Conexiones de la Categoría 2 (Word + Def -> Verde/Esmeralda)
+    I2 --> O1("🗂️ Flashcard")
+    I2 --> O2("🏃 Vocab Race")
+    I2 --> O3("🕳️ Gap Fill")
+    
+    I3 --> R1("🎲 Roulette")
+
+    %% ==========================================
+    %% ESTILOS CATEGORÍA 1: QUIZ (Azul)
+    %% ==========================================
+    %% Caja principal: Fondo blanco, borde azul de 4px de grosor
+    style I1 fill:#fff,stroke:#0366d6,stroke-width:4px,color:#333,font-weight:bold
+    %% Cajas hijas: Fondo blanco, borde azul fino de 1.5px
+    style G1 fill:#fff,stroke:#0366d6,stroke-width:1.5px,color:#333
+    style G2 fill:#fff,stroke:#0366d6,stroke-width:1.5px,color:#333
+
+    %% ==========================================
+    %% ESTILOS CATEGORÍA 2: WORD + DEF (Verde)
+    %% ==========================================
+    %% Caja principal: Fondo blanco, borde verde de 4px de grosor
+    style I2 fill:#fff,stroke:#2e7d32,stroke-width:4px,color:#333,font-weight:bold
+    %% Cajas hijas: Fondo blanco, borde verde fino de 1.5px
+    style O1 fill:#fff,stroke:#2e7d32,stroke-width:1.5px,color:#333
+    style O2 fill:#fff,stroke:#2e7d32,stroke-width:1.5px,color:#333
+    style O3 fill:#fff,stroke:#2e7d32,stroke-width:1.5px,color:#333
+
+    %% ==========================================
+    %% ESTILOS CATEGORÍA 3: SINGLE WORD (Naranja/Lila)
+    %% ==========================================
+    %% Caja principal: Fondo blanco, borde lila de 4px de grosor
+    style I3 fill:#fff,stroke:#6f42c1,stroke-width:4px,color:#333,font-weight:bold
+    %% Cajas hijas: Fondo blanco, borde lila fino de 1.5px
+    style R1 fill:#fff,stroke:#6f42c1,stroke-width:1.5px,color:#333

@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apps</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({ 
+            startOnLoad: false, 
+            theme: 'neutral',
+            securityLevel: 'loose'
+        });
+    </script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; line-height: 1.6; max-width: 800px; margin: auto; background-color: #f9f9f9; }
+        h1 { border-bottom: 2px solid #333; padding-bottom: 10px; text-align: center; color: #2c3e50; }
+        
+        /* Contenedor principal de bloques */
+        .blocks-container { display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px; border-bottom: 2px solid #ddd; padding-bottom: 15px; }
+        .block-title { font-size: 0.9em; text-transform: uppercase; color: #666; margin: 5px 0 2px 0; font-weight: bold; letter-spacing: 1px;}
+        
+        .tabs { display: flex; flex-wrap: wrap; gap: 5px; }
+        .tab-button {
+            padding: 10px 20px; cursor: pointer; border: none; background: #eee;
+            border-radius: 8px; font-weight: bold; transition: 0.3s;
+        }
+        .tab-button.active { background: #0366d6; color: white; }
+        .tab-button:hover:not(.active) { background: #ddd; }
+
+        .tab-content { display: none; animation: fadeIn 0.5s; }
+        .tab-content.active { display: block; }
+
+        .app-link {
+            display: flex; align-items: center; padding: 12px; margin-bottom: 8px;
+            background: white; text-decoration: none; color: #333;
+            border-radius: 8px; border: 1px solid #ddd; font-weight: 500; transition: 0.2s;
+        }
+        .app-link:hover { transform: translateX(5px); border-color: #0366d6; box-shadow: 2px 2px 10px rgba(0,0,0,0.1); }
+        .icon { margin-right: 15px; font-size: 1.2em; }
+
+        /* Estilos para tu panel visual de Notas */
+        .diagram-container {
+            margin-top: 40px;
+            padding: 20px;
+            background: white;
+            border: 1px solid #eee;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+        }
+        .diagram-title {
+            font-size: 0.85em; text-transform: uppercase; color: #888; 
+            margin-bottom: 15px; font-weight: bold; letter-spacing: 1px;
+            border-bottom: 1px dashed #eee; padding-bottom: 5px;
+        }
+        .mermaid-wrapper {
+            display: flex; justify-content: center; overflow-x: auto; width: 100%; padding: 10px 0;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        #loading { text-align: center; color: #666; font-style: italic; margin-top: 50px; }
+    </style>
+</head>
+<body>
+
+    <h1>🚀 Apps</h1>
+    
+    <div id="loading">Conectando con tu repositorio...</div>
+    
+    <div class="blocks-container" id="blocks-wrapper" style="display: none;">
+        <div id="block-al-container">
+            <div class="block-title">🍺 DE ALEMÁN</div>
+            <div id="tabs-al" class="tabs"></div>
+        </div>
+        <div id="block-in-container">
+            <div class="block-title">☕ GB INGLÉS</div>
+            <div id="tabs-in" class="tabs"></div>
+        </div>
+        <div id="block-other-container">
+            <div class="block-title">🏠 OTROS / GENERAL</div>
+            <div id="tabs-other" class="tabs"></div>
+        </div>
+    </div>
+
+    <div id="contents-container"></div>
+
+    <div id="diagram-section" class="diagram-container" style="display: none;">
+        <div class="diagram-title">📊 Estructura de Inputs & Outputs</div>
+        <div class="mermaid-wrapper">
+            <div id="diagram-target" class="mermaid"></div>
+        </div>
+    </div>
+
+    <script>
+        const repoOwner = 'jlts059';
+        const repoName = 'apps';
+
+        const folderEmojis = {
+            'home': '🏠',
+            'juegos': '🎮',
+            'estudios': '📚',
+            'utilidades': '🛠️',
+            'quiz': '📝',
+            'default': '📁'
+        };
+
+        async function cargarProyectos() {
+            // Ejecutamos la carga del diagrama de notas en segundo plano
+            cargarYGenerarDiagrama();
+            
+            try {
+                // LEER SIEMPRE DE LA API REAL DE GITHUB (Sin simulaciones locales rotas)
+                const url = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/`;
+                const response = await fetch(url);
+                if (!response.ok) throw new Error("API bloqueada temporalmente por límite de peticiones.");
+                const items = await response.json();
+                
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('blocks-wrapper').style.display = 'flex';
+
+                createTab('Home', 'other');
+
+                for (const item of items) {
+                    if (item.type === 'dir') {
+                        let bloque = 'other';
+                        const lowerName = item.name.toLowerCase();
+                        
+                        if (lowerName.startsWith('al_')) {
+                            bloque = 'al';
+                        } else if (lowerName.startsWith('in_')) {
+                            bloque = 'in';
+                        }
+
+                        createTab(item.name, bloque);
+                        
+                        // Buscamos los archivos reales que hay dentro de esta carpeta en GitHub
+                        const subRes = await fetch(item.url);
+                        if (subRes.ok) {
+                            const files = await subRes.json();
+                            renderFiles(files, item.name);
+                        }
+
+                    } else if (item.type === 'file' && item.name.endsWith('.html') && item.name.toLowerCase() !== 'index.html') {
+                        renderFiles([item], 'Home');
+                    }
+                }
+
+                if (document.getElementById('tabs-al').children.length === 0) document.getElementById('block-al-container').style.display = 'none';
+                if (document.getElementById('tabs-in').children.length === 0) document.getElementById('block-in-container').style.display = 'none';
+                if (document.getElementById('tabs-other').children.length === 0) document.getElementById('block-other-container').style.display = 'none';
+
+            } catch (error) {
+                console.error("Error crítico:", error);
+                document.getElementById('loading').innerText = "La API de GitHub está saturada. Espera unos minutos para que se desbloquee y tus archivos aparecerán solos.";
+            }
+        }
+
+        function createTab(name, bloque) {
+            const tabsContainer = document.getElementById(`tabs-${bloque}`);
+            const contentsContainer = document.getElementById('contents-container');
+            
+            if (document.getElementById(`btn-${name}`)) return;
+
+            const cleanKeyForEmoji = name.toLowerCase().replace(/^al_/, '').replace(/^in_/, '');
+            const emoji = folderEmojis[cleanKeyForEmoji] || folderEmojis['default'];
+            const displayName = name.replace(/^al_|^in_/i, '');
+
+            const btn = document.createElement('button');
+            btn.className = 'tab-button';
+            btn.id = `btn-${name}`;
+            btn.innerHTML = `${emoji} ${displayName}`;
+            btn.onclick = () => openTab(name);
+            tabsContainer.appendChild(btn);
+
+            const contentDiv = document.createElement('div');
+            contentDiv.id = name;
+            contentDiv.className = 'tab-content';
+            contentsContainer.appendChild(contentDiv);
+        }
+
+        function renderFiles(files, containerId) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+
+            files.forEach(file => {
+                if (file.name.endsWith('.html') && file.name.toLowerCase() !== 'index.html') {
+                    const link = document.createElement('a');
+                    link.href = containerId === 'Home' ? file.name : `${containerId}/${file.name}`;
+                    link.className = 'app-link';
+                    
+                    let fileIcon = '📄';
+                    const n = file.name.toLowerCase();
+                    if (n.includes('ruleta') || n.includes('wheel')) fileIcon = '🎲';
+                    if (n.includes('quiz')) fileIcon = '📝';
+                    if (n.includes('qr') || n.includes('drive')) fileIcon = '🔳';
+
+                    const cleanName = file.name.replace('.html', '').replace(/-/g, ' ');
+                    link.innerHTML = `<span class="icon">${fileIcon}</span> ${cleanName}`;
+                    container.appendChild(link);
+                }
+            });
+        }
+
+        function openTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+            document.querySelectorAll('.tab-button').forEach(tb => tb.classList.remove('active'));
+            
+            const targetContent = document.getElementById(tabId);
+            const targetBtn = document.getElementById(`btn-${tabId}`);
+            
+            if(targetContent) targetContent.classList.add('active');
+            if(targetBtn) targetBtn.classList.add('active');
+        }
+
+        // --- PROCESADOR EXCLUSIVO DE TU JSON DE NOTAS ---
+        async function cargarYGenerarDiagrama() {
+            const diagramTarget = document.getElementById('diagram-target');
+            const diagramSection = document.getElementById('diagram-section');
+            
+            try {
+                const response = await fetch('vault/_input-output.json');
+                if (!response.ok) throw new Error("No se pudo leer el archivo JSON");
+                
+                const data = await response.json();
+                
+                let mermaidSyntax = "graph LR\n";
+                let inputCounter = 0;
+                let gameCounter = 0;
+
+                if (!data.categorias) return;
+
+                data.categorias.forEach(cat => {
+                    if (cat.inputs) {
+                        cat.inputs.forEach(input => {
+                            inputCounter++;
+                            const inputId = `I${inputCounter}`;
+                            
+                            mermaidSyntax += `    ${inputId}["${input.tipo}"]\n`;
+                            mermaidSyntax += `    style ${inputId} fill:#0366d6,stroke:#024ea4,color:#fff,font-weight:bold\n`;
+
+                            if (input.juegos) {
+                                input.juegos.forEach(juego => {
+                                    gameCounter++;
+                                    const gameId = `G${gameCounter}`;
+                                    
+                                    mermaidSyntax += `    ${inputId} --> ${gameId}("${juego.nombre}")\n`;
+                                    mermaidSyntax += `    style ${gameId} fill:#fff,stroke:#ccc,color:#333\n`;
+                                });
+                            }
+                        });
+                    }
+                });
+
+                if (inputCounter > 0) {
+                    diagramSection.style.display = 'block';
+                    diagramTarget.removeAttribute('data-processed');
+                    diagramTarget.textContent = mermaidSyntax;
+                    
+                    await mermaid.run({ nodes: [diagramTarget] });
+                }
+
+            } catch (err) {
+                console.log("Diagrama en espera (Se mostrará automáticamente en GitHub Pages).");
+                diagramSection.style.display = 'none';
+            }
+        }
+
+        cargarProyectos();
+    </script>
+</body>
+</html>
