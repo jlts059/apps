@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="es"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tile Panel</title>
+    <!-- Librería para generar códigos QR de forma local y limpia -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js">
+                    const urlActual = window.location.href;
+                    new QRCode(document.getElementById("qrcode"), { text: urlActual, width: 80, height: 80 });
+                    new QRCode(document.getElementById("qr-large"), { text: urlActual, width: 240, height: 240 });
+
+                    function abrirQR() { document.getElementById('qr-overlay').style.display = 'flex'; }
+                    function cerrarQR() { document.getElementById('qr-overlay').style.display = 'none'; }
+                </script>
+    <style>
+        :root {
+            --bg-color: #f4f6f9;
+            --text-muted: #7f8c8d;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        /* Configuración del Administrador */
+        #admin-panel {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            max-width: 600px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        input[type="text"], select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background-color: #27ae60;
+        }
+
+        #btn-export {
+            background-color: #e67e22;
+            display: none;
+        }
+
+        #btn-export:hover {
+            background-color: #d35400;
+        }
+
+        /* Contenedor del QR en la esquina superior derecha */
+        #qr-container {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            z-index: 100;
+            width: 100px;
+            height: 100px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #qr-container:hover {
+            transform: scale(1.05);
+        }
+
+        #qrcode img, #qrcode canvas, #qr-large img, #qr-large canvas {
+            display: block;
+            width: 100% !important;
+            height: auto !important;
+            aspect-ratio: 1 / 1 !important;
+        }
+
+        /* QR en pantalla completa (Modal) */
+        #qr-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        #qr-large {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            width: 300px;
+            height: 300px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Grid de Azulejos Autoadaptable con Media Queries */
+        #tiles-grid {
+            display: grid;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 40px auto;
+        }
+
+        @media (orientation: portrait) {
+            #tiles-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (orientation: landscape) {
+            #tiles-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        /* Estilo de los Azulejos - Tamaño aumentado y texto oscuro para contrastar con pasteles */
+        .tile {
+            color: #2c3e50;
+            aspect-ratio: 1 / 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3.8rem;
+            font-weight: bold;
+            border-radius: 16px;
+            text-decoration: none;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .tile:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.12);
+        }
+
+        /* Hueco vacío donde no hay número/letra continuo */
+        .empty-tile {
+            aspect-ratio: 1 / 1;
+        }
+
+        #status-message {
+            font-weight: bold;
+            color: #c0392b;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- BLOQUE ADMINISTRADOR: Se eliminará automáticamente al exportar -->
+    
+
+    <!-- CÓDIGO QR -->
+    <div id="qr-container" onclick="abrirQR()" title="Click para agrandar">
+        <div id="qrcode" title="file:///C:/Users/JL/Desktop/generador-v3.html"><canvas width="80" height="80" style="display: none;"></canvas><img src="data:image/png;base64,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" style="display: block;"></div>
+    </div>
+
+    <!-- MODAL PARA QR AGRANDADO -->
+    <div id="qr-overlay" onclick="cerrarQR()">
+        <div id="qr-large" title="file:///C:/Users/JL/Desktop/generador-v3.html"><canvas width="240" height="240" style="display: none;"></canvas><img src="data:image/png;base64,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" style="display: block;"></div>
+    </div>
+
+    <!-- CUADRÍCULA DE AZULEJOS -->
+    <div id="tiles-grid"><a class="tile" href="https://drive.google.com/file/d/1XF7Lj0d5g7iHpM-TGEA2JWXoENSN6kOc/preview?usp=drivesdk" target="_blank" style="background-color: rgb(241, 225, 177);">1</a><a class="tile" href="https://drive.google.com/file/d/1SRVOUh2GSh3jZR91XFFeI8b5GY8dVaMv/preview?usp=drivesdk" target="_blank" style="background-color: rgb(209, 241, 177);">2</a><a class="tile" href="https://drive.google.com/file/d/19QxImEyFXuaMb2OIqXgiNVtBp26QXKCf/preview?usp=drivesdk" target="_blank" style="background-color: rgb(177, 241, 193);">3</a><a class="tile" href="https://drive.google.com/file/d/1V6LRotsaxTeEaq4ezBj8MwDuiYdGs1G5/preview?usp=drivesdk" target="_blank" style="background-color: rgb(177, 241, 241);">4</a><a class="tile" href="https://drive.google.com/file/d/15d56ugkKfuQ1_6pKFYlue0NZr6-x7gWH/preview?usp=drivesdk" target="_blank" style="background-color: rgb(177, 193, 241);">5</a><a class="tile" href="https://drive.google.com/file/d/1U0FmBRVt2JOa-rfMwhEtS_MwN2TrcD_E/preview?usp=drivesdk" target="_blank" style="background-color: rgb(209, 177, 241);">6</a><a class="tile" href="https://drive.google.com/file/d/1VxQAW61qkcrxl3TM9wnmIsGMKYpeBvDA/preview?usp=drivesdk" target="_blank" style="background-color: rgb(241, 177, 225);">7</a></div>
+
+    <script>
+        const API_KEY = 'AIzaSyBRCdldYI0cb2FQrSGdm4yYVEcYfy8o7bg'; 
+
+        const urlActual = window.location.href;
+        new QRCode(document.getElementById("qrcode"), { text: urlActual, width: 80, height: 80 });
+        new QRCode(document.getElementById("qr-large"), { text: urlActual, width: 240, height: 240 });
+
+        function abrirQR() { document.getElementById('qr-overlay').style.display = 'flex'; }
+        function cerrarQR() { document.getElementById('qr-overlay').style.display = 'none'; }
+
+        function obtenerFolderId(url) {
+            const match = url.match(/folders\/([a-zA-Z0-9-_]+)/);
+            if (match) {
+                return match[1].split('?')[0];
+            }
+            return null;
+        }
+
+        // Función para generar un color pastel agradable variando el matiz (Hue)
+        function generarColorPastel(index, total) {
+            // Repartimos los matices equitativamente en el círculo cromático
+            const hue = (index * (360 / Math.max(total, 8))) % 360;
+            // Saturación ligera (65%) y luminosidad alta (82%) garantizan tonos pastel agradables
+            return `hsl(${hue}, 70%, 82%)`;
+        }
+
+        async function procesarCarpeta() {
+            const urlInput = document.getElementById('drive-url').value;
+            const sequenceType = document.getElementById('sequence-type').value;
+            const folderId = obtenerFolderId(urlInput);
+            const status = document.getElementById('status-message');
+            const grid = document.getElementById('tiles-grid');
+            
+            grid.innerHTML = '';
+            status.innerText = '';
+
+            if (!folderId) {
+                status.style.color = "#c0392b";
+                status.innerText = "Error: El enlace de Google Drive no es válido.";
+                return;
+            }
+
+            if (API_KEY === 'TU_API_KEY_REAL_AQUI' || API_KEY === '') {
+                status.style.color = "#c0392b";
+                status.innerText = "Error: Debes reemplazar 'TU_API_KEY_REAL_AQUI' en la línea 157 por tu clave de Google Cloud.";
+                return;
+            }
+
+            status.style.color = "#27ae60";
+            status.innerText = "Leyendo archivos de Google Drive...";
+
+            const apiUrl = `https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents+and+trashed=false&fields=files(id,name,webViewLink)&key=${API_KEY}`;
+
+            try {
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+
+                if (data.error) {
+                    status.style.color = "#c0392b";
+                    status.innerText = `Error de API: ${data.error.message}. Por favor verifica tu clave.`;
+                    return;
+                }
+
+                if (!data.files || data.files.length === 0) {
+                    status.style.color = "#c0392b";
+                    status.innerText = "No se encontraron archivos o la carpeta no es pública.";
+                    return;
+                }
+
+                let mapeoArchivos = {};
+                let maxIndex = 0;
+
+                data.files.forEach(file => {
+                    let numero = null;
+
+                    if (sequenceType === 'numbers') {
+                        const match = file.name.match(/^0*([1-9][0-9]*)\./);
+                        if (match) {
+                            numero = parseInt(match[1], 10);
+                        }
+                    } else if (sequenceType === 'letters') {
+                        // Busca letras individuales al inicio: "A. Nombre" o "B. Nombre"
+                        const match = file.name.match(/^([A-Z])\./i);
+                        if (match) {
+                            numero = match[1].toUpperCase().charCodeAt(0) - 64; // A=1, B=2, etc.
+                        }
+                    }
+
+                    if (numero !== null && numero > 0) {
+                        if (file.webViewLink) {
+                            mapeoArchivos[numero] = file.webViewLink.replace('/view', '/preview');
+                        } else {
+                            mapeoArchivos[numero] = `https://drive.google.com/file/d/${file.id}/preview`;
+                        }
+                        if (numero > maxIndex) maxIndex = numero;
+                    }
+                });
+
+                if (Object.keys(mapeoArchivos).length === 0) {
+                    status.style.color = "#e67e22";
+                    status.innerText = sequenceType === 'numbers' 
+                        ? "Se encontraron archivos, pero ninguno empieza con número (Ej: '1. Nombre')."
+                        : "Se encontraron archivos, pero ninguno empieza con letra (Ej: 'A. Nombre').";
+                    return;
+                }
+
+                for (let i = 1; i <= maxIndex; i++) {
+                    if (mapeoArchivos[i]) {
+                        const a = document.createElement('a');
+                        a.className = 'tile';
+                        a.href = mapeoArchivos[i];
+                        a.target = '_blank';
+                        
+                        // Determinar etiqueta visible (Número o Letra)
+                        if (sequenceType === 'numbers') {
+                            a.innerText = i;
+                        } else {
+                            a.innerText = String.fromCharCode(i + 64);
+                        }
+                        
+                        // Aplicar color pastel dinámico único para este cuadro
+                        a.style.backgroundColor = generarColorPastel(i, maxIndex);
+                        
+                        grid.appendChild(a);
+                    } else {
+                        const div = document.createElement('div');
+                        div.className = 'empty-tile';
+                        grid.appendChild(div);
+                    }
+                }
+
+                status.style.color = "#27ae60";
+                status.innerText = `¡Hecho! Se han generado los azulejos correctamente.`;
+                document.getElementById('btn-export').style.display = 'inline-block';
+
+            } catch (error) {
+                console.error(error);
+                status.style.color = "#c0392b";
+                status.innerText = "Error de conexión con la API de Google Drive.";
+            }
+        }
+
+        function exportarHTML() {
+            let clonDoc = document.documentElement.cloneNode(true);
+            const titleInput = document.getElementById('doc-title').value.trim() || 'PROYECTO';
+            
+            const adminPanel = clonDoc.querySelector('#admin-panel');
+            if(adminPanel) adminPanel.remove();
+
+            const scriptAdmin = clonDoc.querySelector('script:last-of-type');
+            if(scriptAdmin) {
+                scriptAdmin.text = `
+                    const urlActual = window.location.href;
+                    new QRCode(document.getElementById("qrcode"), { text: urlActual, width: 80, height: 80 });
+                    new QRCode(document.getElementById("qr-large"), { text: urlActual, width: 240, height: 240 });
+
+                    function abrirQR() { document.getElementById('qr-overlay').style.display = 'flex'; }
+                    function cerrarQR() { document.getElementById('qr-overlay').style.display = 'none'; }
+                `;
+            }
+
+            const contenidoHtml = "<!DOCTYPE html>\n" + clonDoc.outerHTML;
+            const blob = new Blob([contenidoHtml], { type: 'text/html' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `tilelinks-${titleInput}.html`;
+            link.click();
+        }
+    </script>
+
+</body></html>
