@@ -19,7 +19,7 @@
         /* Contenedor único para todas las pestañas */
         .tabs-container { margin-bottom: 20px; border-bottom: 2px solid #ddd; padding-bottom: 15px; }
         
-        /* Forzamos que se mantengan en una sola fila compacta con scroll horizontal si faltase espacio */
+        /* Forzamos una sola fila sin saltos de línea */
         .tabs { display: flex; flex-wrap: nowrap; gap: 6px; overflow-x: auto; padding-bottom: 5px; }
         .tab-button {
             padding: 10px 12px; cursor: pointer; border: none; background: #eee;
@@ -112,7 +112,6 @@
         const repoOwner = 'jlts059';
         const repoName = 'apps';
 
-        // Emojis personalizados para tus pestañas principales automáticas
         const tabEmojis = {
             'aleman': '🍺',
             'ingles': '☕',
@@ -122,7 +121,6 @@
             'varios': '📦'
         };
 
-        // Clasificación inteligente y 100% automatizada
         function analizarRuta(path) {
             const pathParts = path.split('/');
             let nombreTab = 'varios';
@@ -131,7 +129,6 @@
             if (pathParts.length > 1) {
                 const rootFolder = pathParts[0].toLowerCase();
                 
-                // Agrupación especial para idiomas (raíz como pestaña, segundo nivel como subgrupo)
                 if (rootFolder === 'aleman' || rootFolder === 'al_') {
                     nombreTab = 'aleman';
                     subGrupo = pathParts[1]; 
@@ -140,10 +137,8 @@
                     nombreTab = 'ingles';
                     subGrupo = pathParts[1];
                 } 
-                // Cualquier otra carpeta raíz se vuelve su propia pestaña
                 else {
                     nombreTab = rootFolder;
-                    // Si además tiene subcarpetas dentro, se vuelven subgrupos collapsibles
                     if (pathParts.length > 2) {
                         subGrupo = pathParts[1];
                     }
@@ -163,17 +158,14 @@
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('menu-wrapper').style.display = 'block';
 
-                // 1. Filtrar archivos HTML válidos (ignorando el index principal)
                 const htmlFiles = items.filter(item => 
                     item.type === 'blob' && 
                     item.path.endsWith('.html') && 
                     !item.path.toLowerCase().endsWith('index.html')
                 );
 
-                // Ordenamos todos los archivos alfabéticamente por su ruta completa
                 htmlFiles.sort((a, b) => a.path.localeCompare(b.path));
 
-                // FASE 1: Descubrir y crear automáticamente los botones de las pestañas reales que existan (en orden A-Z)
                 const listasCreadas = new Set();
                 htmlFiles.forEach(item => {
                     const info = analizarRuta(item.path);
@@ -183,19 +175,14 @@
                     }
                 });
 
-                // 🔥 FASE EXTRA: Crear la pestaña fija "in-out" al final de todo (a la derecha) y completamente en minúsculas
+                // Crear la pestaña fija "in-out" a la derecha del todo
                 createTab('in-out', true); 
 
-                // FASE 2: Inyectar los archivos dentro de sus pestañas
                 htmlFiles.forEach(item => {
                     const info = analizarRuta(item.path);
                     renderFile(item, info.nombreTab, info.subGrupo);
                 });
 
-                // 🔥 FASE INYECCIÓN: El DOM ya cuenta con el contenedor '#in-out', ahora sí inyectamos el diagrama con seguridad
-                await inyectarNotasDesdeTxt();
-
-                // Abrir la primera pestaña generada de forma automática
                 if (listasCreadas.size > 0) {
                     const primeraTab = Array.from(listasCreadas)[0];
                     openTab(primeraTab);
@@ -215,8 +202,6 @@
 
             const cleanKey = name.toLowerCase();
             const emoji = sinEmoji ? '' : (tabEmojis[cleanKey] || '📁 ');
-            
-            // Si es la pestaña in-out la dejamos exactamente en minúsculas como fue definida
             const displayName = (name === 'in-out') ? name : (name.charAt(0).toUpperCase() + name.slice(1).replace(/_/g, ' '));
 
             const btn = document.createElement('button');
@@ -301,21 +286,27 @@
             
             if(targetContent) targetContent.classList.add('active');
             if(targetBtn) targetBtn.classList.add('active');
+
+            // 🔥 SOLUCIÓN DEFINITIVA: Cargar e inyectar el diagrama solo cuando abres activamente la pestaña 'in-out'
+            if (tabId === 'in-out') {
+                inyectarNotasDesdeTxt();
+            }
         }
 
         async function inyectarNotasDesdeTxt() {
             const containerInOut = document.getElementById('in-out');
             if (!containerInOut) return;
 
+            // Mostrar un indicador rápido de que está leyendo el archivo
+            containerInOut.innerHTML = `<div style="text-align:center; color:#666; padding:20px;">Generando diagrama...</div>`;
+
             try {
-                // Ruta corregida a la carpeta "varios"
                 const response = await fetch('varios/input-output.txt?v=' + new Date().getTime());
                 if (!response.ok) throw new Error("No disponible");
                 
                 const textoRaw = await response.text();
                 
                 if (textoRaw.trim().length > 0) {
-                    // Estructura limpia inyectada de manera precisa en el contenedor de la pestaña in-out
                     containerInOut.innerHTML = `
                         <div class="diagram-container">
                             <div class="diagram-title">📊 Type of Input & Output (Mis Notas)</div>
@@ -324,10 +315,13 @@
                             </div>
                         </div>
                     `;
+                    // Forzar a Mermaid a renderizar el texto recién inyectado
                     await mermaid.run();
+                } else {
+                    containerInOut.innerHTML = `<div style="text-align:center; color:#666; padding:20px;">⚠️ El archivo varios/input-output.txt está vacío.</div>`;
                 }
             } catch (err) {
-                console.log("Esperando archivo separado válido o entorno online.");
+                console.error(err);
                 containerInOut.innerHTML = `<div style="text-align:center; color:#666; padding:20px;">⚠️ No se pudo cargar el diagrama desde varios/input-output.txt</div>`;
             }
         }
