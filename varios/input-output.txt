@@ -3,13 +3,14 @@ graph LR
     I2["📖 Word + Definition"]
     I3["🔤 Sentences"]
     I4["🔤 Single Word"]
+    I5["🔤 Others"]
 
     %% Conexiones de la Categoría 1 (Quiz -> Azul)
     I1 --> G1("👥 Plenary Game with Colour Cards")
-    I1 --> G2("👤 Individual Game")
-    I1 --> G3("⚔️ Versus Game")
+    I1 --> G2("👤 Quiz Individual")
+    I1 --> G3("⚔️ Quiz Versus")
     
-    %% Conexiones de la Categoría 2 (Word + Def -> Verde/Esmeralda)
+    %% Conexiones de la Categoría 2 (Word + Def -> Verde)
     I2 --> O1("🗂️ Flashcard")
     I2 --> O2("🏃 Vocab Race")
     I2 --> O3("🕳️ Gap Fill")
@@ -20,9 +21,10 @@ graph LR
     I3 --> S3("🎵 Unjumble Canción")
 
     %% Conexiones de la Categoría 4 (Single Word -> Naranja)
-    I4 --> P1("🗂️ Flashcards")
-    I4 --> P2("🏃 Vocab Race")
-    I4 --> P3("🎲 Roulette")
+    I4 --> P1("🎲 Roulette")
+
+    %% Conexiones de la Categoría 5 (Others -> Rosa/Fucsia)
+    I5 --> R1("A ver qué se me ocurre...")
 
     %% ==========================================
     %% ESTILOS CATEGORÍA 1: QUIZ (Azul)
@@ -53,5 +55,9 @@ graph LR
     %% ==========================================
     style I4 fill:#fff,stroke:#d97706,stroke-width:4px,color:#333,font-weight:bold
     style P1 fill:#fff,stroke:#d97706,stroke-width:1.5px,color:#333
-    style P2 fill:#fff,stroke:#d97706,stroke-width:1.5px,color:#333
-    style P3 fill:#fff,stroke:#d97706,stroke-width:1.5px,color:#333
+
+    %% ==========================================
+    %% ESTILOS CATEGORÍA 5: OTHERS (Rosa/Magenta)
+    %% ==========================================
+    style I5 fill:#fff,stroke:#b91c1c,stroke-width:4px,color:#333,font-weight:bold
+    style R1 fill:#fff,stroke:#b91c1c,stroke-width:1.5px,color:#333
