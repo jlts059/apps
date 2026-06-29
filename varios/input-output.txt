@@ -1,19 +1,19 @@
 graph LR
     I1["📝 Quiz (6 columns)"]
-    I2["📖 Word + Definition"]
+    I2["📖 Pairs or Word + Definition"]
     I3["🔤 Sentences"]
     I4["🔤 Single Word"]
     I5["🔤 Others"]
 
     %% Conexiones de la Categoría 1 (Quiz -> Azul)
     I1 --> G1("👥 Plenary Game with Colour Cards")
-    I1 --> G2("👤 Quiz Individual")
-    I1 --> G3("⚔️ Quiz Versus")
+    I1 --> G2("👤 Quiz Individual & ⚔️ Versus")
     
     %% Conexiones de la Categoría 2 (Word + Def -> Verde)
     I2 --> O1("🗂️ Flashcard")
     I2 --> O2("🏃 Vocab Race")
     I2 --> O3("🕳️ Gap Fill")
+    I2 --> O4("👤 Quiz Individual & ⚔️ Versus")
 
     %% Conexiones de la Categoría 3 (Sentences -> Lila)
     I3 --> S1("🕳️ Gaps")
@@ -24,7 +24,8 @@ graph LR
     I4 --> P1("🎲 Roulette")
 
     %% Conexiones de la Categoría 5 (Others -> Rosa/Fucsia)
-    I5 --> R1("A ver qué se me ocurre...")
+    I5 --> R1("Manipulatives")
+    I5 --> R2("Match (tengo que probarla)")
 
     %% ==========================================
     %% ESTILOS CATEGORÍA 1: QUIZ (Azul)
