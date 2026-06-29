@@ -33,7 +33,6 @@ graph LR
     style I1 fill:#fff,stroke:#0366d6,stroke-width:4px,color:#333,font-weight:bold
     style G1 fill:#fff,stroke:#0366d6,stroke-width:1.5px,color:#333
     style G2 fill:#fff,stroke:#0366d6,stroke-width:1.5px,color:#333
-    style G3 fill:#fff,stroke:#0366d6,stroke-width:1.5px,color:#333
 
     %% ==========================================
     %% ESTILOS CATEGORÍA 2: WORD + DEF (Verde)
@@ -42,6 +41,7 @@ graph LR
     style O1 fill:#fff,stroke:#2e7d32,stroke-width:1.5px,color:#333
     style O2 fill:#fff,stroke:#2e7d32,stroke-width:1.5px,color:#333
     style O3 fill:#fff,stroke:#2e7d32,stroke-width:1.5px,color:#333
+    style O4 fill:#fff,stroke:#2e7d32,stroke-width:1.5px,color:#333
 
     %% ==========================================
     %% ESTILOS CATEGORÍA 3: SENTENCES (Lila)
@@ -61,4 +61,5 @@ graph LR
     %% ESTILOS CATEGORÍA 5: OTHERS (Rosa/Magenta)
     %% ==========================================
     style I5 fill:#fff,stroke:#b91c1c,stroke-width:4px,color:#333,font-weight:bold
+    style R1 fill:#fff,stroke:#b91c1c,stroke-width:1.5px,color:#333
     style R1 fill:#fff,stroke:#b91c1c,stroke-width:1.5px,color:#333

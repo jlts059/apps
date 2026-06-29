@@ -308,11 +308,10 @@
                 if (textoRaw.trim().length > 0) {
                     containerInOut.innerHTML = `
                         <div class="diagram-container">
-                            <div class="diagram-title">📊 Type of Input & Output (Mis Notas)</div>
-                            <div class="mermaid-wrapper">
-                                <div id="diagram-target" class="mermaid">${textoRaw}</div>
-                            </div>
-                        </div>
+            <div class="mermaid-wrapper">
+                <div id="diagram-target" class="mermaid">${textoRaw}</div>
+            </div>
+        </div>
                     `;
                     // Forzar a Mermaid a renderizar el nodo recién creado de forma asíncrona y segura
                     await mermaid.run();
