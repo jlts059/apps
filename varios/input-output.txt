@@ -1,7 +1,8 @@
 graph LR
     I1["📝 Quiz (6 columns)"]
     I2["📖 Word + Definition"]
-    I3["🔤 Single Word"]
+    I3["🔤 Sentences"]
+    I4["🔤 Single Word"]
 
     %% Conexiones de la Categoría 1 (Quiz -> Azul)
     I1 --> G1("👥 Plenary Game with Colour Cards")
@@ -12,32 +13,45 @@ graph LR
     I2 --> O1("🗂️ Flashcard")
     I2 --> O2("🏃 Vocab Race")
     I2 --> O3("🕳️ Gap Fill")
-    
-    I3 --> R1("🎲 Roulette")
+
+    %% Conexiones de la Categoría 3 (Sentences -> Lila)
+    I3 --> S1("🕳️ Gaps")
+    I3 --> S2("🔀 Unjumble")
+    I3 --> S3("🎵 Unjumble Canción")
+
+    %% Conexiones de la Categoría 4 (Single Word -> Naranja)
+    I4 --> P1("🗂️ Flashcards")
+    I4 --> P2("🏃 Vocab Race")
+    I4 --> P3("🎲 Roulette")
 
     %% ==========================================
     %% ESTILOS CATEGORÍA 1: QUIZ (Azul)
     %% ==========================================
-    %% Caja principal: Fondo blanco, borde azul de 4px de grosor
     style I1 fill:#fff,stroke:#0366d6,stroke-width:4px,color:#333,font-weight:bold
-    %% Cajas hijas: Fondo blanco, borde azul fino de 1.5px
     style G1 fill:#fff,stroke:#0366d6,stroke-width:1.5px,color:#333
     style G2 fill:#fff,stroke:#0366d6,stroke-width:1.5px,color:#333
+    style G3 fill:#fff,stroke:#0366d6,stroke-width:1.5px,color:#333
 
     %% ==========================================
     %% ESTILOS CATEGORÍA 2: WORD + DEF (Verde)
     %% ==========================================
-    %% Caja principal: Fondo blanco, borde verde de 4px de grosor
     style I2 fill:#fff,stroke:#2e7d32,stroke-width:4px,color:#333,font-weight:bold
-    %% Cajas hijas: Fondo blanco, borde verde fino de 1.5px
     style O1 fill:#fff,stroke:#2e7d32,stroke-width:1.5px,color:#333
     style O2 fill:#fff,stroke:#2e7d32,stroke-width:1.5px,color:#333
     style O3 fill:#fff,stroke:#2e7d32,stroke-width:1.5px,color:#333
 
     %% ==========================================
-    %% ESTILOS CATEGORÍA 3: SINGLE WORD (Naranja/Lila)
+    %% ESTILOS CATEGORÍA 3: SENTENCES (Lila)
     %% ==========================================
-    %% Caja principal: Fondo blanco, borde lila de 4px de grosor
     style I3 fill:#fff,stroke:#6f42c1,stroke-width:4px,color:#333,font-weight:bold
-    %% Cajas hijas: Fondo blanco, borde lila fino de 1.5px
-    style R1 fill:#fff,stroke:#6f42c1,stroke-width:1.5px,color:#333
+    style S1 fill:#fff,stroke:#6f42c1,stroke-width:1.5px,color:#333
+    style S2 fill:#fff,stroke:#6f42c1,stroke-width:1.5px,color:#333
+    style S3 fill:#fff,stroke:#6f42c1,stroke-width:1.5px,color:#333
+
+    %% ==========================================
+    %% ESTILOS CATEGORÍA 4: SINGLE WORD (Naranja)
+    %% ==========================================
+    style I4 fill:#fff,stroke:#d97706,stroke-width:4px,color:#333,font-weight:bold
+    style P1 fill:#fff,stroke:#d97706,stroke-width:1.5px,color:#333
+    style P2 fill:#fff,stroke:#d97706,stroke-width:1.5px,color:#333
+    style P3 fill:#fff,stroke:#d97706,stroke-width:1.5px,color:#333
