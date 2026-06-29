@@ -19,10 +19,11 @@
         /* Contenedor único para todas las pestañas */
         .tabs-container { margin-bottom: 20px; border-bottom: 2px solid #ddd; padding-bottom: 15px; }
         
-        .tabs { display: flex; flex-wrap: wrap; gap: 8px; }
+        .tabs { display: flex; flex-wrap: nowrap; gap: 6px; overflow-x: auto; }
         .tab-button {
-            padding: 12px 24px; cursor: pointer; border: none; background: #eee;
+            padding: 12px 12px; cursor: pointer; border: none; background: #eee;
             border-radius: 8px; font-weight: bold; transition: 0.3s; font-size: 0.95em;
+            white-space: nowrap;
         }
         .tab-button.active { background: #0366d6; color: white; }
         .tab-button:hover:not(.active) { background: #ddd; }
@@ -73,7 +74,7 @@
 
         /* Estilos para tu panel visual de Notas */
         .diagram-container {
-            margin-top: 40px;
+            margin-top: 10px;
             padding: 20px;
             background: white;
             border: 1px solid #eee;
@@ -100,19 +101,11 @@
     
     <div id="loading">Conectando con tu repositorio...</div>
     
-    <!-- Barra única de pestañas principales automáticas -->
     <div class="tabs-container" id="menu-wrapper" style="display: none;">
         <div id="main-tabs" class="tabs"></div>
     </div>
 
     <div id="contents-container"></div>
-
-    <div id="diagram-section" class="diagram-container" style="display: none;">
-        <div class="diagram-title">📊 Type of Input & Output (Mis Notas)</div>
-        <div class="mermaid-wrapper">
-            <div id="diagram-target"></div>
-        </div>
-    </div>
 
     <script>
         const repoOwner = 'jlts059';
@@ -159,8 +152,6 @@
         }
 
         async function cargarProyectos() {
-            inyectarNotasDesdeTxt();
-            
             try {
                 const url = `https://api.github.com/repos/${repoOwner}/${repoName}/git/trees/main?recursive=1`;
                 const response = await fetch(url);
@@ -178,7 +169,7 @@
                     !item.path.toLowerCase().endsWith('index.html')
                 );
 
-                // 🔥 CORRECCIÓN DE ORDEN: Ordenamos todos los archivos alfabéticamente por su ruta completa
+                // Ordenamos todos los archivos alfabéticamente por su ruta completa
                 htmlFiles.sort((a, b) => a.path.localeCompare(b.path));
 
                 // FASE 1: Descubrir y crear automáticamente los botones de las pestañas reales que existan (en orden A-Z)
@@ -191,13 +182,19 @@
                     }
                 });
 
+                // 🔥 FASE EXTRA: Crear la pestaña fija "in-out" al final de todo (a la derecha) y forzar minúsculas
+                createTab('in-out', true); 
+
                 // FASE 2: Inyectar los archivos dentro de sus pestañas (se meterán ordenados y con colapsibles cerrados)
                 htmlFiles.forEach(item => {
                     const info = analizarRuta(item.path);
                     renderFile(item, info.nombreTab, info.subGrupo);
                 });
 
-                // Abrir la primera pestaña que se haya generado de forma automática
+                // 🔥 FASE INYECCIÓN: Ahora que el DOM está completamente renderizado, cargamos el txt de Mermaid de forma segura
+                await inyectarNotasDesdeTxt();
+
+                // Abrir la primera pestaña generada de forma automática
                 if (listasCreadas.size > 0) {
                     const primeraTab = Array.from(listasCreadas)[0];
                     openTab(primeraTab);
@@ -209,20 +206,22 @@
             }
         }
 
-        function createTab(name) {
+        function createTab(name, sinEmoji = false) {
             const tabsContainer = document.getElementById('main-tabs');
             const contentsContainer = document.getElementById('contents-container');
             
             if (document.getElementById(`btn-${name}`)) return;
 
             const cleanKey = name.toLowerCase();
-            const emoji = tabEmojis[cleanKey] || '📁';
-            const displayName = name.charAt(0).toUpperCase() + name.slice(1).replace(/_/g, ' ');
+            const emoji = sinEmoji ? '' : (tabEmojis[cleanKey] || '📁 ');
+            
+            // Si es la pestaña in-out la dejamos en minúsculas, para las demás aplicamos capitalización
+            const displayName = (name === 'in-out') ? name : (name.charAt(0).toUpperCase() + name.slice(1).replace(/_/g, ' '));
 
             const btn = document.createElement('button');
             btn.className = 'tab-button';
             btn.id = `btn-${name}`;
-            btn.innerHTML = `${emoji} ${displayName}`;
+            btn.innerHTML = `${emoji}${displayName}`;
             btn.onclick = () => openTab(name);
             tabsContainer.appendChild(btn);
 
@@ -307,24 +306,30 @@
         }
 
         async function inyectarNotasDesdeTxt() {
-            const target = document.getElementById('diagram-target');
-            const section = document.getElementById('diagram-section');
-            
+            const containerInOut = document.getElementById('in-out');
+            if (!containerInOut) return;
+
             try {
-                const response = await fetch('vault/input-output.txt?v=' + new Date().getTime());
+                const response = await fetch('varios/input-output.txt?v=' + new Date().getTime());
                 if (!response.ok) throw new Error("No disponible");
                 
                 const textoRaw = await response.text();
                 
                 if (textoRaw.trim().length > 0) {
-                    section.style.display = 'block';
-                    target.className = "mermaid";
-                    target.textContent = textoRaw;
+                    // Re-inyectamos la estructura del diagrama limpia dentro de la pestaña activa
+                    containerInOut.innerHTML = `
+                        <div class="diagram-container">
+                            <div class="diagram-title">📊 Type of Input & Output (Mis Notas)</div>
+                            <div class="mermaid-wrapper">
+                                <div id="diagram-target" class="mermaid">${textoRaw}</div>
+                            </div>
+                        </div>
+                    `;
                     await mermaid.run();
                 }
             } catch (err) {
                 console.log("Esperando archivo separado válido o entorno online.");
-                section.style.display = 'none';
+                containerInOut.innerHTML = `<div style="text-align:center; color:#666; padding:20px;">⚠️ No se pudo cargar el diagrama desde varios/input-output.txt</div>`;
             }
         }
 
