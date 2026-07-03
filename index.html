@@ -261,7 +261,10 @@
 
         function renderLinkElement(file, parentTarget) {
             const link = document.createElement('a');
-            link.href = file.path;
+            
+            // CAMBIO APLICADO AQUÍ: Fuerza una ruta absoluta unida a tu dominio de GitHub Pages
+            link.href = `https://${repoOwner}.github.io/${repoName}/${file.path}`;
+            
             link.className = 'app-link';
             
             const fileName = file.path.split('/').pop();
@@ -287,7 +290,6 @@
             if(targetContent) targetContent.classList.add('active');
             if(targetBtn) targetBtn.classList.add('active');
 
-            // 🔥 SOLUCIÓN AL ERROR: Renderizamos el diagrama únicamente cuando entras a la pestaña 'in-out'
             if (tabId === 'in-out') {
                 inyectarNotasDesdeTxt();
             }
@@ -313,7 +315,6 @@
             </div>
         </div>
                     `;
-                    // Forzar a Mermaid a renderizar el nodo recién creado de forma asíncrona y segura
                     await mermaid.run();
                 } else {
                     containerInOut.innerHTML = `<div style="text-align:center; color:#666; padding:20px;">⚠️ El archivo varios/input-output.txt está vacío.</div>`;
