@@ -65,18 +65,19 @@
         .qr-large-dest { display: flex; justify-content: center; margin-top: 15px; }
         .qr-large-dest img { width: 200px !important; height: 200px !important; }
 
-        .game-board-area { display: flex; flex-direction: column; gap: 24px; margin: 24px 0; align-items: center; width: 100%; }
-        .word-group { display: flex; flex-direction: column; gap: 10px; width: 100%; align-items: center; }
+        /* Contenedores de juego principales y estructuras multi-palabra centraditas */
+        .game-board-area { display: flex; flex-direction: column; gap: 20px; margin: 24px 0; align-items: center; }
+        .word-group { display: flex; flex-direction: column; gap: 8px; width: 100%; align-items: center; }
         
         .letters-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; padding: 6px; border-radius: 8px; width: fit-content; }
         .pool-row { background: #f8fafc; border: 1px dashed #cbd5e1; min-height: 54px; }
         .target-row { background: #f1f5f9; border: 2px solid #e2e8f0; min-height: 54px; }
 
-        .target-relative-container { position: relative; display: flex; justify-content: center; align-items: center; width: 100%; }
-
-        .inline-feedback { position: absolute; left: calc(50% + (var(--row-width, 0px) / 2) + 12px); font-size: 2rem; font-weight: bold; width: 30px; text-align: left; line-height: 1; display: inline-block; }
-        .inline-feedback.tick { color: var(--success-green); }
-        .inline-feedback.cross { color: var(--danger-red); }
+        /* Estructura alineada horizontalmente para fila de destino y feedback lateral */
+        .target-align-wrapper { display: flex; align-items: center; justify-content: center; gap: 12px; position: relative; width: 100%; }
+        .inline-feedback { font-size: 2rem; font-weight: bold; width: 30px; text-align: left; line-height: 1; position: absolute; right: calc(50% - (fit-content)/2 - 40px); margin-left: auto; }
+        /* Ajuste dinámico de posición relativa simple al contenedor centrado */
+        .target-align-wrapper .inline-feedback { position: relative; right: auto; left: 0; width: 24px; }
 
         .letter-block { width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: bold; border-radius: 6px; border: 2px solid; user-select: none; cursor: pointer; transition: all 0.15s; text-transform: uppercase; }
         
@@ -86,6 +87,9 @@
         .letter-block.status-correct { background-color: var(--success-bg) !important; border-color: var(--success-green) !important; color: var(--success-green) !important; }
         .letter-block.status-incorrect { background-color: var(--danger-bg) !important; border-color: var(--danger-red) !important; color: var(--danger-red) !important; }
         .letter-block.empty-slot { background-color: #e2e8f0; border-color: #cbd5e1; color: transparent; border-style: dashed; }
+
+        .inline-feedback.tick { color: var(--success-green); }
+        .inline-feedback.cross { color: var(--danger-red); }
 
         .score-summary { text-align: center; margin-bottom: 24px; }
         .score-ratio { font-size: 3rem; font-weight: 800; color: #111827; line-height: 1; }
@@ -121,7 +125,6 @@
             .header-center { font-size: 1.1rem; }
             .letter-block { width: 36px; height: 36px; font-size: 1rem; }
             .btn-group { grid-template-columns: 1fr; }
-            .inline-feedback { position: static; margin-top: 4px; text-align: center; width: 100%; }
         }
     </style>
 </head>
@@ -133,7 +136,7 @@
                 <input type="text" id="game-title" placeholder="Ej. Vocabulario Inglés - Unidad 1">
             </div>
             <div class="form-group">
-                <textarea id="game-data" placeholder="Perro, Dog&#10;Gato, Cat&#10;Una hora y media, One hour and a half"></textarea>
+                <textarea id="game-data" placeholder="Perro, Dog&#10;Gato, Cat&#10;Buenos días, Good morning"></textarea>
             </div>
             <div class="btn-group">
                 <button class="btn-green" onclick="startGame(false)">GO</button>
@@ -157,8 +160,7 @@
 
             <div class="game-board-area" id="dynamic-board-container"></div>
 
-            <div class="btn-group" style="grid-template-columns: repeat(4, 1fr);" id="game-control-buttons">
-                <button class="btn-secondary" style="background:#4b5563" onclick="goBackToHome()">↩ Volver</button>
+            <div class="btn-group" style="grid-template-columns: repeat(3, 1fr);">
                 <button class="btn-success" onclick="manualCheck()">OK?</button>
                 <button class="btn-secondary" onclick="passItem()">PASS</button>
                 <button class="btn-primary" style="background:#ef4444" onclick="stopAndScore()">STOP & SCORE</button>
@@ -198,6 +200,7 @@
         let timerInterval = null;
         let secondsElapsed = 0;
         
+        // Estructuras divididas por sub-palabras para soportar frases múltiples
         let wordsData = []; 
         let activeOrangeWordIdx = null;
         let activeOrangeLetterIdx = null;
@@ -213,6 +216,7 @@
             return rawText.split('\n').map(line => {
                 let parts = line.includes('\t') ? line.split('\t') : line.split(',');
                 if (parts.length >= 2) {
+                    // Mantener espacios internos pero limpiar extremos, formateando la respuesta limpia
                     return { clue: parts[0].trim(), answer: parts[1].trim().toUpperCase().replace(/\s+/g, ' ') };
                 }
                 return null;
@@ -246,13 +250,6 @@
             }, 1000);
         }
 
-        function goBackToHome() {
-            clearInterval(timerInterval);
-            document.getElementById("game-screen").classList.add('hidden');
-            document.getElementById("game-watermark").classList.add('hidden');
-            document.getElementById("start-screen").classList.remove('hidden');
-        }
-
         function loadItem() {
             activeOrangeWordIdx = null;
             activeOrangeLetterIdx = null;
@@ -262,6 +259,7 @@
             document.getElementById("item-counter").innerText = `${currentIndex + 1} / ${items.length}`;
             document.getElementById("clue-display").innerText = currentItem.clue;
 
+            // Dividir la respuesta completa por palabras individuales
             const words = currentItem.answer.split(' ');
             wordsData = words.map(word => {
                 let chars = word.split('');
@@ -286,6 +284,7 @@
                 const wordGroup = document.createElement("div");
                 wordGroup.className = "word-group";
 
+                // Fila Pool de letras desordenadas (azul)
                 const poolRow = document.createElement("div");
                 poolRow.className = "letters-container pool-row";
                 wordObj.pool.forEach(item => {
@@ -298,8 +297,9 @@
                     }
                 });
 
-                const relativeWrap = document.createElement("div");
-                relativeWrap.className = "target-relative-container";
+                // Envoltura horizontal para Target row y feedback alineado a su derecha
+                const alignWrapper = document.createElement("div");
+                alignWrapper.className = "target-align-wrapper";
 
                 const targetRow = document.createElement("div");
                 targetRow.className = "letters-container target-row";
@@ -325,18 +325,12 @@
                 feedbackSpan.className = "inline-feedback";
                 feedbackSpan.id = `feedback-${wIdx}`;
 
-                relativeWrap.appendChild(targetRow);
-                relativeWrap.appendChild(feedbackSpan);
+                alignWrapper.appendChild(targetRow);
+                alignWrapper.appendChild(feedbackSpan);
 
                 wordGroup.appendChild(poolRow);
-                wordGroup.appendChild(relativeWrap);
+                wordGroup.appendChild(alignWrapper);
                 container.appendChild(wordGroup);
-
-                setTimeout(() => {
-                    if(targetRow) {
-                        relativeWrap.style.setProperty('--row-width', targetRow.offsetWidth + 'px');
-                    }
-                }, 0);
             });
         }
 
@@ -374,6 +368,7 @@
                 activeOrangeLetterIdx = null;
                 renderMultiBoards();
             } else if (activeOrangeWordIdx === wIdx) {
+                // Intercambio solo permitido dentro de la misma palabra
                 let temp = wordsData[wIdx].target[lIdx];
                 wordsData[wIdx].target[lIdx] = wordsData[wIdx].target[activeOrangeLetterIdx];
                 wordsData[wIdx].target[activeOrangeLetterIdx] = temp;
@@ -382,6 +377,7 @@
                 renderMultiBoards();
                 checkAutoValidation();
             } else {
+                // Si pulsa sobre otra palabra distinta reinicia la selección naranja
                 activeOrangeWordIdx = wIdx;
                 activeOrangeLetterIdx = lIdx;
                 renderMultiBoards();
@@ -394,6 +390,8 @@
 
         function checkAutoValidation() {
             if (!isTotalComplete()) return;
+
+            // Verificar si toda la frase completa coincide exactamente
             let totalMatch = wordsData.every(w => w.target.map(l => l.char).join('') === w.originalWord);
 
             if (totalMatch) {
@@ -408,10 +406,12 @@
                 });
                 setTimeout(() => { currentIndex++; loadItem(); }, 900);
             }
+            // Importante: Si no coincide por completo, NO se auto-corrige nada. Queda en espera del botón "OK?".
         }
 
         function manualCheck() {
             if (!isTotalComplete()) return;
+
             let totalMatch = true;
 
             wordsData.forEach((w, wIdx) => {
@@ -485,11 +485,12 @@
         function showQR() { document.getElementById("qr-modal").classList.remove('hidden'); }
         function closeModals() { document.getElementById("info-modal").classList.add('hidden'); document.getElementById("qr-modal").classList.add('hidden'); }
 
-        // --- EXPORTACIÓN (Sin el botón Volver y con ajuste de columnas grid) ---
+        // --- EXPORTACIÓN E INYECCIÓN DE CÓDIGO LIMPIO ---
         function exportHTML() {
             const titleValue = document.getElementById("game-title").value.trim() || "Anagrama";
             const parsedItems = parseData();
             if(parsedItems.length === 0) return alert("Ingresa datos primero.");
+
             const styles = document.getElementsByTagName("style")[0].innerHTML;
 
             const outputHTML = `<!DOCTYPE html>
@@ -505,10 +506,12 @@
     <div class="container">
         <div id="start-screen" class="screen" style="text-align:center;">
             <h1 style="margin-bottom:30px; font-weight:700; color:#111827;">${titleValue}</h1>
+            
             <div style="display:flex; justify-content:center; align-items:center; gap:20px; margin-bottom:30px;">
                 <button class="icon-btn" onclick="showInfo()">ℹ️</button>
                 <div id="qr-container" class="qr-box" onclick="showQR()"></div>
             </div>
+
             <div class="btn-group" style="grid-template-columns: 1fr 1fr; max-width:400px; margin:0 auto;">
                 <button class="btn-green" onclick="startGame(false)">GO</button>
                 <button class="btn-purple" onclick="startGame(true)">SHUFFLE</button>
@@ -527,8 +530,9 @@
                     <div id="qr-container-game" class="qr-box" onclick="showQR()"></div>
                 </div>
             </div>
+
             <div class="game-board-area" id="dynamic-board-container"></div>
-            
+
             <div class="btn-group" style="grid-template-columns: repeat(3, 1fr);">
                 <button class="btn-success" onclick="manualCheck()">OK?</button>
                 <button class="btn-secondary" onclick="passItem()">PASS</button>
@@ -545,6 +549,7 @@
             <button class="btn-primary" style="margin-top:20px; width:100%;" onclick="resetApp()">Restart</button>
         </div>
     </div>
+
     <div id="game-watermark" class="watermark hidden">${titleValue}</div>
 
     <div id="info-modal" class="modal hidden">
@@ -553,6 +558,7 @@
             <p style="font-size:0.95rem; line-height:1.5;">Toca una letra para colocarla. Al marcar una letra colocada pasará a naranja; toca otra letra para intercambiarlas o pulsa de nuevo para devolverla a la caja original.</p>
         </div>
     </div>
+
     <div id="qr-modal" class="modal hidden">
         <div class="modal-content" style="text-align:center;">
             <button class="close-modal" onclick="closeModals()">✕</button>
@@ -638,8 +644,8 @@
                     }
                 });
 
-                const relativeWrap = document.createElement("div");
-                relativeWrap.className = "target-relative-container";
+                const alignWrapper = document.createElement("div");
+                alignWrapper.className = "target-align-wrapper";
 
                 const targetRow = document.createElement("div");
                 targetRow.className = "letters-container target-row";
@@ -692,17 +698,11 @@
                 feedbackSpan.className = "inline-feedback";
                 feedbackSpan.id = "feedback-" + wIdx;
 
-                relativeWrap.appendChild(targetRow);
-                relativeWrap.appendChild(feedbackSpan);
+                alignWrapper.appendChild(targetRow);
+                alignWrapper.appendChild(feedbackSpan);
                 wordGroup.appendChild(poolRow);
-                wordGroup.appendChild(relativeWrap);
+                wordGroup.appendChild(alignWrapper);
                 container.appendChild(wordGroup);
-
-                setTimeout(() => {
-                    if(targetRow) {
-                        relativeWrap.style.setProperty('--row-width', targetRow.offsetWidth + 'px');
-                    }
-                }, 0);
             });
         }
 

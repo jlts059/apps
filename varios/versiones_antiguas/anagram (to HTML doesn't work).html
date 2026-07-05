@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Unjumble Game</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --border-blue: #3b82f6;
+            --bg-letter: #eff6ff;
+            --text-dark: #1e293b;
+            
+            --success-green: #22c55e;
+            --success-bg: #f0fdf4;
+            --danger-red: #ef4444;
+            --danger-bg: #fef2f2;
+            --orange-border: #f97316;
+            --orange-bg: #ffedd5;
+            --hint-blue: #2563eb;
+            
+            --btn-blue: #3b82f6;
+            --btn-grey: #64748b;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #e2e8f0;
+            margin: 0;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .game-card {
+            width: 100%;
+            max-width: 900px;
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            box-sizing: border-box;
+        }
+
+        .setup-container h2 { margin-top: 0; color: var(--text-dark); }
+        textarea {
+            width: 100%; height: 140px; padding: 12px;
+            border: 1px solid #cbd5e1; border-radius: 8px;
+            font-family: monospace; box-sizing: border-box; margin-bottom: 15px;
+            resize: vertical;
+        }
+        
+        .setup-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 5px;
+        }
+        
+        .primary-btn {
+            background: var(--btn-blue); color: white; border: none;
+            padding: 12px 24px; font-weight: bold; border-radius: 8px; cursor: pointer;
+        }
+        .secondary-btn {
+            background: #a855f7; color: white; border: none;
+            padding: 12px 24px; font-weight: bold; border-radius: 8px; cursor: pointer;
+        }
+        .save-btn {
+            background: #22c55e; color: white; border: none;
+            padding: 12px 24px; font-weight: bold; border-radius: 8px; cursor: pointer;
+        }
+
+        .top-bar {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            align-items: center;
+            gap: 15px;
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .meta-indicators {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .counter-badge {
+            background: #f1f5f9; border: 1px solid #cbd5e1;
+            padding: 6px 15px; border-radius: 20px; font-weight: bold; color: #475569;
+            font-size: 0.95rem;
+            text-align: center;
+            min-width: 65px;
+        }
+        
+        .stopwatch-badge {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            color: #94a3b8;
+        }
+
+        .clue-text { font-size: 1.5rem; font-weight: 600; color: var(--text-dark); text-align: center; }
+        .right-actions { display: flex; align-items: center; gap: 12px; }
+        .info-icon { font-size: 1.4rem; cursor: pointer; user-select: none; }
+        .qr-code-mini { width: 40px; height: 40px; border: 1px solid #cbd5e1; border-radius: 4px; padding: 2px; box-sizing: border-box; background: white; cursor: pointer; }
+        .qr-code-mini img { width: 100%; height: 100%; object-fit: contain; }
+
+        .board-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            width: 100%;
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .words-row-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .box-container {
+            background: #f8fafc;
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 12px 14px;
+            display: inline-flex;
+            flex-wrap: nowrap; 
+            gap: 6px;           
+            box-sizing: border-box;
+        }
+        
+        .target-container {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 12px 14px;
+            display: inline-flex;
+            flex-wrap: nowrap; 
+            gap: 6px;
+            box-sizing: border-box;
+        }
+
+        .letter-block {
+            flex: 0 0 auto;
+            padding: 8px 0;
+            width: 44px;
+            height: 24px;
+            border: 1px solid var(--border-blue);
+            background: var(--bg-letter);
+            color: var(--text-dark);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.15rem;
+            font-weight: bold;
+            cursor: pointer;
+            user-select: none;
+            box-shadow: 0 2px 4px rgba(59,130,246,0.03);
+            box-sizing: content-box;
+            text-align: center;
+        }
+
+        .letter-block.orange-active {
+            background-color: var(--orange-bg) !important;
+            border-color: var(--orange-border) !important;
+            color: var(--orange-border) !important;
+        }
+        .letter-block.status-correct {
+            background-color: var(--success-bg) !important;
+            border-color: var(--success-green) !important;
+            color: var(--success-green) !important;
+        }
+        .letter-block.status-hint {
+            background-color: #eff6ff !important;
+            border-color: var(--hint-blue) !important;
+            color: var(--hint-blue) !important;
+        }
+        .letter-block.status-incorrect {
+            background-color: var(--danger-bg) !important;
+            border-color: var(--danger-red) !important;
+            color: var(--danger-red) !important;
+        }
+
+        .validation-feedback {
+            position: absolute;
+            right: 0;
+            bottom: 4px;
+            font-size: 2.2rem;
+            font-weight: bold;
+            width: 35px;
+            text-align: center;
+        }
+        .validation-feedback.tick { color: var(--success-green); }
+        .validation-feedback.cross { color: var(--danger-red); }
+
+        .action-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+        .action-btn { color: white; border: none; padding: 14px; font-size: 1.1rem; font-weight: bold; border-radius: 8px; cursor: pointer; text-transform: uppercase; }
+        .btn-ok { background-color: #22c55e; }
+        .btn-pass { background-color: var(--btn-blue); }
+        .btn-stop { background-color: #ef4444; }
+        .back-btn { width: 100%; background-color: #475569; color: white; border: none; padding: 12px; font-size: 1rem; font-weight: bold; border-radius: 8px; cursor: pointer; }
+
+        .home-container { text-align: center; padding: 30px 0; }
+        .home-container h2 { color: var(--text-dark); margin-bottom: 30px; font-size: 1.8rem; }
+        .home-actions { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
+        .home-btn { padding: 16px 40px; font-size: 1.3rem; font-weight: bold; color: white; border: none; border-radius: 10px; cursor: pointer; text-transform: uppercase; min-width: 160px; }
+        .btn-go { background-color: #22c55e; }
+        .btn-shuffle { background-color: #a855f7; }
+
+        .results-container { text-align: center; padding: 10px 0; }
+        .results-score { font-size: 3.5rem; font-weight: 800; color: #0f172a; margin: 15px 0 25px 0; }
+        .result-item-box {
+            display: flex;
+            align-items: center;
+            background: var(--success-bg);
+            border: 1px solid #e2e8f0;
+            border-left: 6px solid var(--success-green);
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+            text-align: left;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--success-green);
+        }
+        .result-item-box.failed { background: var(--danger-bg); border-left-color: var(--danger-red); color: var(--danger-red); }
+        .result-item-box .icon { margin-right: 10px; font-size: 1.4rem; }
+        
+        .results-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 25px; }
+        .results-actions .btn { padding: 16px; border-radius: 10px; font-size: 1.1rem; font-weight: bold; color: white; border: none; cursor: pointer; }
+        .btn-restart { background-color: #3b82f6; }
+        .btn-new { background-color: #64748b; }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .modal-box { background: white; padding: 30px 24px 24px 24px; border-radius: 12px; max-width: 420px; width: 90%; text-align: center; position: relative; }
+        .modal-close { position: absolute; top: 10px; right: 14px; font-size: 1.4rem; cursor: pointer; color: #64748b; }
+        
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<div class="game-card">
+    <div id="homeView" class="home-container hidden">
+        <h2>Juego de Anagramas Generado</h2>
+        <div class="home-actions">
+            <button class="home-btn btn-go" onclick="startExportedGame(false)">GO</button>
+            <button class="home-btn btn-shuffle" onclick="startExportedGame(true)">SHUFFLE</button>
+        </div>
+    </div>
+
+    <div id="setupView" class="setup-container">
+        <h2>Configurar juego de Anagramas</h2>
+        <textarea id="dataInput" placeholder="Pega tus datos aquí...&#10;Pista uno&#10;palabra&#10;Pista dos&#10;varias palabras"></textarea>
+        <div class="setup-actions">
+            <button class="primary-btn" onclick="initializeGame(false)">Generate Game</button>
+            <button class="secondary-btn" onclick="initializeGame(true)">Try with Shuffle</button>
+            <button class="save-btn" onclick="saveToHtml()">💾 HTML</button>
+        </div>
+    </div>
+
+    <div id="gameView" class="hidden">
+        <div class="top-bar">
+            <div class="meta-indicators">
+                <div id="itemCounter" class="counter-badge">1 / 1</div>
+                <div id="stopwatchDisplay" class="counter-badge stopwatch-badge">00:00</div>
+            </div>
+            <div id="clueText" class="clue-text">Cargando...</div>
+            <div class="right-actions">
+                <span class="info-icon" onclick="openInstructions()">ℹ️</span>
+                <div id="qrMiniContainer" class="qr-code-mini" onclick="openQR()"></div>
+            </div>
+        </div>
+
+        <div class="board-wrapper">
+            <div id="jumbledWrapper" class="words-row-container"></div>
+            <div id="targetWrapper" class="words-row-container"></div>
+            <div id="validationFeedback" class="validation-feedback"></div>
+        </div>
+
+        <div class="action-row">
+            <button class="action-btn btn-ok" onclick="checkAnswer()">OK?</button>
+            <button class="action-btn btn-pass" onclick="passItem()">Pass</button>
+            <button class="action-btn btn-stop" onclick="stopAndScore()">Stop & Score</button>
+        </div>
+        <button id="backBtn" class="back-btn" onclick="returnToSetup()">← Volver</button>
+    </div>
+
+    <div id="resultsView" class="hidden">
+        <div class="results-container">
+            <div id="resultsScoreDisplay" class="results-score">0 / 0</div>
+            <div id="resultsList"></div>
+            <div class="results-actions">
+                <button class="btn btn-restart" onclick="restartCurrentGame()">Reiniciar Juego</button>
+                <button id="newGameBtn" class="btn btn-new" onclick="returnToSetup()">Crear Nuevo Juego</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="infoModal" class="modal-overlay hidden">
+    <div class="modal-box">
+        <span class="modal-close" onclick="closeModals()">&times;</span>
+        <p style="text-align:left; line-height:1.5; margin:0;">Toca una letra para colocarla. Al marcar una letra colocada pasará a naranja; toca otra letra para intercambiarlas o pulsa de nuevo para devolverla a la caja original.</p>
+    </div>
+</div>
+
+<div id="qrModal" class="modal-overlay hidden">
+    <div class="modal-box"><span class="modal-close" onclick="closeModals()">&times;</span><div id="qrCodeExpanded" style="display:flex; justify-content:center; margin-top:10px;"></div></div>
+</div>
+
+<script>
+    window.isExportedMode = false;
+    window.embeddedData = "";
+
+    let gameItems = [];
+    let currentIndex = 0;
+    let activeOrangeGlobalId = null; 
+    let scoreCount = 0;
+    let qrGenerated = false;
+    
+    let startTime = 0;
+    let timerInterval = null;
+
+    function startTimer() {
+        clearInterval(timerInterval);
+        startTime = Date.now();
+        timerInterval = setInterval(updateTimer, 1000);
+    }
+    function stopTimer() { clearInterval(timerInterval); }
+    function updateTimer() {
+        const delta = Date.now() - startTime;
+        const totalSeconds = Math.floor(delta / 1000);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        document.getElementById('stopwatchDisplay').textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+
+    function shuffleArray(arr) {
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+
+    function generateAnagram(word) {
+        let letters = word.toUpperCase().split('');
+        if (letters.length <= 1) return letters;
+        let attempts = 0;
+        while (attempts < 15) {
+            shuffleArray(letters);
+            if (letters.join('') !== word.toUpperCase()) break;
+            attempts++;
+        }
+        return letters;
+    }
+
+    function initializeGame(shouldShuffle) {
+        const rawText = document.getElementById('dataInput').value.trim();
+        if (!rawText) return alert('Inserta datos válidos.');
+        
+        gameItems = [];
+        const lines = rawText.split('\n');
+        lines.forEach(line => {
+            if (!line.trim()) return;
+            let parts = [];
+            if (line.includes('\t')) {
+                parts = line.split('\t');
+            } else {
+                let commaIndex = line.lastIndexOf(',');
+                if (commaIndex !== -1) {
+                    parts = [line.slice(0, commaIndex), line.slice(commaIndex + 1)];
+                } else {
+                    parts = [line];
+                }
+            }
+            if (parts.length >= 2 && parts[1].trim()) {
+                gameItems.push({ clue: parts[0].trim(), originalWord: parts[1].trim().toUpperCase(), userSuccess: false });
+            }
+        });
+
+        if (gameItems.length === 0) return alert('No se encontraron filas válidas.');
+        
+        if (shouldShuffle) {
+            shuffleArray(gameItems);
+        }
+        
+        currentIndex = 0; scoreCount = 0;
+        
+        if (document.getElementById('setupView')) document.getElementById('setupView').classList.add('hidden');
+        document.getElementById('resultsView').classList.add('hidden');
+        document.getElementById('gameView').classList.remove('hidden');
+        
+        generateQRCodes();
+        startTimer();
+        loadItem(currentIndex);
+    }
+
+    function generateQRCodes() {
+        if (!qrGenerated) {
+            document.getElementById('qrMiniContainer').innerHTML = '';
+            document.getElementById('qrCodeExpanded').innerHTML = '';
+            new QRCode(document.getElementById('qrMiniContainer'), { text: window.location.href, width: 42, height: 42 });
+            new QRCode(document.getElementById('qrCodeExpanded'), { text: window.location.href, width: 220, height: 220 });
+            qrGenerated = true;
+        }
+    }
+
+    function loadItem(index) {
+        if (index >= gameItems.length) { stopAndScore(); return; }
+        
+        activeOrangeGlobalId = null;
+        const item = gameItems[index];
+        
+        document.getElementById('validationFeedback').textContent = '';
+        document.getElementById('validationFeedback').className = 'validation-feedback';
+        document.getElementById('itemCounter').textContent = `${index + 1} / ${gameItems.length}`;
+        document.getElementById('clueText').textContent = item.clue;
+
+        const jumbledWrapper = document.getElementById('jumbledWrapper');
+        const targetWrapper = document.getElementById('targetWrapper');
+        jumbledWrapper.innerHTML = '';
+        targetWrapper.innerHTML = '';
+
+        const words = item.originalWord.split(' ');
+        let globalBlockId = 0;
+        let globalSlotId = 0;
+
+        words.forEach((word) => {
+            if (!word) return;
+
+            const poolBox = document.createElement('div');
+            poolBox.className = 'box-container';
+            const jumbledLetters = generateAnagram(word);
+
+            jumbledLetters.forEach(char => {
+                const block = document.createElement('div');
+                block.className = 'letter-block';
+                block.textContent = char;
+                block.dataset.globalBlockId = globalBlockId;
+                
+                block.onclick = () => handlePoolClick(block, block.dataset.globalBlockId);
+                poolBox.appendChild(block);
+                globalBlockId++;
+            });
+            jumbledWrapper.appendChild(poolBox);
+
+            const targetBox = document.createElement('div');
+            targetBox.className = 'target-container';
+
+            for (let i = 0; i < word.length; i++) {
+                const slot = document.createElement('div');
+                slot.className = 'letter-block';
+                slot.style.borderColor = '#cbd5e1'; 
+                slot.style.backgroundColor = '#ffffff';
+                slot.textContent = ''; 
+                slot.dataset.globalSlotId = globalSlotId;
+                
+                slot.onclick = () => handleSlotClick(slot, slot.dataset.globalSlotId);
+                targetBox.appendChild(slot);
+                globalSlotId++;
+            }
+            targetWrapper.appendChild(targetBox);
+        });
+    }
+
+    function handlePoolClick(block, bId) {
+        clearVisualColors();
+
+        if (activeOrangeGlobalId !== null) {
+            const activeSlot = document.querySelector(`[data-global-slot-id='${activeOrangeGlobalId}']`);
+            
+            if (block.dataset.placedInSlot !== undefined) {
+                const originSlotId = block.dataset.placedInSlot;
+                const originSlot = document.querySelector(`[data-global-slot-id='${originSlotId}']`);
+                const tempText = activeSlot.textContent;
+                const tempId = activeSlot.dataset.containingBlockId;
+
+                swapSlots(activeSlot, originSlot, block, tempText, tempId);
+            } else {
+                if (activeSlot.dataset.containingBlockId !== undefined) {
+                    const oldBlock = document.querySelector(`[data-global-block-id='${activeSlot.dataset.containingBlockId}']`);
+                    if (oldBlock) oldBlock.style.visibility = 'visible';
+                }
+                placeBlock(block, activeSlot, bId);
+            }
+            activeSlot.classList.remove('orange-active');
+            activeOrangeGlobalId = null;
+            checkAutoValidation();
+            return;
+        }
+
+        if (block.dataset.placedInSlot !== undefined) {
+            const slotId = block.dataset.placedInSlot;
+            const slot = document.querySelector(`[data-global-slot-id='${slotId}']`);
+            
+            if (activeOrangeGlobalId === slotId) {
+                returnToPool(block, slot);
+                activeOrangeGlobalId = null;
+            } else {
+                document.querySelectorAll('#targetWrapper .letter-block').forEach(b => b.classList.remove('orange-active'));
+                slot.classList.add('orange-active');
+                activeOrangeGlobalId = slotId;
+            }
+            return;
+        }
+
+        const allSlots = document.querySelectorAll('#targetWrapper .letter-block');
+        for (let slot of allSlots) {
+            if (!slot.dataset.containingBlockId) {
+                placeBlock(block, slot, bId);
+                break;
+            }
+        }
+        checkAutoValidation();
+    }
+
+    function handleSlotClick(slot, sId) {
+        clearVisualColors();
+        const boundId = slot.dataset.containingBlockId;
+
+        if (activeOrangeGlobalId !== null) {
+            if (activeOrangeGlobalId === sId) {
+                if (boundId !== undefined) {
+                    const block = document.querySelector(`[data-global-block-id='${boundId}']`);
+                    if (block) returnToPool(block, slot);
+                }
+                activeOrangeGlobalId = null;
+            } else {
+                const originSlot = document.querySelector(`[data-global-slot-id='${activeOrangeGlobalId}']`);
+                const originBlockId = originSlot.dataset.containingBlockId;
+                
+                if (originBlockId !== undefined) {
+                    const originBlock = document.querySelector(`[data-global-block-id='${originBlockId}']`);
+                    const tempText = slot.textContent;
+                    const tempId = slot.dataset.containingBlockId;
+
+                    placeBlock(originBlock, slot, originBlockId);
+
+                    if (tempId !== undefined) {
+                        const targetBlock = document.querySelector(`[data-global-block-id='${tempId}']`);
+                        placeBlock(targetBlock, originSlot, tempId);
+                    } else {
+                        originSlot.textContent = '';
+                        delete originSlot.dataset.containingBlockId;
+                    }
+                }
+                originSlot.classList.remove('orange-active');
+                activeOrangeGlobalId = null;
+                checkAutoValidation();
+            }
+        } else if (boundId !== undefined) {
+            document.querySelectorAll('#targetWrapper .letter-block').forEach(b => b.classList.remove('orange-active'));
+            slot.classList.add('orange-active');
+            activeOrangeGlobalId = sId;
+        }
+    }
+
+    function placeBlock(block, slot, bId) {
+        slot.textContent = block.textContent;
+        slot.dataset.containingBlockId = bId;
+        block.dataset.placedInSlot = slot.dataset.globalSlotId;
+        block.style.visibility = 'hidden';
+    }
+
+    function swapSlots(activeSlot, originSlot, block, tempText, tempId) {
+        activeSlot.textContent = block.textContent;
+        activeSlot.dataset.containingBlockId = block.dataset.globalBlockId;
+        block.dataset.placedInSlot = activeSlot.dataset.globalSlotId;
+
+        originSlot.textContent = tempText;
+        originSlot.dataset.containingBlockId = tempId;
+        const oldBlock = document.querySelector(`[data-global-block-id='${tempId}']`);
+        if (oldBlock) oldBlock.dataset.placedInSlot = originSlot.dataset.globalSlotId;
+    }
+
+    function returnToPool(block, slot) {
+        slot.textContent = '';
+        delete slot.dataset.containingBlockId;
+        slot.classList.remove('orange-active');
+        delete block.dataset.placedInSlot;
+        block.style.visibility = 'visible';
+    }
+
+    function clearVisualColors() {
+        document.querySelectorAll('#targetWrapper .letter-block').forEach(slot => {
+            slot.classList.remove('status-correct', 'status-hint', 'status-incorrect');
+        });
+    }
+
+    function checkAutoValidation() {
+        const slots = document.querySelectorAll('#targetWrapper .letter-block');
+        let allFilled = true;
+        slots.forEach(slot => {
+            if (!slot.dataset.containingBlockId) allFilled = false;
+        });
+        if (allFilled) checkAnswer();
+    }
+
+    function checkAnswer() {
+        const item = gameItems[currentIndex];
+        const cleanOriginal = item.originalWord.replace(/\s+/g, ''); 
+        const slots = document.querySelectorAll('#targetWrapper .letter-block');
+        
+        let constructedWord = '';
+        let correctMap = [];
+
+        slots.forEach((slot, index) => {
+            const char = slot.textContent || '';
+            constructedWord += char;
+            correctMap.push(char === cleanOriginal[index]);
+        });
+
+        let currentSuccess = true;
+        slots.forEach((slot, index) => {
+            slot.classList.remove('orange-active');
+
+            if (correctMap[index]) {
+                slot.className = 'letter-block status-correct';
+            } else {
+                currentSuccess = false;
+                const leftOk = (index > 0 && correctMap[index - 1]);
+                const rightOk = (index < correctMap.length - 1 && correctMap[index + 1]);
+
+                if (leftOk || rightOk) {
+                    slot.className = 'letter-block status-hint';
+                } else {
+                    slot.className = 'letter-block status-incorrect';
+                }
+            }
+        });
+
+        const feedback = document.getElementById('validationFeedback');
+        if (constructedWord === cleanOriginal && currentSuccess) {
+            feedback.textContent = '✓';
+            feedback.className = 'validation-feedback tick';
+            item.userSuccess = true;
+            scoreCount++;
+            setTimeout(() => { currentIndex++; loadItem(currentIndex); }, 900);
+        } else {
+            feedback.textContent = '✕';
+            feedback.className = 'validation-feedback cross';
+        }
+    }
+
+    function passItem() {
+        gameItems[currentIndex].userSuccess = false;
+        currentIndex++;
+        loadItem(currentIndex);
+    }
+
+    function stopAndScore() {
+        stopTimer();
+        document.getElementById('gameView').classList.add('hidden');
+        document.getElementById('resultsScoreDisplay').textContent = `${scoreCount} / ${gameItems.length}`;
+        
+        const container = document.getElementById('resultsList');
+        container.innerHTML = '';
+
+        gameItems.forEach(item => {
+            const box = document.createElement('div');
+            box.className = `result-item-box ${item.userSuccess ? '' : 'failed'}`;
+            box.innerHTML = `
+                <span class="icon">${item.userSuccess ? '✓' : '✕'}</span>
+                <span>${item.originalWord.toLowerCase()}</span>
+            `;
+            container.appendChild(box);
+        });
+
+        document.getElementById('resultsView').classList.remove('hidden');
+    }
+
+    function restartCurrentGame() {
+        currentIndex = 0; scoreCount = 0;
+        gameItems.forEach(i => i.userSuccess = false);
+        document.getElementById('resultsView').classList.add('hidden');
+        document.getElementById('gameView').classList.remove('hidden');
+        startTimer();
+        loadItem(currentIndex);
+    }
+
+    function returnToSetup() {
+        stopTimer();
+        document.getElementById('gameView').classList.add('hidden');
+        document.getElementById('resultsView').classList.add('hidden');
+        if (window.isExportedMode) {
+            document.getElementById('homeView').classList.remove('hidden');
+        } else {
+            if(document.getElementById('setupView')) document.getElementById('setupView').classList.remove('hidden');
+        }
+    }
+
+    function openInstructions() { document.getElementById('infoModal').classList.remove('hidden'); }
+    function openQR() { document.getElementById('qrModal').classList.remove('hidden'); }
+    function closeModals() { document.getElementById('infoModal').classList.add('hidden'); document.getElementById('qrModal').classList.add('hidden'); }
+
+    function saveToHtml() {
+        const rawText = document.getElementById('dataInput').value.trim();
+        if (!rawText) return alert('Inserta datos antes de empaquetar.');
+
+        let docSource = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+        
+        const setupScript = "<script>" +
+            "window.isExportedMode = true;" +
+            "window.embeddedData = " + JSON.stringify(rawText) + ";" +
+            "if(document.getElementById('setupView')) document.getElementById('setupView').remove();" +
+            "if(document.getElementById('backBtn')) document.getElementById('backBtn').remove();" +
+            "if(document.getElementById('newGameBtn')) document.getElementById('newGameBtn').remove();" +
+            "document.getElementById('homeView').classList.remove('hidden');" +
+            "generateQRCodes();" +
+            "</" + "script>";
+        
+        docSource = docSource.replace('</body>', setupScript + '\n</body>');
+
+        const blob = new Blob([docSource], { type: 'text/html;charset=utf-8' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'anagram_game.html';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    function startExportedGame(shouldShuffle) {
+        document.getElementById('dataInput').value = window.embeddedData;
+        initializeGame(shouldShuffle);
+        document.getElementById('homeView').classList.add('hidden');
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        if (window.isExportedMode && window.embeddedData) {
+            if(document.getElementById('setupView')) document.getElementById('setupView').remove();
+            document.getElementById('homeView').classList.remove('hidden');
+            generateQRCodes();
+        }
+    });
+</script>
+</body>
+</html>
