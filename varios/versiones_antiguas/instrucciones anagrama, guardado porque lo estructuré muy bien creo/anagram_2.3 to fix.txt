@@ -1,0 +1,14 @@
+pequeño cambio:
+
+
+
+que la parte a rellenar esté centrada y alineada con la parte donde están las letras desordenada en azul
+
+
+
+cuando las letras no son puestas en el orden correcto y se llenan todos los huecos, no habrá correcciones automáticas hasta que el jugador pulse "OK?"
+
+
+
+si el item a reconstruir tiene más de una palabra, las letras apareceran desordenadas pero agrupadas por palabra, como en la segunda imagen 
+

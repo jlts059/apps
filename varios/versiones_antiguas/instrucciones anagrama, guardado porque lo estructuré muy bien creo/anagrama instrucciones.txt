@@ -1,0 +1,87 @@
+Quiero que me crees código html
+
+Es un generador de juegos de ANAGRAMA
+
+En la pantalla de inicio hay: 
+
+- una input box para pegar el título del juego, que aparecerá más tarde en el juego abajo a la izquierda como un watermark
+- una input box donde pegaré dos columnas de una hoja de cálculo o términos separados por una coma. Siempre binomios
+- tres botones: GO, SHUFFLE y HTML (con un emoji de disquete)
+	GO y SHUFFLE comienzan el juego
+	HTML genera un nuevo archivo html. Explicaré qué contiene más tarde
+Don't include any text and titles outside the inputboxes
+Colours for the buttons: GO goes in green, shuffle in purple, HTML in blue
+
+En la pantalla de juego hay:
+
+- primera fila a la izquierda: 
+	un contador de items X / Y que va avanzando cuando vamos avanzando
+	un cronómetro debajo que avanza. el color del cronómetro es más discreto (gris)
+- primera fila centrado: el primer item de cada binomio, el tamaño de la letra es similar a las de abajo pero la fuente es negra
+- primera fila derecha: 
+	el emoji cuadrado azul de información "ℹ️". Al hacer click, sale este pop-up: "Toca una letra para colocarla. Al marcar una letra colocada pasará a naranja; toca otra letra para intercambiarlas o pulsa de nuevo para devolverla a la caja original."
+	un código QR que llevará a la URL que esté activa. Será pequeñito, algo más grande que el emoji. Al clicar, se agrandará como un pop-up
+- segunda fila centrado: las letras del segundo item del binomio, desordenadas, cada una en un cuadrito azul
+- tercera fila centrado. cuadrados vacíos para poner las letras
+- cuarta fila centrados: tres botones: OK? PASS y STOP & SCORE
+	OK? verifica si las letras están en el orden correcto
+	PASS pasa al siguiente item. Los items ignorados volveran al final
+	STOP & SCORE para el juego y presenta los resultados
+
+Comportamiento del juego:
+	
+Las letras desordenadas están en una "pool" en azul. Usa esto como inspiración:
+
+        }
+        .letter-block.status-hint {
+            background-color: #eff6ff !important;
+            border-color: var(--hint-blue) !important;
+            color: var(--hint-blue) !important;
+
+Así se comportan:
+- al tocar una, salta al primer cuadrado vacío y quedarán ahí, negro sobre blanco 
+- al marcar una letra que ya está colocada pasará a naranja. Usa esto como inspiración:
+
+        .letter-block.orange-active {
+            background-color: var(--orange-bg) !important;
+            border-color: var(--orange-border) !important;
+            color: var(--orange-border) !important;
+
+	si se toca otra letra, intercambian sus posiciones
+	si se toca de nuevo se devuelve a la pool
+- si se toca un cuadrado vacío y luego una letra de la pool, la letra salta a ese cuadrado
+
+Correcciones:
+- Si las letras se reordenan correctamente, aparecerá un tick verde a la derecha y se pasará al siguiente item automáticamente
+- Si no se reordenan correctamente no pasará nada; el jugador tiene que clickar en "OK?" para que se verifique su respuesta
+
+	Al verificar la respuesta, aparecerá una cruz roja. Usa esto como inspiración para el tick y la cruz:
+
+        .validation-feedback.tick { color: var(--success-green); }
+        .validation-feedback.cross { color: var(--danger-red); }
+
+	Las letras colocadas aparecerán en colores distintos según si son correctas o no. Usa esto como inspiración
+       
+        .letter-block.status-correct {
+            background-color: var(--success-bg) !important;
+            border-color: var(--success-green) !important;
+            color: var(--success-green) !important;
+
+
+Pagina de Resultados
+Al terminar los items o clicar en STOP & SCORE, aparecerá una lista de los items completados correctamente con un tick verde al inicio. Los items no completados aparecen en azul.
+No text or title. Include just the number of items completed in this format "X/Y" and below, smaller font, the time needed with no labels, just the time
+Add a "restart" button that starts the game again. 
+(aquí prefiero lo de la barra verde, pero no sé cómo será)
+
+El boton "to HTML":
+Este botón genera un archivo html llamado "anagram-XXXX", donde XXXX es el título del juego. Al abrirlo, la pantalla de inicio contiene:
+-El boton de informacion y el código QR expandable
+-Botones GO y SHUFFLE (los dos inician el juego, pero SHUFFLE randomiza los items). Nada más. 
+
+Crea un código lo más "lean" posible. Los juegos se jugaran en ordenador a veces pero casi siempre móvil, así que el formato debe adaptarse a horizontal y vertical	
+
+
+
+
+

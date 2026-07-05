@@ -1,0 +1,25 @@
+pequeños cambios:
+
+
+
+en lugar de esto "✕ Incorrecto" o correcto, usa sólo una cruz o tick que aparece a la derecha de las letras pero en la misma línea
+
+
+
+para las correcciones, las letras que están en el sitio correcto deben aparecer en verde y las que no en rojo.
+
+
+
+elimina la letra "s" tan rara que aparece al lado del tiempo "s01:32"
+
+
+
+en los resultados, presenta los items con dos puntos para separarlos, así:
+
+
+
+✓ hola: adios
+
+
+
+el primer término en negro, el segundo en verde

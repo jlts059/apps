@@ -1,0 +1,30 @@
+Resultados" screen
+
+get rid of all text above. include just the number of items completed in this format "X/Y" and below, smaller font, the time needed with no labels, just the time
+
+
+
+correct answers. use a format similar to the one in the attached screenshot
+
+non completed items. show the answer in blue
+
+
+
+add a "restart" button to go back to the home screen
+
+
+
+Home Screen
+
+elminate all text and titles outside the inputboxes
+
+colours for the buttons: GO goes in green, shuffle in purple, HTML in blue
+
+
+
+Game
+
+the clue or first item in each pair goes in black.
+
+use this emoji "ℹ️" 
+
