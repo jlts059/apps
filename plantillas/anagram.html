@@ -65,13 +65,11 @@
         .qr-large-dest { display: flex; justify-content: center; margin-top: 15px; }
         .qr-large-dest img { width: 200px !important; height: 200px !important; }
 
-        /* MODIFICADO: Permite que múltiples palabras compartan fila si son cortas */
         .game-board-area { display: flex; flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 24px; margin: 24px 0; align-items: flex-start; width: 100%; }
         .word-group { display: flex; flex-direction: column; gap: 10px; align-items: center; max-width: 100%; }
         
-        /* MODIFICADO: flex-wrap cambiado a nowrap para que NUNCA se parta una palabra */
         .letters-container { display: flex; flex-wrap: nowrap; justify-content: center; gap: 6px; padding: 6px; border-radius: 8px; width: fit-content; max-width: 100%; }
-        .pool-row { background: #f8fafc; border: 1px dashed #cbd5e1; min-height: 54px; }
+        .pool-row { background: #f8fafc; border: 1px dashed #cbd5e1; min-height: 54px; cursor: pointer; }
         .target-row { background: #f1f5f9; border: 2px solid #e2e8f0; min-height: 54px; }
 
         .target-relative-container { position: relative; display: flex; justify-content: center; align-items: center; width: 100%; }
@@ -80,7 +78,6 @@
         .inline-feedback.tick { color: var(--success-green); }
         .inline-feedback.cross { color: var(--danger-red); }
 
-        /* MODIFICADO: Tamaño responsivo fluido con clamp para pantallas estrechas */
         .letter-block { width: clamp(28px, 7vw, 42px); height: clamp(28px, 7vw, 42px); display: flex; align-items: center; justify-content: center; font-size: clamp(0.9rem, 4vw, 1.2rem); font-weight: bold; border-radius: 6px; border: 2px solid; user-select: none; cursor: pointer; transition: all 0.15s; text-transform: uppercase; }
         
         .letter-block.status-hint { background-color: #eff6ff !important; border-color: var(--hint-blue) !important; color: var(--hint-blue) !important; }
@@ -123,7 +120,6 @@
             .game-header { grid-template-columns: auto 1fr auto; }
             .header-center { font-size: 1.1rem; }
             .btn-group { grid-template-columns: 1fr; }
-            /* MODIFICADO: Cambiado a flex-direction column para evitar que aplaste la fila de letras */
             .target-relative-container { flex-direction: column; }
             .inline-feedback { position: static; margin-top: 4px; text-align: center; width: 100%; left: auto; }
         }
@@ -184,7 +180,7 @@
     <div id="info-modal" class="modal hidden">
         <div class="modal-content">
             <button class="close-modal" onclick="closeModals()">✕</button>
-            <p style="font-size:0.95rem; line-height:1.5;">Toca una letra para colocarla. Al marcar una letra colocada pasará a naranja; toca otra letra para intercambiarlas o pulsa de nuevo para devolverla a la caja original.</p>
+            <p style="font-size:0.95rem; line-height:1.5;">Toca una letra para colocarla en el siguiente hueco libre. Pica en una letra ya colocada para seleccionarla (si vuelves a pulsar se de-selecciona); una vez seleccionada (se pone naranja), toca otro destino válido (otra letra, un hueco o el cajón de sastre) para moverla o intercambiarla. También puedes pulsar un hueco vacío y luego una letra para enviarla allí.</p>
         </div>
     </div>
 
@@ -211,13 +207,18 @@
             new QRCode(document.getElementById("qr-large"), { text: window.location.href, width: 200, height: 200 });
         };
 
+        // Función auxiliar para convertir a mayúsculas respetando la ß
+        function safeUpperCase(str) {
+            return str.split('').map(char => char === 'ß' ? 'ß' : char.toUpperCase()).join('');
+        }
+
         function parseData() {
             const rawText = document.getElementById("game-data").value.trim();
             if (!rawText) return [];
             return rawText.split('\n').map(line => {
                 let parts = line.includes('\t') ? line.split('\t') : line.split(',');
                 if (parts.length >= 2) {
-                    return { clue: parts[0].trim(), answer: parts[1].trim().toUpperCase().replace(/\s+/g, ' ') };
+                    return { clue: parts[0].trim(), answer: safeUpperCase(parts[1].trim()).replace(/\s+/g, ' ') };
                 }
                 return null;
             }).filter(item => item !== null);
@@ -292,12 +293,14 @@
 
                 const poolRow = document.createElement("div");
                 poolRow.className = "letters-container pool-row";
+                poolRow.onclick = () => handlePoolRowClick(wIdx);
+                
                 wordObj.pool.forEach(item => {
                     if (item.active) {
                         const block = document.createElement("div");
                         block.className = "letter-block status-hint";
                         block.innerText = item.char;
-                        block.onclick = () => handlePoolClick(wIdx, item);
+                        block.onclick = (e) => handlePoolClick(wIdx, item, e);
                         poolRow.appendChild(block);
                     }
                 });
@@ -313,6 +316,9 @@
                     const block = document.createElement("div");
                     if (item === null) {
                         block.className = "letter-block empty-slot";
+                        if (activeOrangeWordIdx === wIdx && activeOrangeLetterIdx === lIdx) {
+                            block.classList.add("orange-active");
+                        }
                         block.onclick = () => handleTargetEmptyClick(wIdx, lIdx);
                     } else {
                         block.className = "letter-block status-placed";
@@ -344,40 +350,79 @@
             });
         }
 
-        function handlePoolClick(wIdx, poolItem) {
-            let emptyIdx = wordsData[wIdx].target.indexOf(null);
-            if (emptyIdx !== -1) {
-                wordsData[wIdx].target[emptyIdx] = { id: poolItem.id, char: poolItem.char };
+        function handlePoolClick(wIdx, poolItem, event) {
+            if (event) event.stopPropagation();
+
+            if (activeOrangeWordIdx === wIdx && activeOrangeLetterIdx !== null && wordsData[wIdx].target[activeOrangeLetterIdx] === null) {
+                wordsData[wIdx].target[activeOrangeLetterIdx] = { id: poolItem.id, char: poolItem.char };
                 poolItem.active = false;
+                activeOrangeWordIdx = null;
+                activeOrangeLetterIdx = null;
                 renderMultiBoards();
                 checkAutoValidation();
+            } 
+            else if (activeOrangeWordIdx === wIdx && activeOrangeLetterIdx !== null && wordsData[wIdx].target[activeOrangeLetterIdx] !== null) {
+                handlePoolRowClick(wIdx);
+            } 
+            else {
+                let emptyIdx = wordsData[wIdx].target.indexOf(null);
+                if (emptyIdx !== -1) {
+                    wordsData[wIdx].target[emptyIdx] = { id: poolItem.id, char: poolItem.char };
+                    poolItem.active = false;
+                    renderMultiBoards();
+                    checkAutoValidation();
+                }
+            }
+        }
+
+        function handlePoolRowClick(wIdx) {
+            if (activeOrangeWordIdx === wIdx && activeOrangeLetterIdx !== null && wordsData[wIdx].target[activeOrangeLetterIdx] !== null) {
+                let targetItem = wordsData[wIdx].target[activeOrangeLetterIdx];
+                let poolItem = wordsData[wIdx].pool.find(p => p.id === targetItem.id);
+                if (poolItem) poolItem.active = true;
+                wordsData[wIdx].target[activeOrangeLetterIdx] = null;
+                activeOrangeWordIdx = null;
+                activeOrangeLetterIdx = null;
+                renderMultiBoards();
             }
         }
 
         function handleTargetEmptyClick(wIdx, lIdx) {
-            if (activeOrangeWordIdx === wIdx && activeOrangeLetterIdx !== null) {
+            if (activeOrangeWordIdx === wIdx && activeOrangeLetterIdx === lIdx) {
+                activeOrangeWordIdx = null;
+                activeOrangeLetterIdx = null;
+                renderMultiBoards();
+            } 
+            else if (activeOrangeWordIdx === wIdx && activeOrangeLetterIdx !== null && wordsData[wIdx].target[activeOrangeLetterIdx] !== null) {
                 wordsData[wIdx].target[lIdx] = wordsData[wIdx].target[activeOrangeLetterIdx];
                 wordsData[wIdx].target[activeOrangeLetterIdx] = null;
                 activeOrangeWordIdx = null;
                 activeOrangeLetterIdx = null;
                 renderMultiBoards();
                 checkAutoValidation();
+            } 
+            else {
+                activeOrangeWordIdx = wIdx;
+                activeOrangeLetterIdx = lIdx;
+                renderMultiBoards();
             }
         }
 
         function handleTargetFilledClick(wIdx, lIdx) {
-            if (activeOrangeWordIdx === null) {
-                activeOrangeWordIdx = wIdx;
-                activeOrangeLetterIdx = lIdx;
+            if (activeOrangeWordIdx === wIdx && activeOrangeLetterIdx === lIdx) {
+                activeOrangeWordIdx = null;
+                activeOrangeLetterIdx = null;
                 renderMultiBoards();
-            } else if (activeOrangeWordIdx === wIdx && activeOrangeLetterIdx === lIdx) {
-                let poolItem = wordsData[wIdx].pool.find(p => p.id === wordsData[wIdx].target[lIdx].id);
-                if (poolItem) poolItem.active = true;
+            } 
+            else if (activeOrangeWordIdx === wIdx && activeOrangeLetterIdx !== null && wordsData[wIdx].target[activeOrangeLetterIdx] === null) {
+                wordsData[wIdx].target[activeOrangeLetterIdx] = wordsData[wIdx].target[lIdx];
                 wordsData[wIdx].target[lIdx] = null;
                 activeOrangeWordIdx = null;
                 activeOrangeLetterIdx = null;
                 renderMultiBoards();
-            } else if (activeOrangeWordIdx === wIdx) {
+                checkAutoValidation();
+            } 
+            else if (activeOrangeWordIdx === wIdx && activeOrangeLetterIdx !== null && wordsData[wIdx].target[activeOrangeLetterIdx] !== null) {
                 let temp = wordsData[wIdx].target[lIdx];
                 wordsData[wIdx].target[lIdx] = wordsData[wIdx].target[activeOrangeLetterIdx];
                 wordsData[wIdx].target[activeOrangeLetterIdx] = temp;
@@ -385,7 +430,8 @@
                 activeOrangeLetterIdx = null;
                 renderMultiBoards();
                 checkAutoValidation();
-            } else {
+            } 
+            else {
                 activeOrangeWordIdx = wIdx;
                 activeOrangeLetterIdx = lIdx;
                 renderMultiBoards();
@@ -489,7 +535,6 @@
         function showQR() { document.getElementById("qr-modal").classList.remove('hidden'); }
         function closeModals() { document.getElementById("info-modal").classList.add('hidden'); document.getElementById("qr-modal").classList.add('hidden'); }
 
-        // --- EXPORTACIÓN ACTUALIZADA CON LOS MISMOS ESTILOS OPTIMIZADOS ---
         function exportHTML() {
             const titleValue = document.getElementById("game-title").value.trim() || "Anagrama";
             const parsedItems = parseData();
@@ -554,7 +599,7 @@
     <div id="info-modal" class="modal hidden">
         <div class="modal-content">
             <button class="close-modal" onclick="closeModals()">✕</button>
-            <p style="font-size:0.95rem; line-height:1.5;">Toca una letra para colocarla. Al marcar una letra colocada pasará a naranja; toca otra letra para intercambiarlas o pulsa de nuevo para devolverla a la caja original.</p>
+            <p style="font-size:0.95rem; line-height:1.5;">Toca una letra o un hueco vacío para seleccionarlo (cambiará a naranja). Pulsa el mismo elemento para deseleccionarlo. Si hay un elemento naranja, pulsa otro destino válido (la caja de letras, un hueco u otra letra colocada) para moverlo o intercambiarlo.</p>
         </div>
     </div>
     <div id="qr-modal" class="modal hidden">
@@ -624,18 +669,31 @@
 
                 const poolRow = document.createElement("div");
                 poolRow.className = "letters-container pool-row";
+                poolRow.onclick = () => handlePoolRowClick(wIdx);
+                
                 wordObj.pool.forEach(item => {
                     if (item.active) {
                         const block = document.createElement("div");
                         block.className = "letter-block status-hint";
                         block.innerText = item.char;
-                        block.onclick = () => {
-                            let emptyIdx = wordObj.target.indexOf(null);
-                            if (emptyIdx !== -1) {
-                                wordObj.target[emptyIdx] = { id: item.id, char: item.char };
+                        block.onclick = (e) => {
+                            if (e) e.stopPropagation();
+                            if (activeOrangeWordIdx === wIdx && activeOrangeLetterIdx !== null && wordObj.target[activeOrangeLetterIdx] === null) {
+                                wordObj.target[activeOrangeLetterIdx] = { id: item.id, char: item.char };
                                 item.active = false;
+                                activeOrangeWordIdx = null; activeOrangeLetterIdx = null;
                                 renderMultiBoards();
                                 checkAutoValidation();
+                            } else if (activeOrangeWordIdx === wIdx && activeOrangeLetterIdx !== null && wordObj.target[activeOrangeLetterIdx] !== null) {
+                                handlePoolRowClick(wIdx);
+                            } else {
+                                let emptyIdx = wordObj.target.indexOf(null);
+                                if (emptyIdx !== -1) {
+                                    wordObj.target[emptyIdx] = { id: item.id, char: item.char };
+                                    item.active = false;
+                                    renderMultiBoards();
+                                    checkAutoValidation();
+                                }
                             }
                         };
                         poolRow.appendChild(block);
@@ -653,13 +711,20 @@
                     const block = document.createElement("div");
                     if (item === null) {
                         block.className = "letter-block empty-slot";
+                        if (activeOrangeWordIdx === wIdx && activeOrangeLetterIdx === lIdx) block.classList.add("orange-active");
                         block.onclick = () => {
-                            if (activeOrangeWordIdx === wIdx && activeOrangeLetterIdx !== null) {
+                            if (activeOrangeWordIdx === wIdx && activeOrangeLetterIdx === lIdx) {
+                                activeOrangeWordIdx = null; activeOrangeLetterIdx = null;
+                                renderMultiBoards();
+                            } else if (activeOrangeWordIdx === wIdx && activeOrangeLetterIdx !== null && wordObj.target[activeOrangeLetterIdx] !== null) {
                                 wordObj.target[lIdx] = wordObj.target[activeOrangeLetterIdx];
                                 wordObj.target[activeOrangeLetterIdx] = null;
                                 activeOrangeWordIdx = null; activeOrangeLetterIdx = null;
                                 renderMultiBoards();
                                 checkAutoValidation();
+                            } else {
+                                activeOrangeWordIdx = wIdx; activeOrangeLetterIdx = lIdx;
+                                renderMultiBoards();
                             }
                         };
                     } else {
@@ -667,16 +732,16 @@
                         if (activeOrangeWordIdx === wIdx && activeOrangeLetterIdx === lIdx) block.classList.add("orange-active");
                         block.innerText = item.char;
                         block.onclick = () => {
-                            if (activeOrangeWordIdx === null) {
-                                activeOrangeWordIdx = wIdx; activeOrangeLetterIdx = lIdx;
+                            if (activeOrangeWordIdx === wIdx && activeOrangeLetterIdx === lIdx) {
+                                activeOrangeWordIdx = null; activeOrangeLetterIdx = null;
                                 renderMultiBoards();
-                            } else if (activeOrangeWordIdx === wIdx && activeOrangeLetterIdx === lIdx) {
-                                let poolItem = wordObj.pool.find(p => p.id === wordObj.target[lIdx].id);
-                                if (poolItem) poolItem.active = true;
+                            } else if (activeOrangeWordIdx === wIdx && activeOrangeLetterIdx !== null && wordObj.target[activeOrangeLetterIdx] === null) {
+                                wordObj.target[activeOrangeLetterIdx] = wordObj.target[lIdx];
                                 wordObj.target[lIdx] = null;
                                 activeOrangeWordIdx = null; activeOrangeLetterIdx = null;
                                 renderMultiBoards();
-                            } else if (activeOrangeWordIdx === wIdx) {
+                                checkAutoValidation();
+                            } else if (activeOrangeWordIdx === wIdx && activeOrangeLetterIdx !== null && wordObj.target[activeOrangeLetterIdx] !== null) {
                                 let temp = wordObj.target[lIdx];
                                 wordObj.target[lIdx] = wordObj.target[activeOrangeLetterIdx];
                                 wordObj.target[activeOrangeLetterIdx] = temp;
@@ -708,6 +773,17 @@
                     }
                 }, 0);
             });
+        }
+
+        function handlePoolRowClick(wIdx) {
+            if (activeOrangeWordIdx === wIdx && activeOrangeLetterIdx !== null && wordsData[wIdx].target[activeOrangeLetterIdx] !== null) {
+                let targetItem = wordsData[wIdx].target[activeOrangeLetterIdx];
+                let poolItem = wordsData[wIdx].pool.find(p => p.id === targetItem.id);
+                if (poolItem) poolItem.active = true;
+                wordsData[wIdx].target[activeOrangeLetterIdx] = null;
+                activeOrangeWordIdx = null; activeOrangeLetterIdx = null;
+                renderMultiBoards();
+            }
         }
 
         function isTotalComplete() {
@@ -792,7 +868,6 @@
             document.getElementById("start-screen").classList.remove('hidden');
         }
 
-        /* Modals */
         function showInfo() { document.getElementById("info-modal").classList.remove('hidden'); }
         function showQR() { document.getElementById("qr-modal").classList.remove('hidden'); }
         function closeModals() { document.getElementById("info-modal").classList.add('hidden'); document.getElementById("qr-modal").classList.add('hidden'); }
