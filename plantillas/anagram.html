@@ -65,10 +65,12 @@
         .qr-large-dest { display: flex; justify-content: center; margin-top: 15px; }
         .qr-large-dest img { width: 200px !important; height: 200px !important; }
 
-        .game-board-area { display: flex; flex-direction: column; gap: 24px; margin: 24px 0; align-items: center; width: 100%; }
-        .word-group { display: flex; flex-direction: column; gap: 10px; width: 100%; align-items: center; }
+        /* MODIFICADO: Permite que múltiples palabras compartan fila si son cortas */
+        .game-board-area { display: flex; flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 24px; margin: 24px 0; align-items: flex-start; width: 100%; }
+        .word-group { display: flex; flex-direction: column; gap: 10px; align-items: center; max-width: 100%; }
         
-        .letters-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; padding: 6px; border-radius: 8px; width: fit-content; }
+        /* MODIFICADO: flex-wrap cambiado a nowrap para que NUNCA se parta una palabra */
+        .letters-container { display: flex; flex-wrap: nowrap; justify-content: center; gap: 6px; padding: 6px; border-radius: 8px; width: fit-content; max-width: 100%; }
         .pool-row { background: #f8fafc; border: 1px dashed #cbd5e1; min-height: 54px; }
         .target-row { background: #f1f5f9; border: 2px solid #e2e8f0; min-height: 54px; }
 
@@ -78,7 +80,8 @@
         .inline-feedback.tick { color: var(--success-green); }
         .inline-feedback.cross { color: var(--danger-red); }
 
-        .letter-block { width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: bold; border-radius: 6px; border: 2px solid; user-select: none; cursor: pointer; transition: all 0.15s; text-transform: uppercase; }
+        /* MODIFICADO: Tamaño responsivo fluido con clamp para pantallas estrechas */
+        .letter-block { width: clamp(28px, 7vw, 42px); height: clamp(28px, 7vw, 42px); display: flex; align-items: center; justify-content: center; font-size: clamp(0.9rem, 4vw, 1.2rem); font-weight: bold; border-radius: 6px; border: 2px solid; user-select: none; cursor: pointer; transition: all 0.15s; text-transform: uppercase; }
         
         .letter-block.status-hint { background-color: #eff6ff !important; border-color: var(--hint-blue) !important; color: var(--hint-blue) !important; }
         .letter-block.status-placed { background-color: white; border-color: #94a3b8; color: black; }
@@ -119,9 +122,10 @@
         @media (max-width: 600px) {
             .game-header { grid-template-columns: auto 1fr auto; }
             .header-center { font-size: 1.1rem; }
-            .letter-block { width: 36px; height: 36px; font-size: 1rem; }
             .btn-group { grid-template-columns: 1fr; }
-            .inline-feedback { position: static; margin-top: 4px; text-align: center; width: 100%; }
+            /* MODIFICADO: Cambiado a flex-direction column para evitar que aplaste la fila de letras */
+            .target-relative-container { flex-direction: column; }
+            .inline-feedback { position: static; margin-top: 4px; text-align: center; width: 100%; left: auto; }
         }
     </style>
 </head>
@@ -485,7 +489,7 @@
         function showQR() { document.getElementById("qr-modal").classList.remove('hidden'); }
         function closeModals() { document.getElementById("info-modal").classList.add('hidden'); document.getElementById("qr-modal").classList.add('hidden'); }
 
-        // --- EXPORTACIÓN (Sin el botón Volver y con ajuste de columnas grid) ---
+        // --- EXPORTACIÓN ACTUALIZADA CON LOS MISMOS ESTILOS OPTIMIZADOS ---
         function exportHTML() {
             const titleValue = document.getElementById("game-title").value.trim() || "Anagrama";
             const parsedItems = parseData();
@@ -788,6 +792,7 @@
             document.getElementById("start-screen").classList.remove('hidden');
         }
 
+        /* Modals */
         function showInfo() { document.getElementById("info-modal").classList.remove('hidden'); }
         function showQR() { document.getElementById("qr-modal").classList.remove('hidden'); }
         function closeModals() { document.getElementById("info-modal").classList.add('hidden'); document.getElementById("qr-modal").classList.add('hidden'); }
