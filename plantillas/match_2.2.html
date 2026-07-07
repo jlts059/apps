@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Match Game Generator</title>
+    <style>
+        :root {
+            --success-bg: #f0fdf4;
+            --success-green: #10b981;
+            --success-dark: #16a34a;
+            --error-bg: #fef2f2;
+            --error-red: #ef4444;
+            --go-btn: #22c55e;
+            --shuffle-btn: #a855f7;
+            --html-btn: #3b82f6;
+            --gray-text: #6b7280;
+            --bg-color: #f9fafb;
+            --card-bg: #ffffff;
+            --clue-bg: #fef08a;
+            --tile-bg: #e0f2fe;
+            --tile-border: #bae6fd;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: #111827;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            padding: 15px;
+        }
+
+        .screen {
+            display: none;
+            width: 100%;
+            max-width: 650px;
+            margin: auto;
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .screen.active {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* PANTALLA INICIO */
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+        }
+        textarea {
+            height: 150px;
+            resize: vertical;
+        }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        button:active { opacity: 0.8; }
+        #btn-go { background-color: var(--go-btn); }
+        #btn-shuffle { background-color: var(--shuffle-btn); }
+        #btn-html { background-color: var(--html-btn); }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 5px;
+            font-size: 15px;
+            cursor: pointer;
+            user-select: none;
+        }
+        .checkbox-container input {
+            width: auto;
+            cursor: pointer;
+        }
+
+        /* ESTILO PARA LA IMAGEN EN LA PANTALLA DE INICIO */
+        .cover-image {
+            max-width: 100%;
+            max-height: 300px;
+            object-fit: contain;
+            border-radius: 10px;
+            margin: 0 auto;
+            display: block;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        /* PANTALLA JUEGO */
+        .row-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            position: relative;
+            gap: 10px;
+            z-index: 10;
+        }
+        .top-left {
+            display: flex;
+            flex-direction: column;
+            min-width: 70px;
+        }
+        #counter { font-size: 18px; font-weight: bold; }
+        #timer { font-size: 14px; color: var(--gray-text); }
+        
+        #clue-container {
+            font-size: 24px;
+            font-weight: bold;
+            color: #000000;
+            text-align: center;
+            flex: 1;
+            padding: 15px;
+            background-color: var(--clue-bg);
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .top-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 70px;
+            justify-content: flex-end;
+        }
+        .info-icon {
+            font-size: 24px;
+            cursor: pointer;
+            user-select: none;
+        }
+        .qr-small {
+            width: 32px;
+            height: 32px;
+            cursor: pointer;
+            border: 1px solid #e5e7eb;
+            border-radius: 4px;
+        }
+
+        /* WATERMARK DENTRO DE LA PANTALLA DE JUEGO */
+        .watermark-bg {
+            position: absolute;
+            top: 55%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 42px;
+            font-weight: 800;
+            color: rgba(0, 0, 0, 0.04);
+            text-align: center;
+            width: 90%;
+            pointer-events: none;
+            z-index: 1;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            word-wrap: break-word;
+        }
+
+        /* CABECERA EXPORTADA */
+        .standalone-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--gray-text);
+            text-align: center;
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding: 0 10px;
+        }
+
+        /* MATRIZ DE AZULEJOS */
+        .row-middle {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin: 20px 0;
+            min-height: 150px;
+            position: relative;
+            z-index: 5;
+        }
+        
+        .letter-block {
+            background-color: var(--tile-bg);
+            border: 2px solid var(--tile-border);
+            color: #1e3a8a;
+            padding: 14px 18px;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            user-select: none;
+            text-align: center;
+            transition: transform 0.1s ease, background-color 0.2s ease, opacity 0.2s ease;
+            flex-grow: 1;
+            flex-shrink: 1;
+            opacity: 1;
+        }
+
+        .size-short { flex-basis: calc(33.33% - 10px); min-width: 130px; }
+        .size-medium { flex-basis: calc(50% - 10px); min-width: 200px; }
+        .size-long { flex-basis: 100%; }
+
+        .letter-block.status-correct {
+            background-color: var(--success-bg) !important;
+            border-color: var(--success-green) !important;
+            color: var(--success-green) !important;
+            opacity: 0;
+            pointer-events: none;
+        }
+        .letter-block.status-incorrect {
+            background-color: var(--error-bg) !important;
+            border-color: var(--error-red) !important;
+            color: var(--error-red) !important;
+        }
+
+        .row-bottom {
+            display: flex;
+            gap: 10px;
+            position: relative;
+            z-index: 10;
+        }
+        #btn-pass { background-color: #f59e0b; }
+        #btn-stop { background-color: #ef4444; }
+
+        /* POPUPS */
+        .popup-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            padding: 20px;
+        }
+        .popup-content {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            max-width: 90%;
+        }
+        .popup-content img { width: 200px; height: 200px; }
+
+        /* PANTALLA RESULTADOS */
+        #results-summary { text-align: center; }
+        #res-count { font-size: 32px; font-weight: bold; }
+        #res-time { font-size: 16px; color: var(--gray-text); margin-top: 4px; }
+        .results-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 15px 0;
+        }
+        .result-item {
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 16px;
+            border-left: 5px solid transparent;
+            background-color: #f3f4f6;
+        }
+        .result-item.correct { background-color: var(--success-bg); border-left-color: var(--success-green); }
+        .result-item.pending { background-color: #eff6ff; border-left-color: #3b82f6; color: #1d4ed8; }
+        .text-green { color: var(--success-dark); font-weight: bold; }
+        #btn-restart { background-color: #4b5563; }
+    </style>
+</head>
+<body>
+
+    <div id="screen-start" class="screen active">
+        <input type="text" id="input-title" placeholder="Título del juego...">
+        <input type="text" id="input-image" placeholder="URL de la imagen de portada (opcional)...">
+        <textarea id="input-data" placeholder="Término A, Término B (uno por línea)&#10;O copia dos columnas de Excel..."></textarea>
+        <div class="btn-group">
+            <button id="btn-go" onclick="startGame(false)">GO</button>
+            <button id="btn-shuffle" onclick="startGame(true)">SHUFFLE</button>
+            <button id="btn-html" onclick="generateHTML()">💾 HTML</button>
+        </div>
+        <label class="checkbox-container">
+            <input type="checkbox" id="check-pro">
+            <span><i>pro mode</i>: sólo un intento por palabra</span>
+        </label>
+    </div>
+
+    <div id="screen-game" class="screen">
+        <div id="game-watermark-internal" class="watermark-bg"></div>
+        <div class="row-top">
+            <div class="top-left">
+                <div id="counter">0 / 0</div>
+                <div id="timer">00:00</div>
+            </div>
+            <div id="clue-container"></div>
+            <div class="top-right">
+                <span class="info-icon" onclick="showInfo()">ℹ️</span>
+                <img id="qr-img" class="qr-small" onclick="expandQR()" alt="QR">
+            </div>
+        </div>
+
+        <div class="row-middle" id="options-container"></div>
+
+        <div class="row-bottom">
+            <button id="btn-pass" onclick="handlePass()">PASS</button>
+            <button id="btn-stop" onclick="endGame()">STOP & SCORE</button>
+        </div>
+    </div>
+
+    <div id="screen-results" class="screen">
+        <div id="results-summary">
+            <div id="res-count">0/0</div>
+            <div id="res-time">00:00</div>
+        </div>
+        <div class="results-list" id="results-list-container"></div>
+        <button id="btn-restart" onclick="restartToStart()">Restart</button>
+    </div>
+
+    <div id="popup-overlay" class="popup-overlay" onclick="closePopup()">
+        <div class="popup-content" id="popup-content" onclick="event.stopPropagation()"></div>
+    </div>
+
+    <script>
+        let rawItems = []; 
+        let originalTotal = 0;
+        let gameQueue = [];
+        let currentItem = null;
+        let timerInterval = null;
+        let secondsElapsed = 0;
+        let completedCorrectly = 0;
+        let isStandalone = false;
+        let proModeActive = false;
+
+        document.getElementById('qr-img').src = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" + encodeURIComponent(window.location.href);
+
+        function parseInput() {
+            const text = document.getElementById('input-data').value.trim();
+            if (!text) return [];
+            
+            const lines = text.split('\n');
+            let pairs = [];
+            lines.forEach((line, index) => {
+                let parts = [];
+                if (line.includes('\t')) {
+                    parts = line.split('\t');
+                } else if (line.includes(',')) {
+                    parts = line.split(',');
+                }
+                if (parts.length >= 2) {
+                    pairs.push({
+                        a: parts[0].trim(),
+                        b: parts[1].trim(),
+                        id: index,
+                        status: 'pending'
+                    });
+                }
+            });
+            return pairs;
+        }
+
+        function startGame(shuffleMode) {
+            proModeActive = document.getElementById('check-pro').checked;
+
+            if (!isStandalone) {
+                rawItems = parseInput();
+                if (rawItems.length === 0) {
+                    alert('Por favor, introduce binomios válidos.');
+                    return;
+                }
+                const title = document.getElementById('input-title').value.trim();
+                const watermark = document.getElementById('game-watermark-internal');
+                if (title) {
+                    watermark.textContent = title;
+                } else {
+                    watermark.textContent = '';
+                }
+            }
+
+            originalTotal = rawItems.length;
+            completedCorrectly = 0;
+            rawItems.forEach(item => item.status = 'pending');
+            
+            gameQueue = [...rawItems];
+            if (shuffleMode) {
+                gameQueue.sort(() => Math.random() - 0.5);
+            }
+
+            switchScreen('screen-game');
+            startTimer();
+            nextTurn();
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            secondsElapsed = 0;
+            document.getElementById('timer').textContent = "00:00";
+            timerInterval = setInterval(() => {
+                secondsElapsed++;
+                const mins = String(Math.floor(secondsElapsed / 60)).padStart(2, '0');
+                const secs = String(secondsElapsed % 60).padStart(2, '0');
+                document.getElementById('timer').textContent = mins + ":" + secs;
+            }, 1000);
+        }
+
+        function nextTurn() {
+            if (gameQueue.length === 0) {
+                endGame();
+                return;
+            }
+
+            currentItem = gameQueue[0];
+            document.getElementById('counter').textContent = completedCorrectly + " / " + originalTotal;
+            document.getElementById('clue-container').innerHTML = currentItem.a;
+
+            let options = [currentItem.b];
+            let pool = rawItems.filter(i => i.id !== currentItem.id && i.status !== 'correct').map(i => i.b);
+            pool.sort(() => Math.random() - 0.5);
+            
+            for (let i = 0; i < pool.length && options.length < 8; i++) {
+                if (!options.includes(pool[i])) {
+                    options.push(pool[i]);
+                }
+            }
+            
+            options.sort((a, b) => a.replace(/<[^>]*>/g, '').length - b.replace(/<[^>]*>/g, '').length);
+
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+            options.forEach(opt => {
+                const block = document.createElement('div');
+                block.className = 'letter-block';
+                block.innerHTML = opt;
+                
+                const plainTextLength = opt.replace(/<[^>]*>/g, '').length;
+                if (plainTextLength < 20) {
+                    block.classList.add('size-short');
+                } else if (plainTextLength < 50) {
+                    block.classList.add('size-medium');
+                } else {
+                    block.classList.add('size-long');
+                }
+
+                block.onclick = () => checkAnswer(block, opt);
+                container.appendChild(block);
+            });
+        }
+
+        function checkAnswer(element, selectedValue) {
+            if (selectedValue === currentItem.b) {
+                const indexRaw = rawItems.findIndex(i => i.id === currentItem.id);
+                if (indexRaw !== -1) rawItems[indexRaw].status = 'correct';
+                
+                element.classList.add('status-correct');
+                completedCorrectly++;
+                gameQueue.splice(0, 1); 
+                
+                setTimeout(() => {
+                    nextTurn();
+                }, 400);
+            } else {
+                if (!element.classList.contains('status-incorrect')) {
+                    element.classList.add('status-incorrect');
+                    
+                    if (proModeActive) {
+                        setTimeout(() => {
+                            if (gameQueue.length > 1) {
+                                const failedItem = gameQueue.shift();
+                                gameQueue.push(failedItem);
+                            }
+                            nextTurn();
+                        }, 500);
+                    }
+                }
+            }
+        }
+
+        function handlePass() {
+            if (gameQueue.length > 1) {
+                const passed = gameQueue.shift();
+                gameQueue.push(passed); 
+                nextTurn();
+            }
+        }
+
+        function endGame() {
+            clearInterval(timerInterval);
+            switchScreen('screen-results');
+            
+            document.getElementById('res-count').textContent = completedCorrectly + "/" + originalTotal;
+            const mins = String(Math.floor(secondsElapsed / 60)).padStart(2, '0');
+            const secs = String(secondsElapsed % 60).padStart(2, '0');
+            document.getElementById('res-time').textContent = mins + ":" + secs;
+
+            const listContainer = document.getElementById('results-list-container');
+            listContainer.innerHTML = '';
+            
+            rawItems.forEach(item => {
+                const div = document.createElement('div');
+                if (item.status === 'correct') {
+                    div.className = 'result-item correct';
+                    div.innerHTML = '<span class="text-green">✓ ' + item.a + ' - ' + item.b + '</span>';
+                } else {
+                    div.className = 'result-item pending';
+                    div.innerHTML = '<span>' + item.a + ' - ' + item.b + '</span>';
+                }
+                listContainer.appendChild(div);
+            });
+        }
+
+        function restartToStart() {
+            switchScreen('screen-start');
+        }
+
+        function switchScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function showInfo() {
+            const overlay = document.getElementById('popup-overlay');
+            const content = document.getElementById('popup-content');
+            content.innerHTML = '<p style="font-size: 16px; font-weight: 500;">Toca el elemento que corresponde a la pista del centro.</p>';
+            overlay.style.display = 'flex';
+        }
+
+        function expandQR() {
+            const overlay = document.getElementById('popup-overlay');
+            const content = document.getElementById('popup-content');
+            const url = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" + encodeURIComponent(window.location.href);
+            content.innerHTML = '<img src="' + url + '" alt="QR">';
+            overlay.style.display = 'flex';
+        }
+
+        function closePopup() {
+            document.getElementById('popup-overlay').style.display = 'none';
+        }
+
+        function generateHTML() {
+            const title = document.getElementById('input-title').value.trim() || 'Juego';
+            const imageUrl = document.getElementById('input-image').value.trim();
+            const itemsData = parseInput();
+            if (itemsData.length === 0) {
+                alert('Añade binomios antes de exportar.');
+                return;
+            }
+
+            let currentScript = document.querySelector('script').innerHTML;
+            let standaloneScript = currentScript.replace('let rawItems = [];', 'let rawItems = ' + JSON.stringify(itemsData) + ';');
+            standaloneScript = standaloneScript.replace('let isStandalone = false;', 'let isStandalone = true;');
+            
+            standaloneScript += '\n document.addEventListener("DOMContentLoaded", function() {\n' +
+                'const wm = document.getElementById("game-watermark-internal");\n' +
+                'if(wm) wm.textContent = ' + JSON.stringify(title) + ';\n' +
+                '});';
+
+            const docStyle = document.querySelector('style').innerHTML;
+            
+            // Renderizado condicional de la etiqueta de imagen para la portada exportada
+            const imageTag = imageUrl ? `<img src="${imageUrl}" class="cover-image" alt="Portada del juego">` : '';
+
+            const standaloneHTML = '<!DOCTYPE html>\n<html lang="es">\n<head>\n' +
+                '<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1.0">\n' +
+                '<title>Match - ' + title + '</title>\n<style>' + docStyle + '</style>\n</head>\n<body>\n' +
+                '<div id="screen-start" class="screen active">\n' +
+                '    <div class="row-top" style="margin-bottom: 10px;">\n' +
+                '        <div class="standalone-title">' + title + '</div>\n' +
+                '        <div class="top-right">\n' +
+                '            <span class="info-icon" onclick="showInfo()">ℹ️</span>\n' +
+                '            <img id="qr-img" class="qr-small" onclick="expandQR()" alt="QR">\n' +
+                '        </div>\n' +
+                '    </div>\n' +
+                '    ' + imageTag + '\n' +
+                '    <div class="btn-group" style="margin-top: 10px;">\n' +
+                '        <button id="btn-go" onclick="startGame(false)">GO</button>\n' +
+                '        <button id="btn-shuffle" onclick="startGame(true)">SHUFFLE</button>\n' +
+                '    </div>\n' +
+                '    <label class="checkbox-container">\n' +
+                '        <input type="checkbox" id="check-pro">\n' +
+                '        <span><i>pro mode</i>: sólo un intento por palabra</span>\n' +
+                '    </label>\n' +
+                '</div>\n' +
+                '<div id="screen-game" class="screen">\n' +
+                '    <div id="game-watermark-internal" class="watermark-bg"></div>\n' +
+                '    <div class="row-top">\n' +
+                '        <div class="top-left">\n' +
+                '            <div id="counter">0 / 0</div>\n' +
+                '            <div id="timer">00:00</div>\n' +
+                '        </div>\n' +
+                '        <div id="clue-container"></div>\n' +
+                '        <div class="top-right">\n' +
+                '            <span class="info-icon" onclick="showInfo()">ℹ️</span>\n' +
+                '            <img id="qr-img-game" class="qr-small" onclick="expandQR()" alt="QR">\n' +
+                '        </div>\n' +
+                '    </div>\n' +
+                '    <div class="row-middle" id="options-container"></div>\n' +
+                '    <div class="row-bottom">\n' +
+                '        <button id="btn-pass" onclick="handlePass()">PASS</button>\n' +
+                '        <button id="btn-stop" onclick="endGame()">STOP & SCORE</button>\n' +
+                '    </div>\n' +
+                '</div>\n' +
+                '<div id="screen-results" class="screen">\n' +
+                '    <div id="results-summary">\n' +
+                '        <div id="res-count">0/0</div>\n' +
+                '        <div id="res-time">00:00</div>\n' +
+                '    </div>\n' +
+                '    <div class="results-list" id="results-list-container"></div>\n' +
+                '    <button id="btn-restart" onclick="restartToStart()">Restart</button>\n' +
+                '</div>\n' +
+                '<div id="popup-overlay" class="popup-overlay" onclick="closePopup()">\n' +
+                '    <div class="popup-content" id="popup-content" onclick="event.stopPropagation()"></div>\n' +
+                '</div>\n' +
+                '<script>\n' + standaloneScript + '\n' +
+                'document.addEventListener("DOMContentLoaded", function() {\n' +
+                '    const currentUrl = window.location.href;\n' +
+                '    const qrSrc = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" + encodeURIComponent(currentUrl);\n' +
+                '    if(document.getElementById("qr-img")) document.getElementById("qr-img").src = qrSrc;\n' +
+                '    if(document.getElementById("qr-img-game")) document.getElementById("qr-img-game").src = qrSrc;\n' +
+                '});\n<\/script>\n</body>\n</html>';
+
+            const blob = new Blob([standaloneHTML], { type: 'text/html' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = "match-" + title.replace(/[^a-z0-9]/gi, '_').toLowerCase() + ".html";
+            link.click();
+        }
+    </script>
+</body>
+</html>
