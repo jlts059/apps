@@ -1,0 +1,45 @@
++EXTRA: si pones lila y sueltas fuera de la caja, se deselecciona la palabra
+
+
+
+este código funciona estupendamente, en mi teléfono Android puedo jugar de maravilla
+
+me preguntaba si podemos hacer TRES cosas (A,B y C):
+
+A) cambiar estos dos botones
+
+la flecha para atrás + "volver" - poner solo la flecha para atras
+
+en lugar de "STOP & SCORE" solo STOP
+
+B) para mover las letras, añadir una nueva manera: long press sobre una letra pone la letra en lila y podemos desplazarla arrastrándola
+
+- cuando la situamos entre dos letras, desplaza todas las de la derecha hacia delante (si hay espacio, contando el espacio vacío que dejaría la desplazada). deberíamos ver una preview con poca opacidad del desplazamiento general, y al soltar la letra en el espacio liberado por la preview, todo se coloca como deseado
+
+- possibility of dropping it back where it was so there's no change if I change my mind
+
+- quiero que cuando deje pulsada una letra, que se "bloquee" la selección de texto para que no haya interferencias
+
+C) Pon este texto en el emoji de información:
+
+"Maneras de mover las letras:
+
+1) Toca una letra para que salte al siguiente hueco libre. 
+
+2) Pica en una letra <b>ya colocada</b> (cambiará a naranja) y:
+
+- vuelve a picar para de-seleccionar
+
+- toca otro destino válido (otra letra, un hueco o el cajón de sastre) para moverla o intercambiarla.
+
+3) Pulsa primero un <b>hueco vacío</b> y luego una letra para enviarla allí.
+
+4) <b>Mantén pulsada</b> una letra ya colocada (cambariá a lila) y arrástrala para insertarla y desplazar las otras letras a la derecha."
+
+
+quiero que las palabras naranja y lila aparezcan en negrita y en el color que describen.
+quiero que los términos que he puesto con <b> y </b> aparezcan en negrita 
+
+
+
+Asegúrate de que los botones de la Homepage siguen funcionando y que los HTML generados conservan el código QR y sus botones funcionan también

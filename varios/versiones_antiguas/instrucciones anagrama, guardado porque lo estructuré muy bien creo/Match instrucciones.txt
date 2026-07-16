@@ -1,0 +1,118 @@
+Quiero que me crees código html
+
+
+
+Es un generador de juegos de MATCH
+
+
+
+En la pantalla de inicio hay: 
+
+
+
+- una input box para pegar el título del juego, que aparecerá más tarde en el juego abajo a la izquierda como un watermark
+
+- una input box donde pegaré dos columnas de una hoja de cálculo o términos separados por una coma. Siempre binomios
+
+- tres botones: GO, SHUFFLE y HTML (con un emoji de disquete)
+
+	GO y SHUFFLE comienzan el juego
+
+	HTML genera un nuevo archivo html. Explicaré qué contiene más tarde
+
+Don't include any text and titles outside the inputboxes
+
+Colours for the buttons: GO goes in green, shuffle in purple, HTML in blue
+
+
+
+En la pantalla de juego hay:
+
+
+
+- primera fila a la izquierda: 
+
+	un contador de items X / Y que va avanzando cuando vamos avanzando
+
+	un cronómetro debajo que avanza. el color del cronómetro es más discreto (gris)
+
+- primera fila centrado: el primer item de cada binomio, el tamaño de la letra es similar a las de abajo pero la fuente es negra
+
+- primera fila derecha: 
+
+	el emoji cuadrado azul de información "ℹ️". Al hacer click, sale este pop-up: "Toca el elemento que corresponde a la pista del centro."
+
+	un código QR que llevará a la URL que esté activa. Será pequeñito, algo más grande que el emoji. Al clicar, se agrandará como un pop-up
+
+- segunda fila centrado: todos los elementos de la columna derecha cada uno en su caja intentando maximizar el espacio para que se vean todos bien, juntos como ladrillos en un muro. Para evitar aglomeración, si en la lista hay más de 8 binomios sólo aparecerán 8 a la vez. Uno de ellos será el que corresponde a la pista, los demás 7 aleatorios
+
+- última fila centrados: tres botones: PASS y STOP & SCORE
+
+		PASS pasa al siguiente item. Los items ignorados volveran al final
+
+	STOP & SCORE para el juego y presenta los resultados
+
+
+
+Comportamiento del juego:
+
+	
+
+Si tocamos un elemento que no corresponde a la pista, la caja del elemento se pondrá en rojo y se quedará en rojo hasta que se pique sobre el correcto o se pulse "PASS". 
+
+
+
+Si el elemento es correcto, se pondrá en verde. Usa esto como inspiración, también te vale para el rojo:
+
+
+
+        .letter-block.status-correct {
+
+            background-color: var(--success-bg) !important;
+
+            border-color: var(--success-green) !important;
+
+            color: var(--success-green) !important;
+
+
+
+La pista del centro desaparecerá y también el elemento correcto. Si hay menos de 8 y quedan elementos en la lista, aparecerá uno nuevo y finalmente aparecerá una nueva pista en el centro
+
+
+
+
+
+Pagina de Resultados
+
+Al terminar los items o clicar en STOP & SCORE, aparecerá una lista de los items completados correctamente con un tick verde al inicio. Los items no completados aparecen en azul. Puedes usar esto como inspiración:
+
+
+
+.result-item: Define el espaciado interno (padding), las esquinas redondeadas (border-radius: 10px) y prepara el espacio para el borde izquierdo.
+
+.result-item.correct: Añade el color de fondo verde muy claro (#f0fdf4) y pinta la barra gruesa de la izquierda con el color verde principal (var(--success), que es #10b981).
+
+.text-green: Pinta el texto "✓ hola juan" en un tono verde oscuro (#16a34a) y lo pone en negrita.
+
+
+
+No text or title. Include just the number of items completed in this format "X/Y" and below, smaller font, the time needed with no labels, just the time
+
+Add a "restart" button that starts the game again. 
+
+(aquí prefiero lo de la barra verde, pero no sé cómo será)
+
+
+
+El boton "to HTML":
+
+Este botón genera un archivo html llamado "match-XXXX", donde XXXX es el título del juego. Al abrirlo, la pantalla de inicio contiene:
+
+-El boton de informacion y el código QR expandable
+
+-Botones GO y SHUFFLE (los dos inician el juego, pero SHUFFLE randomiza los items). Nada más. 
+
+
+
+Crea un código lo más "lean" posible. Los juegos se jugaran en ordenador a veces pero casi siempre móvil, así que el formato debe adaptarse a horizontal y vertical, sobre todo a vertical
+
