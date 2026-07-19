@@ -30,10 +30,21 @@
     text-align: center;
   }
 
+  .input-field {
+    width: 100%;
+    padding: 12px;
+    margin: 0.5rem 0 1rem 0;
+    border: 2px solid #e0e6ed;
+    border-radius: 12px;
+    font-family: inherit;
+    box-sizing: border-box;
+    font-size: 1rem;
+  }
+
   textarea {
     width: 100%;
-    height: 200px;
-    margin: 1rem 0;
+    height: 180px;
+    margin: 0.5rem 0 1rem 0;
     padding: 10px;
     border: 2px solid #e0e6ed;
     border-radius: 12px;
@@ -47,41 +58,64 @@
     flex-direction: column;
     align-items: center;
     width: 100%;
+    position: relative;
   }
 
-  #classroom-qr-container {
+  /* HEADER TOP BAR (Progress & Title) */
+  .top-bar-header {
+    width: 90%;
+    max-width: 550px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .progress { 
+    font-size: 0.9rem; 
+    color: #90a4ae; 
+    font-weight: bold; 
+  }
+
+  #deck-title-display {
+    font-size: 1rem;
+    color: #2c3e50;
+    font-weight: 600;
+  }
+
+  /* TOP RIGHT UTILITIES (QR & INFO) */
+  .utility-top-right {
     position: absolute;
-    top: 20px;
+    top: 0px;
     right: 20px;
-    width: 120px;
-    height: 120px;
-    background-color: white;
-    border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
     display: flex;
     align-items: center;
-    justify-content: center;
-    padding: 5px;
-    box-sizing: border-box;
+    gap: 15px;
+    z-index: 10;
   }
 
-  #classroom-qr-container img { max-width: 100%; height: auto; }
+  #open-qr-btn {
+    font-size: 1.6rem;
+    cursor: pointer;
+    user-select: none;
+    line-height: 1;
+    transition: transform 0.1s ease;
+  }
+  #open-qr-btn:active { transform: scale(0.9); }
+
+  .info-btn {
+    font-size: 1.6rem;
+    cursor: pointer;
+    user-select: none;
+    line-height: 1;
+    transition: transform 0.1s ease;
+  }
+  .info-btn:active { transform: scale(0.9); }
 
   @media (max-width: 900px) {
-    #classroom-qr-container { display: none; }
+    .utility-top-right { display: none; }
   }
 
-  #instruction {
-    margin-bottom: 0.5rem;
-    color: #546e7a;
-    font-weight: 500;
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-  }
-
-  .progress { margin-bottom: 5px; font-size: 0.9rem; color: #90a4ae; font-weight: bold; }
-  
   #indicators-container {
     display: flex;
     gap: 10px;
@@ -148,31 +182,36 @@
   }
 
   button {
-    padding: 0.7rem 1.1rem;
-    font-size: 0.85rem;
-    border-radius: 10px;
+    padding: 0.8rem 1.2rem;
+    font-size: 1.3rem; /* Emojis stand out much clearer now */
+    border-radius: 12px;
     border: none;
     cursor: pointer;
     font-weight: bold;
     transition: all 0.2s;
     flex: 1;
-    min-width: 80px;
+    min-width: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
-  .btn-next { background: #2c3e50; color: white; box-shadow: 0 4px 0 #1a252f; }
-  .btn-know { background: #27ae60; color: white; box-shadow: 0 4px 0 #219653; }
-  .btn-discard { background: #e74c3c; color: white; box-shadow: 0 4px 0 #c0392b; }
-  .btn-secondary { background: #7f8c8d; color: white; box-shadow: 0 4px 0 #5c6366; }
-  .btn-star { background: #f1c40f; color: #2c3e50; box-shadow: 0 4px 0 #f39c12; }
-  .btn-error { background: #e67e22; color: white; box-shadow: 0 4px 0 #d35400; }
-  .btn-save { background: #3498db; color: white; box-shadow: 0 4px 0 #2980b9; }
-  .btn-utility { background: #e0e6ed; color: #2c3e50; box-shadow: 0 4px 0 #b0bec5; }
+  /* HIGH VISIBILITY VIBRANT CONTRAST COLOURS */
+  .btn-next { background: #34495e; color: white; box-shadow: 0 5px 0 #2c3e50; }
+  .btn-know { background: #1b5e20; color: white; box-shadow: 0 5px 0 #0d3c12; } 
+  .btn-discard { background: #00c853; color: white; box-shadow: 0 5px 0 #00c8538c; } 
+  .btn-secondary { background: #e0e6ed; color: white; box-shadow: 0 5px 0 #b0bec5; }
+  .btn-star { background: #ffea00; box-shadow: 0 5px 0 #ffd600; }
+  .btn-error { background: #ff6d00; color: white; box-shadow: 0 5px 0 #dd2c00; }
+  
+  .btn-save { background: #00b0ff; color: white; box-shadow: 0 4px 0 #0091ea; font-size: 0.85rem; }
+  .btn-utility { background: #ffffff; color: #2c3e50; box-shadow: 0 4px 0 #cfd8dc; border: 1px solid #cfd8dc; font-size: 0.85rem; }
 
   button:active { transform: translateY(2px); box-shadow: none; }
   button:disabled { background: #ccc !important; color: #666 !important; cursor: not-allowed; box-shadow: none !important; transform: none !important; }
 
-  /* MODAL (LIST VIEW) */
-  #list-modal {
+  /* GENERAL MODAL SYSTEM */
+  .modal {
     display: none;
     position: fixed;
     z-index: 100;
@@ -182,13 +221,43 @@
   .modal-content {
     background-color: white;
     margin: 5% auto;
-    padding: 20px;
+    padding: 25px;
     border-radius: 15px;
     width: 80%;
     max-width: 700px;
     max-height: 80vh;
     overflow-y: auto;
+    position: relative;
   }
+  
+  /* CENTERED VIEW FOR INSTRUCTIONS & QR */
+  .modal-centered-content {
+    margin: 12% auto;
+    max-width: 420px;
+    text-align: center;
+  }
+
+  /* DISCRETE X CLOSING BUTTON */
+  .close-x {
+    position: absolute;
+    top: 12px;
+    right: 15px;
+    font-size: 1.2rem;
+    color: #90a4ae;
+    cursor: pointer;
+    user-select: none;
+    font-weight: 300;
+    transition: color 0.2s;
+  }
+  .close-x:hover { color: #546e7a; }
+
+  #classroom-qr-container img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+  }
+
   table { width: 100%; border-collapse: collapse; margin-top: 15px; }
   th, td { border: 1px solid #ddd; padding: 12px; text-align: left; font-size: 0.9rem; }
   th { background-color: #f8f9fa; }
@@ -197,16 +266,29 @@
 <body>
 
   <div id="setup-container">
-    <h2 style="color: #2c3e50; margin-top: 0;">Create Your Deck</h2>
-    <textarea id="csv-input" placeholder="Term [TAB] Definition"></textarea>
+    <h2 style="color: #2c3e50; margin-top: 0; margin-bottom: 1.5rem;">Create Your Deck</h2>
+    
+    <label style="display:block; text-align:left; font-weight:bold; color:#2c3e50; font-size:0.9rem;">Deck Title:</label>
+    <input type="text" id="deck-title-input" class="input-field" placeholder="Enter deck title...">
+    
+    <label style="display:block; text-align:left; font-weight:bold; color:#2c3e50; font-size:0.9rem;">Flashcard Content:</label>
+    <textarea id="csv-input" placeholder="Term [TAB] Definition &#10;or: Term , Definition"></textarea>
+    
     <button style="background: #27ae60; color: white; width: 100%; font-size: 1.1rem;" onclick="loadCustomDeck()">Generate Flashcards ➔</button>
-    <p style="font-size: 0.8rem; color: #7f8c8d; margin-top: 10px;">Shortcuts: [V] Next | [Z] Know/Peek (discard) | [X] Discard/Peek | [C] Star | [E] Report Error | [Space] Flip</p>
   </div>
 
   <div id="flashcard-view">
-    <div id="classroom-qr-container"></div>
-    <div id="instruction">Tap the card to flip (or Space)</div>
-    <div class="progress" id="progress">Card 0 of 0</div>
+    <div class="utility-top-right">
+      <div id="open-qr-btn" onclick="openQRModal()" title="View QR Link">🔲</div>
+      <div class="info-btn" onclick="openInfoModal()" title="Instructions">ℹ️</div>
+    </div>
+
+    <!-- UPPER TOP BAR -->
+    <div class="top-bar-header">
+      <div class="progress" id="progress">Card 0 of 0</div>
+      <div id="deck-title-display">Custom Deck</div>
+    </div>
+    
     <div id="indicators-container">
       <span id="star-indicator">⭐ Starred</span>
       <span id="error-indicator">⚠️ Error</span>
@@ -216,13 +298,14 @@
     
     <div class="controls-container">
       <div class="controls-row">
-        <button class="btn-next" id="nextBtn" onclick="nextCard()">Next (V)</button>
-        <button class="btn-know" id="knowBtn" onclick="knowCard()">Know (discard) (Z)</button>
-        <button class="btn-discard" id="discardBtn" onclick="discardCardWithPeek()">Discard (X)</button>
-        <button class="btn-secondary" id="shuffleBtn" onclick="shuffleDeck()">Shuffle</button>
-        <button class="btn-secondary" id="restartBtn" onclick="resetDeckSequential()">Restart</button>
-        <button class="btn-star" id="starBtn" onclick="toggleStar()">Star (C)</button>
-        <button class="btn-error" id="errorBtn" onclick="toggleError()">Report Error (E)</button>
+        <!-- COLOURED HIGHER CONTRAST EMOJI INTERFACE -->
+        <button class="btn-next" id="nextBtn" onclick="nextCard()" title="Next (V)">➡️</button>
+        <button class="btn-know" id="knowBtn" onclick="knowCard()" title="Discard (Z)">🗑️</button>
+        <button class="btn-discard" id="discardBtn" onclick="discardCardWithPeek()" title="Peek & Discard (X)">👀+🗑️</button>
+        <button class="btn-secondary" id="shuffleBtn" onclick="shuffleDeck()" title="Shuffle">🔀</button>
+        <button class="btn-secondary" id="restartBtn" onclick="resetDeckSequential()" title="Restart">🔄</button>
+        <button class="btn-star" id="starBtn" onclick="toggleStar()" title="Star (C)">⭐</button>
+        <button class="btn-error" id="errorBtn" onclick="toggleError()" title="Report Error (E)">⚠️</button>
       </div>
       
       <div class="controls-row">
@@ -241,19 +324,38 @@
     </div>
   </div>
 
-  <div id="list-modal" onclick="closeList(event)">
+  <!-- VOCABULARY LIST MODAL -->
+  <div id="list-modal" class="modal" onclick="closeList(event)">
     <div class="modal-content" onclick="event.stopPropagation()">
       <div style="display:flex; justify-content: space-between; align-items: center;">
         <h3 id="modal-title" style="margin:0">Vocabulary List</h3>
-        <div style="display: flex; gap: 10px;">
+        <div style="display: flex; gap: 10px; margin-right: 25px;">
           <button id="download-txt-btn" class="btn-save" onclick="downloadErrorTxt()" style="display:none; flex:none; width:auto; padding: 0.4rem 1rem;">⬇️ Download TXT</button>
-          <button class="btn-utility" onclick="closeList()" style="flex:none; width:auto; padding: 0.4rem 1rem;">Close</button>
         </div>
       </div>
+      <span class="close-x" onclick="closeList(event)">✕</span>
       <table id="vocab-table">
         <thead><tr><th>Column 1</th><th>Column 2</th></tr></thead>
         <tbody></tbody>
       </table>
+    </div>
+  </div>
+
+  <!-- INSTRUCTIONS MODAL -->
+  <div id="info-modal" class="modal" onclick="closeInfoModal()">
+    <div class="modal-content modal-centered-content" onclick="event.stopPropagation()">
+      <span class="close-x" onclick="closeInfoModal()">✕</span>
+      <h3 style="margin-top: 0; color: #2c3e50;">Instructions</h3>
+      <p style="color: #546e7a; line-height: 1.5; margin-bottom: 5px;">aquí irán las instrucciones de cómo usarlo</p>
+    </div>
+  </div>
+
+  <!-- CENTERED REAL QR CODE MODAL -->
+  <div id="qr-modal" class="modal" onclick="closeQRModal()">
+    <div class="modal-content modal-centered-content" onclick="event.stopPropagation()">
+      <span class="close-x" onclick="closeQRModal()">✕</span>
+      <h3 style="margin-top: 0; color: #2c3e50; margin-bottom: 15px;">Deck QR Link</h3>
+      <div id="classroom-qr-container"></div>
     </div>
   </div>
 
@@ -263,14 +365,18 @@ let activeDeck = [];
 let currentIndex = 0;
 let isFlipped = false;
 let isActionFrozen = false; 
+let deckTitle = "Custom Deck"; 
 
 window.onload = function() {
-    if (originalDeck.length > 0) startApp();
+    if (originalDeck.length > 0) {
+      document.getElementById('deck-title-display').textContent = deckTitle;
+      startApp();
+    }
 };
 
 // --- KEYBOARD SHORTCUTS ---
 document.addEventListener('keydown', function(event) {
-  if (event.target.tagName === 'TEXTAREA' || isActionFrozen) return;
+  if (event.target.tagName === 'TEXTAREA' || event.target.tagName === 'INPUT' || isActionFrozen) return;
 
   const key = event.key.toLowerCase();
   
@@ -296,11 +402,21 @@ document.addEventListener('keydown', function(event) {
 });
 
 function loadCustomDeck() {
+  const titleInput = document.getElementById('deck-title-input').value.trim();
+  if (titleInput) {
+    deckTitle = titleInput;
+  }
+  document.getElementById('deck-title-display').textContent = deckTitle;
+
   const input = document.getElementById('csv-input').value.trim();
   if (!input) return alert("Please paste some data first!");
   const lines = input.split('\n');
+  
   originalDeck = lines.map(line => {
-    const parts = line.split('\t');
+    let parts = line.split('\t');
+    if (parts.length < 2) {
+      parts = line.split(',');
+    }
     return { 
       sideA: parts[0] ? parts[0].trim() : "", 
       sideB: parts[1] ? parts[1].trim() : "",
@@ -308,6 +424,7 @@ function loadCustomDeck() {
       hasError: false
     };
   }).filter(item => item.sideA || item.sideB);
+  
   if (originalDeck.length === 0) return alert("No valid data found.");
   startApp();
 }
@@ -387,25 +504,20 @@ function flipCard() {
 
 function toggleStar() {
   if (currentIndex >= activeDeck.length || isActionFrozen) return;
-  
   const currentActiveItem = activeDeck[currentIndex];
   currentActiveItem.starred = !currentActiveItem.starred;
-  
   updateDisplay();
 }
 
 function toggleError() {
   if (currentIndex >= activeDeck.length || isActionFrozen) return;
-  
   const currentActiveItem = activeDeck[currentIndex];
   currentActiveItem.hasError = !currentActiveItem.hasError;
-  
   updateDisplay();
 }
 
 function nextCard() {
   if (currentIndex >= activeDeck.length || isActionFrozen) return;
-  
   if (currentIndex < activeDeck.length - 1) {
     currentIndex++;
     isFlipped = false;
@@ -418,9 +530,7 @@ function nextCard() {
 
 function knowCard() {
   if (currentIndex >= activeDeck.length || isActionFrozen) return;
-  
   activeDeck.splice(currentIndex, 1);
-  
   if (currentIndex >= activeDeck.length) {
     currentIndex = 0; 
   }
@@ -469,7 +579,7 @@ function showList(filterType) {
     listItems = originalDeck.filter(item => item.hasError);
     modalTitle.textContent = "⚠️ Vocabulary Items to Correct";
     if (listItems.length === 0) return alert("No items marked with errors!");
-    downloadTxtBtn.style.display = "block"; // Show download button only for errors
+    downloadTxtBtn.style.display = "block"; 
   } else {
     listItems = originalDeck;
     modalTitle.textContent = "Full Vocabulary List";
@@ -492,11 +602,18 @@ function showList(filterType) {
 
 function closeList() { document.getElementById("list-modal").style.display = "none"; }
 
+/* INFO MODAL CONTROLS */
+function openInfoModal() { document.getElementById("info-modal").style.display = "block"; }
+function closeInfoModal() { document.getElementById("info-modal").style.display = "none"; }
+
+/* QR MODAL CONTROLS */
+function openQRModal() { document.getElementById("qr-modal").style.display = "block"; }
+function closeQRModal() { document.getElementById("qr-modal").style.display = "none"; }
+
 function downloadErrorTxt() {
   const errorItems = originalDeck.filter(item => item.hasError);
   if (errorItems.length === 0) return alert("No items to download.");
   
-  // Format items back to Term [TAB] Definition
   const txtContent = errorItems.map(item => `${item.sideA}\t${item.sideB}`).join('\n');
   
   const blob = new Blob([txtContent], { type: 'text/plain;charset=utf-8' });
@@ -508,7 +625,7 @@ function downloadErrorTxt() {
 
 function generateClassroomQR() {
   const currentUrl = window.location.href;
-  const qrApiUrl = `https://quickchart.io/qr?text=${encodeURIComponent(currentUrl)}&size=200&margin=1`;
+  const qrApiUrl = `https://quickchart.io/qr?text=${encodeURIComponent(currentUrl)}&size=220&margin=1`;
   const qrImg = new Image();
   qrImg.src = qrApiUrl;
   qrImg.onload = function() {
@@ -541,8 +658,8 @@ function downloadDeck(mode) {
     }));
 
     let docHtml = document.documentElement.outerHTML;
-    const dataString = `let originalDeck = ${JSON.stringify(cleanDeck)};`;
-    const finalHtml = docHtml.replace(/let originalDeck = \[.*?\];/, dataString);
+    const dataString = `let originalDeck = ${JSON.stringify(cleanDeck)};\nlet deckTitle = ${JSON.stringify(deckTitle)};`;
+    let finalHtml = docHtml.replace(/let originalDeck = \[.*?\];/, dataString);
     
     const blob = new Blob([finalHtml], { type: 'text/html' });
     const a = document.createElement('a');
