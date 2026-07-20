@@ -1,0 +1,730 @@
+<html lang="en"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pro Flashcard Study Tool</title>
+
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: #f0f2f5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+    overflow-x: hidden;
+  }
+
+  /* SETUP VIEW */
+  #setup-container {
+    background: white;
+    padding: 2rem;
+    border-radius: 24px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+    max-width: 600px;
+    width: 90%;
+    text-align: center;
+  }
+
+  .input-field {
+    width: 100%;
+    padding: 12px;
+    margin: 0.5rem 0 1rem 0;
+    border: 2px solid #e0e6ed;
+    border-radius: 12px;
+    font-family: inherit;
+    box-sizing: border-box;
+    font-size: 1rem;
+  }
+
+  textarea {
+    width: 100%;
+    height: 180px;
+    margin: 0.5rem 0 1rem 0;
+    padding: 10px;
+    border: 2px solid #e0e6ed;
+    border-radius: 12px;
+    font-family: inherit;
+    box-sizing: border-box;
+  }
+
+  /* FLASHCARD VIEW */
+  #flashcard-view {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    position: relative;
+  }
+
+  .top-bar-header {
+    width: 90%;
+    max-width: 550px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 5px;
+    position: relative;
+  }
+
+  .progress { 
+    font-size: 0.9rem; 
+    color: #90a4ae; 
+    font-weight: bold;
+    margin-bottom: 2px;
+  }
+
+  #deck-title-display {
+    font-size: 1.4rem;
+    color: #2c3e50;
+    font-weight: 700;
+    text-align: center;
+  }
+
+  /* TOP RIGHT UTILITIES */
+  .utility-top-right {
+    position: absolute;
+    top: 0px;
+    right: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 10;
+  }
+
+  .qr-custom-icon {
+    width: 26px;
+    height: 26px;
+    border: 1px solid #dcdcdc;
+    background: #fff;
+    padding: 2px;
+    box-sizing: border-box;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.1s;
+    border-radius: 2px;
+  }
+  .qr-custom-icon:active { transform: scale(0.9); }
+  .qr-row { display: flex; justify-content: space-between; height: 6px; }
+  .qr-block { width: 6px; height: 6px; background: #000; }
+  .qr-dot-row { display: flex; justify-content: space-around; height: 3px; width: 100%; }
+  .qr-dot { width: 3px; height: 3px; background: #000; }
+
+  .info-custom-btn {
+    width: 28px;
+    height: 28px;
+    background: #4a90e2;
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15), inset 0 -2px 0 rgba(0,0,0,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-family: "Georgia", serif;
+    font-weight: bold;
+    font-style: italic;
+    font-size: 1.1rem;
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.1s;
+  }
+  .info-custom-btn:active { transform: scale(0.9); }
+
+  #indicators-container {
+    display: flex;
+    gap: 10px;
+    min-height: 20px;
+    margin-bottom: 5px;
+  }
+
+  #star-indicator {
+    font-size: 1rem;
+    font-weight: bold;
+    color: #f1c40f;
+    visibility: hidden;
+  }
+
+  #error-indicator {
+    font-size: 1rem;
+    font-weight: bold;
+    color: #d32f2f;
+    visibility: hidden;
+  }
+
+  #card {
+    background: white;
+    border-radius: 24px;
+    padding: 1.5rem 1.5rem;
+    max-width: 550px;
+    width: 90%;
+    min-height: 180px;
+    display: flex;
+    flex-direction: column; 
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 1.6rem;
+    line-height: 1.4;
+    cursor: pointer;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+    transition: transform 0.1s ease, background 0.3s ease;
+    border-bottom: 8px solid #2c3e50;
+    margin-bottom: 25px;
+    color: #2c3e50;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    position: relative;
+    box-sizing: border-box;
+  }
+
+  #card:active { transform: scale(0.98); }
+
+  .controls-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 90%;
+    max-width: 550px;
+    align-items: center;
+  }
+
+  .controls-row { 
+    display: flex; 
+    gap: 6px; 
+    justify-content: center; 
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  button {
+    padding: 6px 10px;
+    font-size: 1.2rem;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.2s;
+    flex: 0 1 auto;
+    min-width: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+  }
+
+  .btn-next { background: #b39ddb; color: white; box-shadow: 0 4px 0 #7e57c2; } 
+  .btn-secondary { background: #e0e6ed; color: white; box-shadow: 0 4px 0 #b0bec5; }
+  .btn-error { background: #d32f2f; color: white; box-shadow: 0 4px 0 #b71c1c; } 
+  
+  /* GREEN BORDER / NO BACKGROUND FOR BASKET BUTTONS */
+  .btn-know { 
+    background: #ffffff; 
+    color: #1b5e20; 
+    border: 2px solid #1b5e20;
+    box-shadow: 0 4px 0 #0d3c12; 
+  } 
+  .btn-discard { 
+    background: #ffffff; 
+    color: #00c853; 
+    border: 2px solid #00c853;
+    box-shadow: 0 4px 0 #009624; 
+  } 
+
+  .btn-star { 
+    background: #ffffff; 
+    border: 2px solid #ffd600; 
+    box-shadow: 0 4px 0 #ffd600; 
+  }
+
+  .btn-save { 
+    background: #ffffff; 
+    color: #00b0ff; 
+    border: 2px solid #00b0ff; 
+    box-shadow: 0 3px 0 #0091ea; 
+    font-size: 0.95rem; 
+    padding: 4px 14px; 
+  }
+  
+  .btn-utility { background: #ffffff; color: #2c3e50; box-shadow: 0 3px 0 #cfd8dc; border: 1px solid #cfd8dc; font-size: 0.95rem; padding: 6px 14px; }
+
+  button:active { transform: translateY(2px); box-shadow: none; }
+  button:disabled { background: #ccc !important; color: #666 !important; border-color: #ccc !important; cursor: not-allowed; box-shadow: none !important; transform: none !important; }
+
+  /* GENERAL MODAL SYSTEM */
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 100;
+    left: 0; top: 0; width: 100%; height: 100%;
+    background-color: rgba(0,0,0,0.5);
+  }
+  .modal-content {
+    background-color: white;
+    margin: 5% auto;
+    padding: 25px;
+    border-radius: 15px;
+    width: 80%;
+    max-width: 700px;
+    max-height: 80vh;
+    overflow-y: auto;
+    position: relative;
+  }
+  
+  .modal-centered-content {
+    margin: 12% auto;
+    max-width: 420px;
+    text-align: center;
+  }
+
+  .close-x {
+    position: absolute;
+    top: 12px;
+    right: 15px;
+    font-size: 1.2rem;
+    color: #90a4ae;
+    cursor: pointer;
+    user-select: none;
+    font-weight: 300;
+    transition: color 0.2s;
+  }
+  .close-x:hover { color: #546e7a; }
+
+  #classroom-qr-container img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+  }
+
+  table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+  th, td { border: 1px solid #ddd; padding: 12px; text-align: left; font-size: 0.9rem; }
+  th { background-color: #f8f9fa; }
+</style>
+</head>
+<body>
+
+  <div id="setup-container" style="display: none;">
+    <h2 style="color: #2c3e50; margin-top: 0; margin-bottom: 1.5rem;">Create Your Deck</h2>
+    
+    <label style="display:block; text-align:left; font-weight:bold; color:#2c3e50; font-size:0.9rem;">Deck Title:</label>
+    <input type="text" id="deck-title-input" class="input-field" placeholder="Enter deck title...">
+    
+    <label style="display:block; text-align:left; font-weight:bold; color:#2c3e50; font-size:0.9rem;">Flashcard Content:</label>
+    <textarea id="csv-input" placeholder="Term [TAB] Definition 
+or: Term , Definition"></textarea>
+    
+    <button style="background: #27ae60; color: white; width: 100%; font-size: 1.1rem; padding: 10px;" onclick="loadCustomDeck()">Generate Flashcards ➔</button>
+  </div>
+
+  <div id="flashcard-view" style="display: flex;">
+    <div class="utility-top-right">
+      <div class="qr-custom-icon" id="open-qr-btn" onclick="openQRModal()" title="View QR Link">
+        <div class="qr-row"><div class="qr-block"></div><div class="qr-block"></div></div>
+        <div class="qr-dot-row"><div class="qr-dot"></div><div class="qr-dot"></div><div class="qr-dot"></div></div>
+        <div class="qr-row"><div class="qr-block"></div><div class="qr-block"></div></div>
+      </div>
+      <div class="info-custom-btn" onclick="openInfoModal()" title="Instructions">i</div>
+    </div>
+
+    <!-- UPPER TOP BAR -->
+    <div class="top-bar-header">
+      <div class="progress" id="progress">Card 1 of 43</div>
+      <div id="deck-title-display">Spieleabend</div>
+    </div>
+    
+    <div id="indicators-container">
+      <span id="star-indicator" style="visibility: visible;">⭐ Starred</span>
+      <span id="error-indicator" style="visibility: hidden;">⚠️ Error</span>
+    </div>
+    
+    <div id="card" onclick="flipCard()" style="background: white; color: rgb(44, 62, 80);"><div>ladrar</div></div>
+    
+    <div class="controls-container">
+      <div class="controls-row">
+        <!-- NEXT WITH RED CROSS AND BASKETS WITH GREEN TICK AND BORDERS -->
+        <button class="btn-next" id="nextBtn" onclick="nextCard()" title="Next (V)">❌➡️</button>
+        <button class="btn-know" id="knowBtn" onclick="knowCard()" title="Discard (Z)">✅🗑️</button>
+        <button class="btn-discard" id="discardBtn" onclick="discardCardWithPeek()" title="Peek &amp; Discard (X)">✅👀🗑️</button>
+        <button class="btn-secondary" id="shuffleBtn" onclick="shuffleDeck()" title="Shuffle">🔀</button>
+        <button class="btn-secondary" id="restartBtn" onclick="resetDeckSequential()" title="Restart">🔄</button>
+        <button class="btn-star" id="starBtn" onclick="toggleStar()" title="Star (C)">⭐</button>
+        <button class="btn-error" id="errorBtn" onclick="toggleError()" title="Report Error (E)">⚠️</button>
+      </div>
+      
+      <div class="controls-row">
+        <button class="btn-save" id="saveFullBtn" onclick="downloadDeck('full')">💾 Full</button>
+        <button class="btn-save" id="saveLeftBtn" onclick="downloadDeck('left')">💾 🚧</button>
+        <button class="btn-save" id="saveStarBtn" onclick="downloadDeck('star')">💾 ⭐</button>
+      </div>
+
+      <!-- NO MORE 'LIST' WORD, EYE REPLACEMENTS DONE -->
+      <div class="controls-row" style="margin-top: 10px;">
+        <button class="btn-utility" id="listBtn" onclick="showList('all')">👁</button>
+        <button class="btn-utility" id="leftListBtn" onclick="showList('left')">👁 🚧</button>
+        <button class="btn-utility" id="starListBtn" onclick="showList('star')">👁 ⭐</button>
+        <button class="btn-utility" id="errorListBtn" onclick="showList('error')">👁 ⚠️</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- VOCABULARY LIST MODAL -->
+  <div id="list-modal" class="modal" onclick="closeList(event)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <div style="display:flex; justify-content: space-between; align-items: center;">
+        <h3 id="modal-title" style="margin:0">List</h3>
+        <div style="display: flex; gap: 10px; margin-right: 25px;">
+          <button id="download-txt-btn" class="btn-save" onclick="downloadErrorTxt()" style="display:none; flex:none; width:auto; padding: 0.4rem 1rem;">⬇️ Download TXT</button>
+        </div>
+      </div>
+      <span class="close-x" onclick="closeList(event)">✕</span>
+      <table id="vocab-table">
+        <thead><tr><th>Column 1</th><th>Column 2</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- INSTRUCTIONS MODAL -->
+  <div id="info-modal" class="modal" onclick="closeInfoModal()">
+    <div class="modal-content modal-centered-content" onclick="event.stopPropagation()">
+      <span class="close-x" onclick="closeInfoModal()">✕</span>
+      <p style="color: #546e7a; line-height: 1.5; margin: 15px 0 5px 0;">aquí irán las instrucciones de cómo usarlo</p>
+    </div>
+  </div>
+
+  <!-- CENTERED REAL QR CODE MODAL -->
+  <div id="qr-modal" class="modal" onclick="closeQRModal()">
+    <div class="modal-content modal-centered-content" onclick="event.stopPropagation()">
+      <span class="close-x" onclick="closeQRModal()">✕</span>
+      <div id="classroom-qr-container" style="margin-top: 15px;"><img src="https://quickchart.io/qr?text=file%3A%2F%2F%2FC%3A%2FUsers%2FJL%2FDesktop%2Fgemini-code-1784551564311.html&amp;size=220&amp;margin=1"></div>
+    </div>
+  </div>
+
+<script>
+// <!-- DATA_SLOT -->
+let originalDeck = [{"sideA":"ladrar","sideB":"Hunde bellen","starred":true,"hasError":false},{"sideA":"me tengo que ir / better get going","sideB":"ich muss wieder (los)","starred":false,"hasError":false},{"sideA":"cuándo te iría bien?","sideB":"wann würd's dir denn passen?","starred":false,"hasError":false},{"sideA":"me costaba demasiado / daba perezaca","sideB":"es war mir zu anstrengend","starred":false,"hasError":false},{"sideA":"la intención es lo que cuenta!","sideB":"der Gedanke zählt doch, né?","starred":false,"hasError":false},{"sideA":"he quedado con amigos","sideB":"ich bin mit Freunden verabredet","starred":false,"hasError":false},{"sideA":"no puedes cambiarlo de día (compromiso)?","sideB":"das kannst du nicht verschieben?","starred":false,"hasError":false},{"sideA":"no, no puedo cancelarlo","sideB":"nein, ich kann nicht absagen","starred":false,"hasError":false},{"sideA":"la noche de juegos es una especie de tradición para (b_ _) nosotros","sideB":"der Spieleabend hat (so) eine Art Tradition bei uns","starred":false,"hasError":false},{"sideA":"check out (e_ _ z _ _ ) the rules in advance, otherwise you're going to make a fool of yourself","sideB":"zieh dir die Regeln vorher rein, sonst blamierst du dich ((SICH (dat) etwas REINZIEHEN)","starred":false,"hasError":false},{"sideA":"you must assess who in the group would be most likely to do that","sideB":"man muss einschätzen wer aus der Gruppe das am ehesten machen würde","starred":false,"hasError":false},{"sideA":"pedazo de juego! a que sí?!","sideB":"tolles Spiel! oder?!","starred":false,"hasError":false},{"sideA":"debían ser 2 semanas, y (de ahí) se convirtieron en medio año","sideB":"es sollten 2 Wochen sein, aber daraus ist ein halbes Jahr geworden","starred":false,"hasError":false},{"sideA":"ya es otra vez noche de juegos?","sideB":"schon wieder Spieleabend? Bingo!","starred":false,"hasError":false},{"sideA":"go on ahead (v _ _ g _ _ ) and take that","sideB":"gehe doch schon mal vor und nimm das mit","starred":false,"hasError":false},{"sideA":"un \"hola\" no muy común g_ d_","sideB":"ich bin der Oliver, grüss dich!","starred":false,"hasError":false},{"sideA":"siéntate, (siéntete) como si estuvieras en tu casa","sideB":"setz dich hin, fühl dich wie zuhause!","starred":false,"hasError":false},{"sideA":"nunca he oído hablar (de eso)","sideB":"nie gehört!","starred":false,"hasError":false},{"sideA":"no hay peros que valgan!","sideB":"keine Widerrede! du musst / machst das!","starred":false,"hasError":false},{"sideA":"y cuánto llevais saliendo juntos?","sideB":"und wie lange seid ihr schon zusammen?","starred":false,"hasError":false},{"sideA":"llevo 5 años con Zora (NO seit)","sideB":"ich bin mit Zora jetzt fünf Jahre zusammen","starred":false,"hasError":false},{"sideA":"tienen pisci? pues no me he fijado!","sideB":"haben die 'nen Pool? habe ich nicht darauf geachtet!","starred":false,"hasError":false},{"sideA":"no te acerques mucho!","sideB":"kommt mir nicht zu nah!","starred":false,"hasError":false},{"sideA":"may the best (man) win!","sideB":"möge der Beste gewinnen!","starred":false,"hasError":false},{"sideA":"alérgica a las nuces! llevo comiendo nueces todo el rato!!!","sideB":"allergisch gegen/auf Nüsse? ich esse die ganze Zeit schon Nüsse!","starred":false,"hasError":false},{"sideA":"venga, que todo el mundo lo sabe…! (w_ d_ j_ ...!)","sideB":"oh komm weiss doch jeder…!","starred":false,"hasError":false},{"sideA":"venga, siguiente ronda!","sideB":"ok, nächste Runde!","starred":false,"hasError":false},{"sideA":"seguimos jugando?","sideB":"spielen wir dann weiter?","starred":false,"hasError":false},{"sideA":"ciertamente/tiene que ser un gran alivio, una au-pair como esa!","sideB":"bestimmt 'ne sehr große Erleichterung, so ein Au-pair!","starred":false,"hasError":false},{"sideA":"vale, solo teoréticamente: si se va volando…?","sideB":"ok, mal rein theoretisch: wenn der jetzt wegfliegt, …?","starred":false,"hasError":false},{"sideA":"puedes contar conmigo! (kakadú)","sideB":"ja, geil, kannst du dich auf mich verlassen! (kakadú!)","starred":false,"hasError":false},{"sideA":"(suena el timbre) yo voy!","sideB":"(Türklingel!) ich gehe schon!","starred":false,"hasError":false},{"sideA":"perdona (por) el retraso","sideB":"entschuldige die Verspätung","starred":false,"hasError":false},{"sideA":"como se saluda a todo el mundo de golpe?","sideB":"ich' mach mal so! (klopf auf dem Tisch)","starred":false,"hasError":false},{"sideA":"let's make the most of it!","sideB":"lassen uns das Beste draus machen!","starred":false,"hasError":false},{"sideA":"do you know anything about wine? (A _ _)","sideB":"hast du 'ne Ahnung von Wein?","starred":false,"hasError":false},{"sideA":"lo importante, (es que) no corran por el cemento fresco","sideB":"Hauptsache, die laufen nicht durch den frischen Beton","starred":false,"hasError":false},{"sideA":"ahora se pregunta cultura general","sideB":"jetzt ist es Allgemeinwissen gefragt","starred":false,"hasError":false},{"sideA":"supplies! (Karo bringt noch was zum Essen)","sideB":"so, Nachschub!","starred":false,"hasError":false},{"sideA":"el nuevo/novato empieza?","sideB":"der Neuling fängt an?","starred":false,"hasError":false},{"sideA":"gracias por preguntar! (nice of you to ask)","sideB":"schön, das du fragst!","starred":false,"hasError":false},{"sideA":"parece simpática / y lo es!!","sideB":"sie sieht nett aus! ist sie auch!","starred":false,"hasError":false},{"sideA":"Jan, cheer up! everybody fucks up at some point!","sideB":"Jan, kopf hoch! Jeder baut mal Scheisse!","starred":false,"hasError":false}];
+let deckTitle = "Spieleabend"; 
+let isGeneratedFile = true; // <!-- EXPORT_FLAG -->
+
+let activeDeck = []; 
+let currentIndex = 0;
+let isFlipped = false;
+let isActionFrozen = false; 
+
+window.onload = function() {
+    if (originalDeck && originalDeck.length > 0) {
+      document.getElementById('deck-title-display').textContent = deckTitle;
+      if (isGeneratedFile) {
+        const fullBtn = document.getElementById("saveFullBtn");
+        if(fullBtn) fullBtn.style.display = "none";
+      }
+      startApp();
+    }
+};
+
+// --- KEYBOARD SHORTCUTS ---
+document.addEventListener('keydown', function(event) {
+  if (event.target.tagName === 'TEXTAREA' || event.target.tagName === 'INPUT' || isActionFrozen) return;
+
+  const key = event.key.toLowerCase();
+  
+  if (key === 'v') {
+    nextCard();
+  }
+  else if (key === 'z') {
+    knowCard();
+  } 
+  else if (key === 'x') {
+    discardCardWithPeek();
+  } 
+  else if (key === 'c') {
+    toggleStar();
+  }
+  else if (key === 'e') {
+    toggleError();
+  }
+  else if (key === ' ') {
+    event.preventDefault(); 
+    flipCard();
+  }
+});
+
+function loadCustomDeck() {
+  const titleInput = document.getElementById('deck-title-input').value.trim();
+  if (titleInput) {
+    deckTitle = titleInput;
+  }
+  document.getElementById('deck-title-display').textContent = deckTitle;
+
+  const input = document.getElementById('csv-input').value.trim();
+  if (!input) return alert("Please paste some data first!");
+  const lines = input.split('\n');
+  
+  originalDeck = lines.map(line => {
+    let parts = line.split('\t');
+    if (parts.length < 2) {
+      parts = line.split(',');
+    }
+    return { 
+      sideA: parts[0] ? parts[0].trim() : "", 
+      sideB: parts[1] ? parts[1].trim() : "",
+      starred: false,
+      hasError: false
+    };
+  }).filter(item => item.sideA || item.sideB);
+  
+  if (originalDeck.length === 0) return alert("No valid data found.");
+  startApp();
+}
+
+function startApp() {
+  document.getElementById('setup-container').style.display = 'none';
+  document.getElementById('flashcard-view').style.display = 'flex';
+  generateClassroomQR();
+  resetDeckSequential(); 
+}
+
+function resetDeckSequential() {
+  activeDeck = [...originalDeck]; 
+  initSession();
+}
+
+function shuffleDeck() {
+  activeDeck = [...activeDeck].sort(() => Math.random() - 0.5); 
+  initSession();
+}
+
+function initSession() {
+  currentIndex = 0;
+  isFlipped = false;
+  isActionFrozen = false;
+  setButtonsDisabled(false);
+  updateDisplay();
+}
+
+function setButtonsDisabled(disabledState) {
+  document.getElementById("nextBtn").disabled = disabledState;
+  document.getElementById("knowBtn").disabled = disabledState;
+  document.getElementById("discardBtn").disabled = disabledState;
+  document.getElementById("shuffleBtn").disabled = disabledState;
+  document.getElementById("restartBtn").disabled = disabledState;
+  document.getElementById("starBtn").disabled = disabledState;
+  document.getElementById("errorBtn").disabled = disabledState;
+}
+
+function updateDisplay() {
+  const current = activeDeck[currentIndex];
+  const card = document.getElementById("card");
+  const starIndicator = document.getElementById("star-indicator");
+  const errorIndicator = document.getElementById("error-indicator");
+  
+  if (!current || activeDeck.length === 0 || currentIndex >= activeDeck.length) {
+    card.innerHTML = "<b>Excellent!</b><br>All cards completed.";
+    card.style.background = "#d4edda";
+    starIndicator.style.visibility = "hidden";
+    errorIndicator.style.visibility = "hidden";
+    setButtonsDisabled(true);
+    document.getElementById("restartBtn").disabled = false; 
+    return;
+  }
+
+  document.getElementById("progress").textContent = `Card ${currentIndex + 1} of ${activeDeck.length}`;
+  
+  starIndicator.style.visibility = current.starred ? "visible" : "hidden";
+  errorIndicator.style.visibility = current.hasError ? "visible" : "hidden";
+
+  if (!isFlipped) {
+    card.innerHTML = `<div>${current.sideA}</div>`; 
+    card.style.background = "white";
+    card.style.color = "#2c3e50";
+  } else {
+    card.innerHTML = `<div>${current.sideB}</div>`;
+    card.style.background = "#eef6ff";
+    card.style.color = "#1565c0";
+  }
+}
+
+function flipCard() {
+  if (currentIndex >= activeDeck.length || isActionFrozen) return;
+  isFlipped = !isFlipped;
+  updateDisplay();
+}
+
+function toggleStar() {
+  if (currentIndex >= activeDeck.length || isActionFrozen) return;
+  const currentActiveItem = activeDeck[currentIndex];
+  currentActiveItem.starred = !currentActiveItem.starred;
+  updateDisplay();
+}
+
+function toggleError() {
+  if (currentIndex >= activeDeck.length || isActionFrozen) return;
+  const currentActiveItem = activeDeck[currentIndex];
+  currentActiveItem.hasError = !currentActiveItem.hasError;
+  updateDisplay();
+}
+
+function nextCard() {
+  if (currentIndex >= activeDeck.length || isActionFrozen) return;
+  if (currentIndex < activeDeck.length - 1) {
+    currentIndex++;
+    isFlipped = false;
+  } else {
+    currentIndex = 0; 
+    isFlipped = false;
+  }
+  updateDisplay();
+}
+
+function knowCard() {
+  if (currentIndex >= activeDeck.length || isActionFrozen) return;
+  activeDeck.splice(currentIndex, 1);
+  if (currentIndex >= activeDeck.length) {
+    currentIndex = 0; 
+  }
+  isFlipped = false;
+  updateDisplay();
+}
+
+function discardCardWithPeek() {
+  if (currentIndex >= activeDeck.length || isActionFrozen) return;
+  
+  isActionFrozen = true;
+  isFlipped = true; 
+  updateDisplay();
+  setButtonsDisabled(true);
+
+  setTimeout(() => {
+    activeDeck.splice(currentIndex, 1);
+    if (currentIndex >= activeDeck.length) {
+      currentIndex = 0;
+    }
+    isFlipped = false;
+    isActionFrozen = false;
+    setButtonsDisabled(false);
+    updateDisplay();
+  }, 2000);
+}
+
+function showList(filterType) {
+  const tbody = document.querySelector("#vocab-table tbody");
+  const modalTitle = document.getElementById("modal-title");
+  const downloadTxtBtn = document.getElementById("download-txt-btn");
+  tbody.innerHTML = "";
+  
+  let listItems = [];
+  downloadTxtBtn.style.display = "none";
+  
+  if (filterType === 'star') {
+    listItems = originalDeck.filter(item => item.starred);
+    modalTitle.textContent = "👁 ⭐";
+    if (listItems.length === 0) return alert("No starred items to display!");
+  } else if (filterType === 'left') {
+    listItems = activeDeck;
+    modalTitle.textContent = "👁 🚧";
+    if (listItems.length === 0) return alert("No active items remaining!");
+  } else if (filterType === 'error') {
+    listItems = originalDeck.filter(item => item.hasError);
+    modalTitle.textContent = "👁 ⚠️";
+    if (listItems.length === 0) return alert("No items marked with errors!");
+    downloadTxtBtn.style.display = "block"; 
+  } else {
+    listItems = originalDeck;
+    modalTitle.textContent = "👁";
+  }
+
+  listItems.forEach(item => {
+    const row = tbody.insertRow();
+    const cell1 = row.insertCell(0);
+    const cell2 = row.insertCell(1);
+    
+    let label = item.sideA;
+    if (item.starred) label = `⭐ ${label}`;
+    if (item.hasError) label = `⚠️ ${label}`;
+    
+    cell1.innerHTML = label;
+    cell2.innerHTML = item.sideB;
+  });
+  document.getElementById("list-modal").style.display = "block";
+}
+
+function closeList() { document.getElementById("list-modal").style.display = "none"; }
+
+/* INFO MODAL CONTROLS */
+function openInfoModal() { document.getElementById("info-modal").style.display = "block"; }
+function closeInfoModal() { document.getElementById("info-modal").style.display = "none"; }
+
+/* QR MODAL CONTROLS */
+function openQRModal() { document.getElementById("qr-modal").style.display = "block"; }
+function closeQRModal() { document.getElementById("qr-modal").style.display = "none"; }
+
+function downloadErrorTxt() {
+  const errorItems = originalDeck.filter(item => item.hasError);
+  if (errorItems.length === 0) return alert("No items to download.");
+  
+  const txtContent = errorItems.map(item => `${item.sideA}\t${item.sideB}`).join('\n');
+  
+  const blob = new Blob([txtContent], { type: 'text/plain;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'errors_to_correct.txt';
+  a.click();
+}
+
+function generateClassroomQR() {
+  const currentUrl = window.location.href;
+  const qrApiUrl = `https://quickchart.io/qr?text=${encodeURIComponent(currentUrl)}&size=220&margin=1`;
+  const qrImg = new Image();
+  qrImg.src = qrApiUrl;
+  qrImg.onload = function() {
+    const container = document.getElementById("classroom-qr-container");
+    if(container) { container.innerHTML = ""; container.appendChild(qrImg); }
+  };
+}
+
+function downloadDeck(mode) {
+    let targetDeck = [];
+    let filename = `flash-${deckTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.html`;
+
+    if (mode === 'full') {
+      targetDeck = originalDeck;
+    } else if (mode === 'left') {
+      targetDeck = activeDeck;
+      filename = 'Flashcards_Remaining.html';
+    } else if (mode === 'star') {
+      targetDeck = originalDeck.filter(item => item.starred);
+      filename = 'Flashcards_Starred.html';
+      if(targetDeck.length === 0) return alert("You haven't starred any cards yet!");
+    }
+
+    const cleanDeck = targetDeck.map(item => ({
+      sideA: item.sideA,
+      sideB: item.sideB,
+      starred: item.starred,
+      hasError: item.hasError
+    }));
+
+    let docHtml = document.documentElement.outerHTML;
+    
+    const replacementString = `// <!-- DATA_SLOT -->\nlet originalDeck = ${JSON.stringify(cleanDeck)};\nlet deckTitle = ${JSON.stringify(deckTitle)};`;
+    let finalHtml = docHtml.replace(/\/\/ <!-- DATA_SLOT -->[\s\S]*?let deckTitle = .*?;/, replacementString);
+    
+    if (mode === 'full') {
+      finalHtml = finalHtml.replace(`let isGeneratedFile = false; // <!-- EXPORT_FLAG -->`, `let isGeneratedFile = true; // <!-- EXPORT_FLAG -->`);
+    }
+    
+    const blob = new Blob([finalHtml], { type: 'text/html' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+}
+</script>
+
+
+</body></html>
