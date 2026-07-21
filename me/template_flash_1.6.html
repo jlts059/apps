@@ -1,4 +1,6 @@
-<html lang="en"><head>
+<!DOCTYPE html>
+<html lang="en">
+<head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pro Flashcard Study Tool</title>
@@ -10,7 +12,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start; /* Content starts at the very top */
+    justify-content: flex-start;
     min-height: 100vh;
     margin: 0;
     padding: 20px;
@@ -57,50 +59,50 @@
     flex-direction: column;
     align-items: center;
     width: 100%;
-    position: relative;
   }
 
-  /* HEADER TOP BAR */
-  .top-bar-header {
+  /* HEADER CONTAINER */
+  .header-container {
     width: 90%;
     max-width: 550px;
+    margin-top: 10px;
+    margin-bottom: 15px;
     display: flex;
     flex-direction: column;
-    align-items: stretch; /* Allows children to push left/right */
-    justify-content: center;
-    margin-top: 45px; /* Creates space below the absolute top items */
-    margin-bottom: 5px;
-    position: relative;
+    gap: 10px;
   }
 
-  /* Progress text alignment to the left corner */
+  .header-top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
+
   .progress { 
     font-size: 0.9rem; 
     color: #90a4ae; 
     font-weight: bold;
-    margin-bottom: 2px;
-    text-align: left; 
-    align-self: flex-start;
+  }
+
+  .utility-right-box {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .header-bottom-row {
+    width: 100%;
+    text-align: center;
   }
 
   #deck-title-display {
     font-size: 1.4rem;
     color: #2c3e50;
     font-weight: 700;
-    text-align: center;
   }
 
-  /* TOP RIGHT UTILITIES - Placed perfectly at the absolute top right */
-  .utility-top-right {
-    position: absolute;
-    top: 0px;
-    right: 20px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    z-index: 10;
-  }
-
+  /* UTILITY ICONS */
   .qr-custom-icon {
     width: 26px;
     height: 26px;
@@ -190,11 +192,11 @@
 
   #card:active { transform: scale(0.98); }
 
-  /* CONTROLS STRUCURED IN INDEPENDENT ROWS */
+  /* CONTROLS RIGID GRID ARRANGEMENT */
   .controls-container {
     display: flex;
     flex-direction: column;
-    gap: 14px; /* Generous gap to prevent accidental clicks */
+    gap: 14px; 
     width: 100%;
     max-width: 550px;
     align-items: center;
@@ -224,51 +226,49 @@
   button:active { transform: translateY(2px); box-shadow: none; }
   button:disabled { background: #ccc !important; color: #666 !important; border-color: #ccc !important; cursor: not-allowed; box-shadow: none !important; transform: none !important; }
 
-  /* ROW 1: NEXT (NO BACKGROUND, PURPLE BORDER) */
+  /* --- 2-BUTTON ROWS UNIFIED SYMMETRY STYLE --- */
+  .row-half-btn {
+    flex: 1;
+    width: 50%;
+    max-width: 270px;
+  }
+
+  /* BUTTON SPECIFIC STYLES WITH NEW LIGHT BACKGROUND VALUES */
   .btn-next { 
-    background: #ffffff; 
+    background: #f5f0ff; /* Light purple tint */
     color: #7e57c2; 
     border: 2px solid #7e57c2; 
     box-shadow: 0 4px 0 #5e35b1; 
-    flex: 1;
-    max-width: 200px;
   } 
   
-  /* ROW 1 & 2: KNOWLEDGE / DISCARD (NO BACKGROUND, GREEN BORDERS) */
   .btn-know { 
-    background: #ffffff; 
+    background: #f0f7f0; /* Light green tint */
     color: #1b5e20; 
     border: 2px solid #1b5e20;
     box-shadow: 0 4px 0 #0d3c12; 
-    flex: 1;
-    max-width: 200px;
   } 
+
   .btn-discard { 
-    background: #ffffff; 
+    background: #f0fff4; /* Light bright green tint */
     color: #00c853; 
     border: 2px solid #00c853;
     box-shadow: 0 4px 0 #009624; 
-    width: 100%;
-    max-width: 410px;
   } 
 
-  /* ROW 3: STAR & ERROR */
   .btn-star { 
     background: #ffffff; 
     border: 2px solid #ffd600; 
     box-shadow: 0 4px 0 #ffd600; 
-    flex: 1;
-    max-width: 200px;
   }
+
   .btn-error { 
-    background: #d32f2f; 
-    color: white; 
+    background: #ffffff; 
+    color: #d32f2f;
+    border: 2px solid #d32f2f;
     box-shadow: 0 4px 0 #b71c1c; 
-    flex: 1;
-    max-width: 200px;
   } 
 
-  /* ROW 4: UTILITY EYE BUTTONS (SMALLER) */
+  /* 3-BUTTON AND 4-BUTTON SMALL ROW UNITS */
   .btn-utility { 
     background: #ffffff; 
     color: #2c3e50; 
@@ -277,19 +277,22 @@
     font-size: 1rem; 
     padding: 6px 10px; 
     flex: 1;
-    max-width: 95px;
+  }
+  
+  /* Specific width balancing for Row 2 Utility list button */
+  .row-half-btn.btn-utility {
+    max-width: 270px;
+    font-size: 1.2rem;
+    padding: 8px 16px;
   }
 
-  /* ROW 5: SHUFFLE & RESTART (ORANGE BACKGROUND) */
-  .btn-orange {
-    background: #ff9800;
-    color: white;
+  .btn-orange-border {
+    background: #ffffff;
+    color: #ff9800;
+    border: 2px solid #ff9800;
     box-shadow: 0 4px 0 #e65100;
-    flex: 1;
-    max-width: 200px;
   }
 
-  /* ROW 6: SAVE BUTTONS (BLUE BORDER) */
   .btn-save { 
     background: #ffffff; 
     color: #00b0ff; 
@@ -298,7 +301,7 @@
     font-size: 0.95rem; 
     padding: 6px 14px; 
     flex: 1;
-    max-width: 130px;
+    max-width: 175px;
   }
 
   /* GENERAL MODAL SYSTEM */
@@ -354,76 +357,78 @@
 </head>
 <body>
 
-  <div id="setup-container" style="display: none;">
+  <div id="setup-container">
     <h2 style="color: #2c3e50; margin-top: 0; margin-bottom: 1.5rem;">Create Your Deck</h2>
     
     <label style="display:block; text-align:left; font-weight:bold; color:#2c3e50; font-size:0.9rem;">Deck Title:</label>
     <input type="text" id="deck-title-input" class="input-field" placeholder="Enter deck title...">
     
     <label style="display:block; text-align:left; font-weight:bold; color:#2c3e50; font-size:0.9rem;">Flashcard Content:</label>
-    <textarea id="csv-input" placeholder="Term [TAB] Definition 
-or: Term , Definition"></textarea>
+    <textarea id="csv-input" placeholder="Term [TAB] Definition &#10;or: Term , Definition"></textarea>
     
     <button style="background: #27ae60; color: white; width: 100%; font-size: 1.1rem; padding: 10px;" onclick="loadCustomDeck()">Generate Flashcards ➔</button>
   </div>
 
-  <div id="flashcard-view" style="display: flex;">
-    <!-- ABSOLUTE TOP ITEM -->
-    <div class="utility-top-right">
-      <div class="qr-custom-icon" id="open-qr-btn" onclick="openQRModal()" title="View QR Link">
-        <div class="qr-row"><div class="qr-block"></div><div class="qr-block"></div></div>
-        <div class="qr-dot-row"><div class="qr-dot"></div><div class="qr-dot"></div><div class="qr-dot"></div></div>
-        <div class="qr-row"><div class="qr-block"></div><div class="qr-block"></div></div>
+  <div id="flashcard-view">
+    
+    <!-- TOP HEADER -->
+    <div class="header-container">
+      <div class="header-top-row">
+        <div class="progress" id="progress">Card 0 of 0</div>
+        <div class="utility-right-box">
+          <div class="qr-custom-icon" id="open-qr-btn" onclick="openQRModal()" title="View QR Link">
+            <div class="qr-row"><div class="qr-block"></div><div class="qr-block"></div></div>
+            <div class="qr-dot-row"><div class="qr-dot"></div><div class="qr-dot"></div><div class="qr-dot"></div></div>
+            <div class="qr-row"><div class="qr-block"></div><div class="qr-block"></div></div>
+          </div>
+          <div class="info-custom-btn" onclick="openInfoModal()" title="Instructions">i</div>
+        </div>
       </div>
-      <div class="info-custom-btn" onclick="openInfoModal()" title="Instructions">i</div>
-    </div>
-
-    <!-- UPPER HEADER WITH LEFT ALIGNED PROGRESS -->
-    <div class="top-bar-header">
-      <div class="progress" id="progress">Card 1 of 12</div>
-      <div id="deck-title-display">The Boyfriend: A Gripping Psychological Thriller by Freida McFadden</div>
+      <div class="header-bottom-row">
+        <div id="deck-title-display">Custom Deck</div>
+      </div>
     </div>
     
     <div id="indicators-container">
-      <span id="star-indicator" style="visibility: hidden;">⭐ Starred</span>
-      <span id="error-indicator" style="visibility: hidden;">⚠️ Error</span>
+      <span id="star-indicator">⭐ Starred</span>
+      <span id="error-indicator">⚠️ Error</span>
     </div>
     
-    <div id="card" onclick="flipCard()" style="background: white; color: rgb(44, 62, 80);"><div>ladrar</div></div>
+    <div id="card" onclick="flipCard()">Loading...</div>
     
     <div class="controls-container">
-      <!-- FIRST ROW: NEXT AND CHECK & BASKET -->
+      <!-- FIRST ROW: error + next -->
       <div class="controls-row">
-        <button class="btn-next" id="nextBtn" onclick="nextCard()" title="Next (V)">❌➡️</button>
-        <button class="btn-know" id="knowBtn" onclick="knowCard()" title="Discard (Z)">✅🗑️</button>
+        <button class="btn-error row-half-btn" id="errorBtn" onclick="toggleError()" title="Report Error (E)">⚠️</button>
+        <button class="btn-next row-half-btn" id="nextBtn" onclick="nextCard()" title="Next (V)">❌➡️</button>
       </div>
       
-      <!-- SECOND ROW: CHECK & EYES & BASKET -->
+      <!-- SECOND ROW: eye cross + tick basket (NOW PROPERLY ALIGNED SYMMETRICALLY) -->
       <div class="controls-row">
-        <button class="btn-discard" id="discardBtn" onclick="discardCardWithPeek()" title="Peek &amp; Discard (X)">✅👀🗑️</button>
+        <button class="btn-utility row-half-btn" id="leftListBtn" onclick="showList('left')">👁 ❌</button>
+        <button class="btn-know row-half-btn" id="knowBtn" onclick="knowCard()" title="Discard (Z)">✅🗑️</button>
       </div>
 
-      <!-- THIRD ROW: STAR & ERROR -->
+      <!-- THIRD ROW: star + tick eyes basket (NOW PROPERLY ALIGNED SYMMETRICALLY) -->
       <div class="controls-row">
-        <button class="btn-star" id="starBtn" onclick="toggleStar()" title="Star (C)">⭐</button>
-        <button class="btn-error" id="errorBtn" onclick="toggleError()" title="Report Error (E)">⚠️</button>
+        <button class="btn-star row-half-btn" id="starBtn" onclick="toggleStar()" title="Star (C)">⭐</button>
+        <button class="btn-discard row-half-btn" id="discardBtn" onclick="discardCardWithPeek()" title="Peek & Discard (X)">✅👀🗑️</button>
       </div>
       
-      <!-- FOURTH ROW: EYE LISTS WITH ❌ INSTEAD OF 🚧 -->
+      <!-- FOURTH ROW: eye + eye star + eye error -->
       <div class="controls-row">
         <button class="btn-utility" id="listBtn" onclick="showList('all')">👁</button>
-        <button class="btn-utility" id="leftListBtn" onclick="showList('left')">👁 ❌</button>
         <button class="btn-utility" id="starListBtn" onclick="showList('star')">👁 ⭐</button>
         <button class="btn-utility" id="errorListBtn" onclick="showList('error')">👁 ⚠️</button>
       </div>
 
-      <!-- FIFTH ROW: SHUFFLE & RESTART (ORANGE) -->
+      <!-- FIFTH ROW: shuffle + restart -->
       <div class="controls-row">
-        <button class="btn-orange" id="shuffleBtn" onclick="shuffleDeck()" title="Shuffle">🔀</button>
-        <button class="btn-orange" id="restartBtn" onclick="resetDeckSequential()" title="Restart">🔄</button>
+        <button class="btn-orange-border row-half-btn" id="shuffleBtn" onclick="shuffleDeck()" title="Shuffle">🔀</button>
+        <button class="btn-orange-border row-half-btn" id="restartBtn" onclick="resetDeckSequential()" title="Restart">🔄</button>
       </div>
 
-      <!-- SIXTH ROW: SAVE BUTTONS WITH ❌ INSTEAD OF 🚧 -->
+      <!-- SIXTH ROW: save full + save cross + save star (THREE SAVES TOTAL) -->
       <div class="controls-row">
         <button class="btn-save" id="saveFullBtn" onclick="downloadDeck('full')">💾 Full</button>
         <button class="btn-save" id="saveLeftBtn" onclick="downloadDeck('left')">💾 ❌</button>
@@ -457,19 +462,19 @@ or: Term , Definition"></textarea>
     </div>
   </div>
 
-  <!-- CENTERED REAL QR CODE MODAL -->
+  <!-- CENTERED QR CODE MODAL -->
   <div id="qr-modal" class="modal" onclick="closeQRModal()">
     <div class="modal-content modal-centered-content" onclick="event.stopPropagation()">
       <span class="close-x" onclick="closeQRModal()">✕</span>
-      <div id="classroom-qr-container" style="margin-top: 15px;"><img src="https://quickchart.io/qr?text=file%3A%2F%2F%2FC%3A%2FUsers%2FJL%2FDesktop%2Fgemini-code-1784562847541.html&amp;size=220&amp;margin=1"></div>
+      <div id="classroom-qr-container" style="margin-top: 15px;"></div>
     </div>
   </div>
 
 <script>
 // <!-- DATA_SLOT -->
-let originalDeck = [{"sideA":"ladrar","sideB":"Hunde bellen","starred":false,"hasError":false},{"sideA":"me tengo que ir / better get going","sideB":"ich muss wieder (los)","starred":false,"hasError":false},{"sideA":"cuándo te iría bien?","sideB":"wann würd's dir denn passen?","starred":false,"hasError":false},{"sideA":"me costaba demasiado / daba perezaca","sideB":"es war mir zu anstrengend","starred":false,"hasError":false},{"sideA":"la intención es lo que cuenta!","sideB":"der Gedanke zählt doch, né?","starred":false,"hasError":false},{"sideA":"he quedado con amigos","sideB":"ich bin mit Freunden verabredet","starred":false,"hasError":false},{"sideA":"no puedes cambiarlo de día (compromiso)?","sideB":"das kannst du nicht verschieben?","starred":false,"hasError":false},{"sideA":"no, no puedo cancelarlo","sideB":"nein, ich kann nicht absagen","starred":false,"hasError":false},{"sideA":"la noche de juegos es una especie de tradición para (b_ _) nosotros","sideB":"der Spieleabend hat (so) eine Art Tradition bei uns","starred":false,"hasError":false},{"sideA":"check out (e_ _ z _ _ ) the rules in advance, otherwise you're going to make a fool of yourself","sideB":"zieh dir die Regeln vorher rein, sonst blamierst du dich ((SICH (dat) etwas REINZIEHEN)","starred":false,"hasError":false},{"sideA":"you must assess who in the group would be most likely to do that","sideB":"man muss einschätzen wer aus der Gruppe das am ehesten machen würde","starred":false,"hasError":false},{"sideA":"pedazo de juego! a que sí?!","sideB":"tolles Spiel! oder?!","starred":false,"hasError":false}];
-let deckTitle = "The Boyfriend: A Gripping Psychological Thriller by Freida McFadden"; 
-let isGeneratedFile = true; // <!-- EXPORT_FLAG -->
+let originalDeck = []; 
+let deckTitle = "Custom Deck"; 
+let isGeneratedFile = false; // <!-- EXPORT_FLAG -->
 
 let activeDeck = []; 
 let currentIndex = 0;
@@ -786,5 +791,5 @@ function downloadDeck(mode) {
 }
 </script>
 
-
-</body></html>
+</body>
+</html>

@@ -10,7 +10,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     min-height: 100vh;
     margin: 0;
     padding: 20px;
@@ -26,6 +26,7 @@
     max-width: 600px;
     width: 90%;
     text-align: center;
+    margin-top: 40px;
   }
 
   .input-field {
@@ -56,45 +57,50 @@
     flex-direction: column;
     align-items: center;
     width: 100%;
-    position: relative;
   }
 
-  .top-bar-header {
+  /* HEADER CONTAINER */
+  .header-container {
     width: 90%;
     max-width: 550px;
+    margin-top: 10px;
+    margin-bottom: 15px;
     display: flex;
     flex-direction: column;
+    gap: 10px;
+  }
+
+  .header-top-row {
+    display: flex;
+    justify-content: space-between;
     align-items: center;
-    justify-content: center;
-    margin-bottom: 5px;
-    position: relative;
+    width: 100%;
   }
 
   .progress { 
     font-size: 0.9rem; 
     color: #90a4ae; 
     font-weight: bold;
-    margin-bottom: 2px;
+  }
+
+  .utility-right-box {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .header-bottom-row {
+    width: 100%;
+    text-align: center;
   }
 
   #deck-title-display {
     font-size: 1.4rem;
     color: #2c3e50;
     font-weight: 700;
-    text-align: center;
   }
 
-  /* TOP RIGHT UTILITIES */
-  .utility-top-right {
-    position: absolute;
-    top: 0px;
-    right: 20px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    z-index: 10;
-  }
-
+  /* UTILITY ICONS */
   .qr-custom-icon {
     width: 26px;
     height: 26px;
@@ -184,52 +190,64 @@
 
   #card:active { transform: scale(0.98); }
 
+  /* CONTROLS RIGID GRID ARRANGEMENT */
   .controls-container {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    width: 90%;
+    gap: 14px; 
+    width: 100%;
     max-width: 550px;
     align-items: center;
   }
 
   .controls-row { 
     display: flex; 
-    gap: 6px; 
+    gap: 10px; 
     justify-content: center; 
     width: 100%;
-    flex-wrap: wrap;
   }
 
   button {
-    padding: 6px 10px;
+    padding: 8px 16px;
     font-size: 1.2rem;
     border-radius: 8px;
     border: none;
     cursor: pointer;
     font-weight: bold;
     transition: all 0.2s;
-    flex: 0 1 auto;
-    min-width: 42px;
     display: flex;
     align-items: center;
     justify-content: center;
     box-sizing: border-box;
   }
 
-  .btn-next { background: #b39ddb; color: white; box-shadow: 0 4px 0 #7e57c2; } 
-  .btn-secondary { background: #e0e6ed; color: white; box-shadow: 0 4px 0 #b0bec5; }
-  .btn-error { background: #d32f2f; color: white; box-shadow: 0 4px 0 #b71c1c; } 
+  button:active { transform: translateY(2px); box-shadow: none; }
+  button:disabled { background: #ccc !important; color: #666 !important; border-color: #ccc !important; cursor: not-allowed; box-shadow: none !important; transform: none !important; }
+
+  /* --- 2-BUTTON ROWS UNIFIED SYMMETRY STYLE --- */
+  .row-half-btn {
+    flex: 1;
+    width: 50%;
+    max-width: 270px;
+  }
+
+  /* BUTTON SPECIFIC STYLES WITH NEW LIGHT BACKGROUND VALUES */
+  .btn-next { 
+    background: #f5f0ff; /* Light purple tint */
+    color: #7e57c2; 
+    border: 2px solid #7e57c2; 
+    box-shadow: 0 4px 0 #5e35b1; 
+  } 
   
-  /* GREEN BORDER / NO BACKGROUND FOR BASKET BUTTONS */
   .btn-know { 
-    background: #ffffff; 
+    background: #f0f7f0; /* Light green tint */
     color: #1b5e20; 
     border: 2px solid #1b5e20;
     box-shadow: 0 4px 0 #0d3c12; 
   } 
+
   .btn-discard { 
-    background: #ffffff; 
+    background: #f0fff4; /* Light bright green tint */
     color: #00c853; 
     border: 2px solid #00c853;
     box-shadow: 0 4px 0 #009624; 
@@ -241,19 +259,48 @@
     box-shadow: 0 4px 0 #ffd600; 
   }
 
+  .btn-error { 
+    background: #ffffff; 
+    color: #d32f2f;
+    border: 2px solid #d32f2f;
+    box-shadow: 0 4px 0 #b71c1c; 
+  } 
+
+  /* 3-BUTTON AND 4-BUTTON SMALL ROW UNITS */
+  .btn-utility { 
+    background: #ffffff; 
+    color: #2c3e50; 
+    box-shadow: 0 3px 0 #cfd8dc; 
+    border: 1px solid #cfd8dc; 
+    font-size: 1rem; 
+    padding: 6px 10px; 
+    flex: 1;
+  }
+  
+  /* Specific width balancing for Row 2 Utility list button */
+  .row-half-btn.btn-utility {
+    max-width: 270px;
+    font-size: 1.2rem;
+    padding: 8px 16px;
+  }
+
+  .btn-orange-border {
+    background: #ffffff;
+    color: #ff9800;
+    border: 2px solid #ff9800;
+    box-shadow: 0 4px 0 #e65100;
+  }
+
   .btn-save { 
     background: #ffffff; 
     color: #00b0ff; 
     border: 2px solid #00b0ff; 
     box-shadow: 0 3px 0 #0091ea; 
     font-size: 0.95rem; 
-    padding: 4px 14px; 
+    padding: 6px 14px; 
+    flex: 1;
+    max-width: 175px;
   }
-  
-  .btn-utility { background: #ffffff; color: #2c3e50; box-shadow: 0 3px 0 #cfd8dc; border: 1px solid #cfd8dc; font-size: 0.95rem; padding: 6px 14px; }
-
-  button:active { transform: translateY(2px); box-shadow: none; }
-  button:disabled { background: #ccc !important; color: #666 !important; border-color: #ccc !important; cursor: not-allowed; box-shadow: none !important; transform: none !important; }
 
   /* GENERAL MODAL SYSTEM */
   .modal {
@@ -322,52 +369,69 @@ or: Term , Definition"></textarea>
   </div>
 
   <div id="flashcard-view" style="display: flex;">
-    <div class="utility-top-right">
-      <div class="qr-custom-icon" id="open-qr-btn" onclick="openQRModal()" title="View QR Link">
-        <div class="qr-row"><div class="qr-block"></div><div class="qr-block"></div></div>
-        <div class="qr-dot-row"><div class="qr-dot"></div><div class="qr-dot"></div><div class="qr-dot"></div></div>
-        <div class="qr-row"><div class="qr-block"></div><div class="qr-block"></div></div>
+    
+    <!-- TOP HEADER -->
+    <div class="header-container">
+      <div class="header-top-row">
+        <div class="progress" id="progress">Card 1 of 12</div>
+        <div class="utility-right-box">
+          <div class="qr-custom-icon" id="open-qr-btn" onclick="openQRModal()" title="View QR Link">
+            <div class="qr-row"><div class="qr-block"></div><div class="qr-block"></div></div>
+            <div class="qr-dot-row"><div class="qr-dot"></div><div class="qr-dot"></div><div class="qr-dot"></div></div>
+            <div class="qr-row"><div class="qr-block"></div><div class="qr-block"></div></div>
+          </div>
+          <div class="info-custom-btn" onclick="openInfoModal()" title="Instructions">i</div>
+        </div>
       </div>
-      <div class="info-custom-btn" onclick="openInfoModal()" title="Instructions">i</div>
-    </div>
-
-    <!-- UPPER TOP BAR -->
-    <div class="top-bar-header">
-      <div class="progress" id="progress">Card 1 of 43</div>
-      <div id="deck-title-display">Spieleabend</div>
+      <div class="header-bottom-row">
+        <div id="deck-title-display">Spieleabend</div>
+      </div>
     </div>
     
     <div id="indicators-container">
-      <span id="star-indicator" style="visibility: visible;">⭐ Starred</span>
+      <span id="star-indicator" style="visibility: hidden;">⭐ Starred</span>
       <span id="error-indicator" style="visibility: hidden;">⚠️ Error</span>
     </div>
     
     <div id="card" onclick="flipCard()" style="background: white; color: rgb(44, 62, 80);"><div>ladrar</div></div>
     
     <div class="controls-container">
+      <!-- FIRST ROW: error + next -->
       <div class="controls-row">
-        <!-- NEXT WITH RED CROSS AND BASKETS WITH GREEN TICK AND BORDERS -->
-        <button class="btn-next" id="nextBtn" onclick="nextCard()" title="Next (V)">❌➡️</button>
-        <button class="btn-know" id="knowBtn" onclick="knowCard()" title="Discard (Z)">✅🗑️</button>
-        <button class="btn-discard" id="discardBtn" onclick="discardCardWithPeek()" title="Peek &amp; Discard (X)">✅👀🗑️</button>
-        <button class="btn-secondary" id="shuffleBtn" onclick="shuffleDeck()" title="Shuffle">🔀</button>
-        <button class="btn-secondary" id="restartBtn" onclick="resetDeckSequential()" title="Restart">🔄</button>
-        <button class="btn-star" id="starBtn" onclick="toggleStar()" title="Star (C)">⭐</button>
-        <button class="btn-error" id="errorBtn" onclick="toggleError()" title="Report Error (E)">⚠️</button>
+        <button class="btn-error row-half-btn" id="errorBtn" onclick="toggleError()" title="Report Error (E)">⚠️</button>
+        <button class="btn-next row-half-btn" id="nextBtn" onclick="nextCard()" title="Next (V)">❌➡️</button>
       </div>
       
+      <!-- SECOND ROW: eye cross + tick basket (NOW PROPERLY ALIGNED SYMMETRICALLY) -->
       <div class="controls-row">
-        <button class="btn-save" id="saveFullBtn" onclick="downloadDeck('full')">💾 Full</button>
-        <button class="btn-save" id="saveLeftBtn" onclick="downloadDeck('left')">💾 🚧</button>
-        <button class="btn-save" id="saveStarBtn" onclick="downloadDeck('star')">💾 ⭐</button>
+        <button class="btn-utility row-half-btn" id="leftListBtn" onclick="showList('left')">👁 ❌</button>
+        <button class="btn-know row-half-btn" id="knowBtn" onclick="knowCard()" title="Discard (Z)">✅🗑️</button>
       </div>
 
-      <!-- NO MORE 'LIST' WORD, EYE REPLACEMENTS DONE -->
-      <div class="controls-row" style="margin-top: 10px;">
+      <!-- THIRD ROW: star + tick eyes basket (NOW PROPERLY ALIGNED SYMMETRICALLY) -->
+      <div class="controls-row">
+        <button class="btn-star row-half-btn" id="starBtn" onclick="toggleStar()" title="Star (C)">⭐</button>
+        <button class="btn-discard row-half-btn" id="discardBtn" onclick="discardCardWithPeek()" title="Peek &amp; Discard (X)">✅👀🗑️</button>
+      </div>
+      
+      <!-- FOURTH ROW: eye + eye star + eye error -->
+      <div class="controls-row">
         <button class="btn-utility" id="listBtn" onclick="showList('all')">👁</button>
-        <button class="btn-utility" id="leftListBtn" onclick="showList('left')">👁 🚧</button>
         <button class="btn-utility" id="starListBtn" onclick="showList('star')">👁 ⭐</button>
         <button class="btn-utility" id="errorListBtn" onclick="showList('error')">👁 ⚠️</button>
+      </div>
+
+      <!-- FIFTH ROW: shuffle + restart -->
+      <div class="controls-row">
+        <button class="btn-orange-border row-half-btn" id="shuffleBtn" onclick="shuffleDeck()" title="Shuffle">🔀</button>
+        <button class="btn-orange-border row-half-btn" id="restartBtn" onclick="resetDeckSequential()" title="Restart">🔄</button>
+      </div>
+
+      <!-- SIXTH ROW: save full + save cross + save star (THREE SAVES TOTAL) -->
+      <div class="controls-row">
+        <button class="btn-save" id="saveFullBtn" onclick="downloadDeck('full')">💾 Full</button>
+        <button class="btn-save" id="saveLeftBtn" onclick="downloadDeck('left')">💾 ❌</button>
+        <button class="btn-save" id="saveStarBtn" onclick="downloadDeck('star')">💾 ⭐</button>
       </div>
     </div>
   </div>
@@ -397,17 +461,17 @@ or: Term , Definition"></textarea>
     </div>
   </div>
 
-  <!-- CENTERED REAL QR CODE MODAL -->
+  <!-- CENTERED QR CODE MODAL -->
   <div id="qr-modal" class="modal" onclick="closeQRModal()">
     <div class="modal-content modal-centered-content" onclick="event.stopPropagation()">
       <span class="close-x" onclick="closeQRModal()">✕</span>
-      <div id="classroom-qr-container" style="margin-top: 15px;"><img src="https://quickchart.io/qr?text=file%3A%2F%2F%2FC%3A%2FUsers%2FJL%2FDesktop%2Fgemini-code-1784551564311.html&amp;size=220&amp;margin=1"></div>
+      <div id="classroom-qr-container" style="margin-top: 15px;"><img src="https://quickchart.io/qr?text=file%3A%2F%2F%2FC%3A%2FUsers%2FJL%2FDesktop%2Fgemini-code-1784625621012.html&amp;size=220&amp;margin=1"></div>
     </div>
   </div>
 
 <script>
 // <!-- DATA_SLOT -->
-let originalDeck = [{"sideA":"ladrar","sideB":"Hunde bellen","starred":true,"hasError":false},{"sideA":"me tengo que ir / better get going","sideB":"ich muss wieder (los)","starred":false,"hasError":false},{"sideA":"cuándo te iría bien?","sideB":"wann würd's dir denn passen?","starred":false,"hasError":false},{"sideA":"me costaba demasiado / daba perezaca","sideB":"es war mir zu anstrengend","starred":false,"hasError":false},{"sideA":"la intención es lo que cuenta!","sideB":"der Gedanke zählt doch, né?","starred":false,"hasError":false},{"sideA":"he quedado con amigos","sideB":"ich bin mit Freunden verabredet","starred":false,"hasError":false},{"sideA":"no puedes cambiarlo de día (compromiso)?","sideB":"das kannst du nicht verschieben?","starred":false,"hasError":false},{"sideA":"no, no puedo cancelarlo","sideB":"nein, ich kann nicht absagen","starred":false,"hasError":false},{"sideA":"la noche de juegos es una especie de tradición para (b_ _) nosotros","sideB":"der Spieleabend hat (so) eine Art Tradition bei uns","starred":false,"hasError":false},{"sideA":"check out (e_ _ z _ _ ) the rules in advance, otherwise you're going to make a fool of yourself","sideB":"zieh dir die Regeln vorher rein, sonst blamierst du dich ((SICH (dat) etwas REINZIEHEN)","starred":false,"hasError":false},{"sideA":"you must assess who in the group would be most likely to do that","sideB":"man muss einschätzen wer aus der Gruppe das am ehesten machen würde","starred":false,"hasError":false},{"sideA":"pedazo de juego! a que sí?!","sideB":"tolles Spiel! oder?!","starred":false,"hasError":false},{"sideA":"debían ser 2 semanas, y (de ahí) se convirtieron en medio año","sideB":"es sollten 2 Wochen sein, aber daraus ist ein halbes Jahr geworden","starred":false,"hasError":false},{"sideA":"ya es otra vez noche de juegos?","sideB":"schon wieder Spieleabend? Bingo!","starred":false,"hasError":false},{"sideA":"go on ahead (v _ _ g _ _ ) and take that","sideB":"gehe doch schon mal vor und nimm das mit","starred":false,"hasError":false},{"sideA":"un \"hola\" no muy común g_ d_","sideB":"ich bin der Oliver, grüss dich!","starred":false,"hasError":false},{"sideA":"siéntate, (siéntete) como si estuvieras en tu casa","sideB":"setz dich hin, fühl dich wie zuhause!","starred":false,"hasError":false},{"sideA":"nunca he oído hablar (de eso)","sideB":"nie gehört!","starred":false,"hasError":false},{"sideA":"no hay peros que valgan!","sideB":"keine Widerrede! du musst / machst das!","starred":false,"hasError":false},{"sideA":"y cuánto llevais saliendo juntos?","sideB":"und wie lange seid ihr schon zusammen?","starred":false,"hasError":false},{"sideA":"llevo 5 años con Zora (NO seit)","sideB":"ich bin mit Zora jetzt fünf Jahre zusammen","starred":false,"hasError":false},{"sideA":"tienen pisci? pues no me he fijado!","sideB":"haben die 'nen Pool? habe ich nicht darauf geachtet!","starred":false,"hasError":false},{"sideA":"no te acerques mucho!","sideB":"kommt mir nicht zu nah!","starred":false,"hasError":false},{"sideA":"may the best (man) win!","sideB":"möge der Beste gewinnen!","starred":false,"hasError":false},{"sideA":"alérgica a las nuces! llevo comiendo nueces todo el rato!!!","sideB":"allergisch gegen/auf Nüsse? ich esse die ganze Zeit schon Nüsse!","starred":false,"hasError":false},{"sideA":"venga, que todo el mundo lo sabe…! (w_ d_ j_ ...!)","sideB":"oh komm weiss doch jeder…!","starred":false,"hasError":false},{"sideA":"venga, siguiente ronda!","sideB":"ok, nächste Runde!","starred":false,"hasError":false},{"sideA":"seguimos jugando?","sideB":"spielen wir dann weiter?","starred":false,"hasError":false},{"sideA":"ciertamente/tiene que ser un gran alivio, una au-pair como esa!","sideB":"bestimmt 'ne sehr große Erleichterung, so ein Au-pair!","starred":false,"hasError":false},{"sideA":"vale, solo teoréticamente: si se va volando…?","sideB":"ok, mal rein theoretisch: wenn der jetzt wegfliegt, …?","starred":false,"hasError":false},{"sideA":"puedes contar conmigo! (kakadú)","sideB":"ja, geil, kannst du dich auf mich verlassen! (kakadú!)","starred":false,"hasError":false},{"sideA":"(suena el timbre) yo voy!","sideB":"(Türklingel!) ich gehe schon!","starred":false,"hasError":false},{"sideA":"perdona (por) el retraso","sideB":"entschuldige die Verspätung","starred":false,"hasError":false},{"sideA":"como se saluda a todo el mundo de golpe?","sideB":"ich' mach mal so! (klopf auf dem Tisch)","starred":false,"hasError":false},{"sideA":"let's make the most of it!","sideB":"lassen uns das Beste draus machen!","starred":false,"hasError":false},{"sideA":"do you know anything about wine? (A _ _)","sideB":"hast du 'ne Ahnung von Wein?","starred":false,"hasError":false},{"sideA":"lo importante, (es que) no corran por el cemento fresco","sideB":"Hauptsache, die laufen nicht durch den frischen Beton","starred":false,"hasError":false},{"sideA":"ahora se pregunta cultura general","sideB":"jetzt ist es Allgemeinwissen gefragt","starred":false,"hasError":false},{"sideA":"supplies! (Karo bringt noch was zum Essen)","sideB":"so, Nachschub!","starred":false,"hasError":false},{"sideA":"el nuevo/novato empieza?","sideB":"der Neuling fängt an?","starred":false,"hasError":false},{"sideA":"gracias por preguntar! (nice of you to ask)","sideB":"schön, das du fragst!","starred":false,"hasError":false},{"sideA":"parece simpática / y lo es!!","sideB":"sie sieht nett aus! ist sie auch!","starred":false,"hasError":false},{"sideA":"Jan, cheer up! everybody fucks up at some point!","sideB":"Jan, kopf hoch! Jeder baut mal Scheisse!","starred":false,"hasError":false}];
+let originalDeck = [{"sideA":"ladrar","sideB":"Hunde bellen","starred":false,"hasError":false},{"sideA":"me tengo que ir / better get going","sideB":"ich muss wieder (los)","starred":false,"hasError":false},{"sideA":"cuándo te iría bien?","sideB":"wann würd's dir denn passen?","starred":false,"hasError":false},{"sideA":"me costaba demasiado / daba perezaca (m_ z_ a_)","sideB":"es war <b>mir zu anstrengend</b>","starred":false,"hasError":false},{"sideA":"pero <b>la intención cuenta</b>, ¿no? (G_)","sideB":"der Gedanke zählt doch, né?","starred":false,"hasError":false},{"sideA":"he quedado con amigos","sideB":"ich bin mit Freunden verabredet","starred":false,"hasError":false},{"sideA":"no puedes cambiarlo de día (compromiso)?","sideB":"das kannst du nicht verschieben?","starred":false,"hasError":false},{"sideA":"no, no puedo cancelarlo","sideB":"nein, ich kann nicht absagen","starred":false,"hasError":false},{"sideA":"la noche de juegos es una especie de tradición para (b_ _) nosotros","sideB":"der Spieleabend hat (so) eine Art Tradition bei uns","starred":false,"hasError":false},{"sideA":"check out (e_ _ z _ _ ) the rules in advance, otherwise you're going to make a fool of yourself","sideB":"<b>zieh dir</b> die Regeln vorher <b>rein</b>, sonst <b>blamierst du dich</b> (<i>sich (Dat) etwas reinziehen</i>)","starred":false,"hasError":false},{"sideA":"you must <b>assess</b> who in the group would be <b>most likely</b> to do that","sideB":"man muss <b>einschätzen</b> wer aus der Gruppe das <b>am ehesten</b> machen würde","starred":false,"hasError":false},{"sideA":"pedazo de juego! a que sí?!","sideB":"tolles Spiel! oder?!","starred":false,"hasError":false}];
 let deckTitle = "Spieleabend"; 
 let isGeneratedFile = true; // <!-- EXPORT_FLAG -->
 
@@ -626,7 +690,7 @@ function showList(filterType) {
     if (listItems.length === 0) return alert("No starred items to display!");
   } else if (filterType === 'left') {
     listItems = activeDeck;
-    modalTitle.textContent = "👁 🚧";
+    modalTitle.textContent = "👁 ❌";
     if (listItems.length === 0) return alert("No active items remaining!");
   } else if (filterType === 'error') {
     listItems = originalDeck.filter(item => item.hasError);
