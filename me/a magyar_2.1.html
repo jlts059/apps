@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phrase Filter</title>
+    <style>
+        :root {
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-color: #212529;
+            --primary-color: #4a90e2;
+            --accent-blue: #1a73e8;
+            --pinned-color: #ff9800;
+            --border-radius: 12px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 16px;
+            padding-bottom: 90px; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Input Setup Styling */
+        #setupContainer {
+            width: 100%;
+            max-width: 600px;
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            box-sizing: border-box;
+        }
+
+        #setupContainer h2 {
+            margin-top: 0;
+            font-size: 1.3rem;
+        }
+
+        textarea {
+            width: 100%;
+            height: 250px;
+            padding: 12px;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 1rem;
+            box-sizing: border-box;
+            resize: vertical;
+            margin-bottom: 15px;
+        }
+
+        .primary-btn {
+            width: 100%;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 14px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+        }
+
+        /* App Layout Styles */
+        #appContainer {
+            display: none;
+            width: 100%;
+            max-width: 600px;
+            padding-bottom: 80px; 
+        }
+
+        /* "Frozen Row" Sticky Menu Container */
+        .menu-container {
+            width: 100%;
+            margin-bottom: 20px;
+            background-color: var(--bg-color);
+            border-radius: var(--border-radius);
+            position: sticky;
+            top: 0;
+            z-index: 900;
+            padding-top: 4px;
+            padding-bottom: 4px;
+            box-sizing: border-box;
+        }
+
+        /* Copia inferior congelada */
+        .menu-container.bottom-frozen {
+            position: fixed;
+            bottom: 0;
+            top: auto;
+            left: 50%;
+            transform: translateX(-50%);
+            max-width: 600px;
+            margin-bottom: 0;
+            padding: 8px 16px;
+            box-sizing: border-box;
+            z-index: 999;
+            background: transparent;
+            pointer-events: none; 
+        }
+        
+        .menu-container.bottom-frozen > * {
+            pointer-events: auto;
+        }
+
+        /* Active category flex container row wrapper */
+        .menu-summary {
+            display: none;
+            padding: 10px 14px;
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
+            border-radius: var(--border-radius);
+            align-items: center;
+            justify-content: space-between;
+            box-sizing: border-box;
+            gap: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .menu-summary-text {
+            cursor: pointer;
+            flex: 1;
+            padding: 4px 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: flex;
+            align-items: center;
+        }
+
+        /* Desplegable de Categorías */
+        .category-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+            z-index: 1001;
+            max-height: 250px;
+            overflow-y: auto;
+            margin-top: 4px;
+        }
+
+        .bottom-frozen .category-dropdown {
+            top: auto;
+            bottom: 100%;
+            margin-top: 0;
+            margin-bottom: 4px;
+        }
+
+        .dropdown-item {
+            padding: 12px 16px;
+            color: var(--text-color);
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: normal;
+            border-bottom: 1px solid #eee;
+        }
+
+        .dropdown-item:last-child {
+            border-bottom: none;
+        }
+
+        .dropdown-item:hover {
+            background-color: #f1f3f5;
+        }
+
+        .dropdown-item.pinned-item {
+            color: var(--pinned-color);
+            font-weight: bold;
+        }
+
+        /* Inline header actions wrapper */
+        .header-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .header-btn {
+            border: none;
+            padding: 8px 12px;
+            font-size: 0.95rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            white-space: nowrap;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+        }
+
+        .header-back-btn {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .header-back-btn:hover {
+            background-color: #5a6268;
+        }
+
+        .header-unpin-btn {
+            display: none;
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .header-unpin-btn:hover {
+            background-color: #bd2130;
+        }
+
+        .header-unpin-btn span {
+            color: #ffffff;
+            font-weight: bold;
+            margin-right: 2px;
+        }
+
+        .header-go-pinned-btn {
+            background-color: var(--pinned-color);
+            color: white;
+        }
+
+        .header-go-pinned-btn:hover {
+            background-color: #e08600;
+        }
+
+        .button-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 12px;
+            justify-content: center;
+            background-color: #ffffff;
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+        /* Fila contenedora superior: Botón Pinned (75%) primero, Search Box (25%) segundo */
+        .search-pinned-row {
+            display: flex;
+            width: 100%;
+            gap: 10px;
+            margin-bottom: 2px;
+            box-sizing: border-box;
+        }
+
+        .search-box {
+            flex: 0 0 calc(25% - 5px);
+            width: 25%;
+            padding: 14px 10px;
+            font-size: 1.1rem;
+            border: 2px solid #ccc;
+            border-radius: var(--border-radius);
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        .search-box:focus {
+            border-color: var(--primary-color);
+        }
+
+        .category-btn {
+            flex: 1 1 calc(50% - 10px);
+            padding: 14px 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border: 2px solid var(--primary-color);
+            border-radius: var(--border-radius);
+            background-color: transparent;
+            color: var(--primary-color);
+            cursor: pointer;
+            text-align: center;
+            box-sizing: border-box;
+        }
+
+        .category-btn.pinned-cat-btn {
+            flex: 0 0 calc(75% - 5px) !important;
+            width: 75%;
+            border-color: var(--pinned-color);
+            color: var(--pinned-color);
+            background-color: rgba(255, 152, 0, 0.05);
+        }
+
+        /* Oculta dinámicamente los botones que no sean de búsqueda activa */
+        .button-container.is-searching .category-btn:not(.pinned-cat-btn) {
+            display: none !important;
+        }
+
+        .phrases-export-wrapper {
+            width: 100%;
+            padding: 12px;
+            box-sizing: border-box;
+            background-color: var(--bg-color);
+        }
+
+        .phrases-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .phrase-card {
+            position: relative;
+            background-color: var(--card-bg);
+            padding: 16px;
+            padding-right: 50px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border-left: 5px solid var(--primary-color);
+            display: none;
+            animation: fadeIn 0.3s ease forwards;
+            font-size: 1.15rem;
+            line-height: 1.4;
+            color: var(--text-color);
+        }
+
+        .phrase-card.is-pinned {
+            border-left-color: var(--pinned-color);
+        }
+
+        .two-column-layout {
+            display: flex;
+            width: 100%;
+            gap: 16px;
+        }
+
+        .col-left, .col-right {
+            flex: 1;
+            word-break: break-word;
+        }
+
+        .col-left {
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .col-right {
+            color: #555555;
+        }
+
+        .single-column-text {
+            width: 100%;
+            word-break: break-word;
+            font-weight: 500;
+        }
+
+        .phrase-card b {
+            color: inherit;
+            font-weight: 700;
+        }
+
+        .pin-toggle {
+            position: absolute;
+            top: 50%;
+            right: 15px;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            font-size: 1.3rem;
+            cursor: pointer;
+            opacity: 0.3;
+            transition: opacity 0.2s, transform 0.2s;
+            user-select: none;
+        }
+
+        .phrase-card.is-pinned .pin-toggle, 
+        .pin-toggle:hover {
+            opacity: 1;
+        }
+
+        .phrase-card.is-pinned .pin-toggle {
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        /* Fixed Action Controls Group Bottom Right */
+        .floating-controls {
+            position: fixed;
+            bottom: 80px; 
+            right: 20px;
+            display: none; 
+            flex-direction: column;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        .download-btn {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 14px 22px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+            white-space: nowrap;
+        }
+
+        .image-btn {
+            background-color: #9b59b6;
+            color: white;
+            border: none;
+            padding: 14px 22px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+            white-space: nowrap;
+        }
+
+        .back-input-btn {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            padding: 14px 22px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+            white-space: nowrap;
+        }
+
+        .hide-pins-snapshot .pin-toggle {
+            display: none !important;
+        }
+        .hide-pins-snapshot .phrase-card {
+            animation: none !important;      
+            opacity: 1 !important;           
+            padding-right: 16px !important;
+            color: #000000 !important;       
+        }
+        .hide-pins-snapshot .col-left {
+            color: #000000 !important;       
+        }
+        .hide-pins-snapshot .col-right {
+            color: #222222 !important;
+        }
+        .hide-pins-snapshot .single-column-text {
+            color: #000000 !important;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    
+
+    <div id="appContainer" style="display: block;">
+        <!-- Banda Superior Sticky -->
+        <div class="menu-container" id="menuWrapper">
+            <div class="menu-summary" id="menuSummary" style="display: none;">
+                <div class="menu-summary-text" id="menuSummaryText" onclick="toggleDropdown(event, 'dropdownTop')"></div>
+                <div class="category-dropdown" id="dropdownTop" style="display: none;"><div class="dropdown-item pinned-item" onclick="filterPinnedOnly()">📌 Pinned</div><div class="dropdown-item" onclick="filterPhrases('💹', '💹')">💹</div><div class="dropdown-item" onclick="filterPhrases('🙋 - 👋', '🙋 - 👋')">🙋 - 👋</div><div class="dropdown-item" onclick="filterPhrases('🙇 - 🙏', '🙇 - 🙏')">🙇 - 🙏</div><div class="dropdown-item" onclick="filterPhrases('🤷 - 👌 - ✋', '🤷 - 👌 - ✋')">🤷 - 👌 - ✋</div><div class="dropdown-item" onclick="filterPhrases('🍜', '🍜')">🍜</div><div class="dropdown-item" onclick="filterPhrases('🛍️', '🛍️')">🛍️</div><div class="dropdown-item" onclick="filterPhrases('👤', '👤')">👤</div><div class="dropdown-item" onclick="filterPhrases('🧺', '🧺')">🧺</div><div class="dropdown-item" onclick="filterPhrases('💯Números', '💯Números')">💯Números</div></div>
+                <div class="header-actions">
+                    <button class="header-btn header-go-pinned-btn" id="headerGoPinnedBtn" onclick="filterPinnedOnly()">📌 Pinned</button>
+                    <button class="header-btn header-unpin-btn" id="headerUnpinBtn" onclick="unpinAllItems()"><span>X</span> Remove Pins</button>
+                    <button class="header-btn header-back-btn" id="headerBackBtn" onclick="resetView()">↩ Back</button>
+                </div>
+            </div>
+            <div class="button-container" id="actualButtons" style="display: flex;"><div class="search-pinned-row"><button class="category-btn pinned-cat-btn" onclick="filterPinnedOnly()">📌 Pinned</button><input type="text" class="search-box" id="liveSearchBox" placeholder="" oninput="liveSearch(this.value)"></div><button class="category-btn" onclick="filterPhrases('💹', '💹')">💹</button><button class="category-btn" onclick="filterPhrases('🙋 - 👋', '🙋 - 👋')">🙋 - 👋</button><button class="category-btn" onclick="filterPhrases('🙇 - 🙏', '🙇 - 🙏')">🙇 - 🙏</button><button class="category-btn" onclick="filterPhrases('🤷 - 👌 - ✋', '🤷 - 👌 - ✋')">🤷 - 👌 - ✋</button><button class="category-btn" onclick="filterPhrases('🍜', '🍜')">🍜</button><button class="category-btn" onclick="filterPhrases('🛍️', '🛍️')">🛍️</button><button class="category-btn" onclick="filterPhrases('👤', '👤')">👤</button><button class="category-btn" onclick="filterPhrases('🧺', '🧺')">🧺</button><button class="category-btn" onclick="filterPhrases('💯Números', '💯Números')">💯Números</button></div>
+        </div>
+
+        <div class="phrases-export-wrapper" id="captureTarget">
+            <div class="phrases-container" id="phrasesList"><div class="phrase-card" data-category="💹" data-id="card_0" style="display: none;"><div class="two-column-layout"><div class="col-left">50, <b>100</b>, 200</div><div class="col-right">0.15, <b>0.30</b>, 0.60€</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="💹" data-id="card_1" style="display: none;"><div class="two-column-layout"><div class="col-left"><b>350</b>, 500, <b>700</b></div><div class="col-right"><b>1€</b>, 1,50€, <b>2€</b></div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="💹" data-id="card_2" style="display: none;"><div class="two-column-layout"><div class="col-left">800, 900, <b>1000</b></div><div class="col-right">2.25, 2.50, <b>2.75</b>€</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="💹" data-id="card_3" style="display: none;"><div class="two-column-layout"><div class="col-left">A partir de 1,000€, si el pico es menos/más de 500€ redondear pabajo/parriba, x3 y</div><div class="col-right">quitarle o sumarle: • 1-2k ➜ 0.50 |• 2-3k ➜ 1€ |• &gt;4-10k ➜ 1,50€ |• &gt;10k ➜ 2€</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="🙋 - 👋" data-id="card_4" style="display: none;"><div class="two-column-layout"><div class="col-left">buenos días / good afternoon</div><div class="col-right"><b>jó</b> <u>na</u>pot!</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="🙋 - 👋" data-id="card_5" style="display: none;"><div class="two-column-layout"><div class="col-left">good morning</div><div class="col-right">jó reggelt!</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="🙋 - 👋" data-id="card_6" style="display: none;"><div class="two-column-layout"><div class="col-left">good evening</div><div class="col-right">jó estét!</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="🙋 - 👋" data-id="card_7" style="display: none;"><div class="two-column-layout"><div class="col-left">bye x2</div><div class="col-right">"• <b style="" color:="" black;""="">viszlát!</b></div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="All_Items" data-id="card_8" style="display: none;"><div class="single-column-text">• <b style="" color:="" magenta;""="">viszont<u>lá</u>tásra!</b> /visont-latashrə/"</div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="🙋 - 👋" data-id="card_9" style="display: none;"><div class="two-column-layout"><div class="col-left">hi+bye x1</div><div class="col-right">szia! /sí-ah/</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="🙋 - 👋" data-id="card_10" style="display: none;"><div class="two-column-layout"><div class="col-left">qué tal? - bien - y tú?</div><div class="col-right"><b style="color: magenta;">hodgy vadgy?</b> /hoɟ voɟ/ + <b style="color: magenta;">jól vagyok!</b> + <b style="color: magenta;">és te?</b></div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="🙇 - 🙏" data-id="card_11" style="display: none;"><div class="two-column-layout"><div class="col-left">excuse-me</div><div class="col-right"><b style="color: magenta;">elnézést</b> /'eynezesht/</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="🙇 - 🙏" data-id="card_12" style="display: none;"><div class="two-column-layout"><div class="col-left">sorry</div><div class="col-right"><b style="color: magenta;">bocsánat</b> /'<u>bo</u> <u>cha:</u>not/ | • <b>bocs(i)</b> (clq)</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="🙇 - 🙏" data-id="card_13" style="display: none;"><div class="two-column-layout"><div class="col-left">• (muchas) gracias x2 + you're welcome</div><div class="col-right">• <b style="color: magenta;">köszönöm</b> (<b>szép</b>en /'sepen/) • köszi + <b>szívesem</b> /SÍ-veshem/</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="🙇 - 🙏" data-id="card_14" style="display: none;"><div class="two-column-layout"><div class="col-left">no hablo húngaro - only that!</div><div class="col-right"><b style="color: magenta;">nem beszélek magyarul</b> /beselek/ (...) <b>hát, csak ennyi</b></div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="🤷 - 👌 - ✋" data-id="card_15" style="display: none;"><div class="two-column-layout"><div class="col-left">okay x1, (very) good x2</div><div class="col-right"><b style="color: magenta;">• oké | • (nagyon) jó | • rendben</b></div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="🤷 - 👌 - ✋" data-id="card_16" style="display: none;"><div class="two-column-layout"><div class="col-left">super!</div><div class="col-right">• <b style="color: magenta;">szuper</b> | • remek</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="🤷 - 👌 - ✋" data-id="card_17" style="display: none;"><div class="two-column-layout"><div class="col-left">I'm good!</div><div class="col-right">jo vagyok</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="🤷 - 👌 - ✋" data-id="card_18" style="display: none;"><div class="two-column-layout"><div class="col-left">sí</div><div class="col-right">i<u>gen</u></div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="🤷 - 👌 - ✋" data-id="card_19" style="display: none;"><div class="two-column-layout"><div class="col-left">no</div><div class="col-right">nem</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="🤷 - 👌 - ✋" data-id="card_20" style="display: none;"><div class="two-column-layout"><div class="col-left">I don't understand</div><div class="col-right">bocsánat <b style="color: magenta;">nem ertem<b> csak spanyolul beszélek (vagy angolul)</b></b></div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="🤷 - 👌 - ✋" data-id="card_21" style="display: none;"><div class="two-column-layout"><div class="col-left">habla inglés?</div><div class="col-right"><b style="color: magenta;">beszél angolul?</b> /besel angolul/</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="🤷 - 👌 - ✋" data-id="card_22" style="display: none;"><div class="two-column-layout"><div class="col-left">solo hablo español</div><div class="col-right"><b>cs</b>ak spanyolul beszélek</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="🤷 - 👌 - ✋" data-id="card_23" style="display: none;"><div class="two-column-layout"><div class="col-left">momentito…</div><div class="col-right">egy pillanat...</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="🤷 - 👌 - ✋" data-id="card_24" style="display: none;"><div class="two-column-layout"><div class="col-left">this is the metro, <b>right?</b></div><div class="col-right">ez a metró, <b>ugye</b>?</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="🍜" data-id="card_25" style="display: none;"><div class="two-column-layout"><div class="col-left">excuse-me, donde está el WC?</div><div class="col-right">elnézést, hol van a WC?</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="🍜" data-id="card_26" style="display: none;"><div class="two-column-layout"><div class="col-left">una birra por favó + grande &amp; pequeña</div><div class="col-right">egy <b>póhar</b> / körso <b>sört</b>, kérem                     + nagy /nɒɟ/ &amp; <b>kis</b> OR korsó + póhar</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="🍜" data-id="card_27" style="display: none;"><div class="two-column-layout"><div class="col-left">two waters, please: one still and one sparkling</div><div class="col-right">két <b>vizet</b>, kérek: egy szénsav<u>menteset</u> és egy szénsav<u>asat</u> / <u>ˈseːnʃɒvˈseːnʃɒv<u>mɛntɛʃɛt</u> eːʃ ɛɟ ˈseːnʃɒv<u>ɒʃɒt</u>/</u></div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="🍜" data-id="card_28" style="display: none;"><div class="two-column-layout"><div class="col-left">two coffees with milk, please</div><div class="col-right">két <b>tejes<u>kávét</u></b>, kérek. Egy növényi / laktózmentes <b>tej</b>jel</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="🍜" data-id="card_29" style="display: none;"><div class="two-column-layout"><div class="col-left">excuse-me, queremos pagar</div><div class="col-right">elnézést, fizetni szeretnék</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="🍜" data-id="card_30" style="display: none;"><div class="two-column-layout"><div class="col-left">the bill please - (with) card</div><div class="col-right"><b>a számlát</b>, kérem <b>+</b>  <b>kártyával</b></div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="🍜" data-id="card_31" style="display: none;"><div class="two-column-layout"><div class="col-left">I try in Hungarian</div><div class="col-right">megpróbálom magyarul</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="🍜" data-id="card_32" style="display: none;"><div class="two-column-layout"><div class="col-left">salud!</div><div class="col-right"><b>egészségedre</b>! /ɛ-ɡeːʃːeːɡɛdrɛ/</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="🍜" data-id="card_33" style="display: none;"><div class="two-column-layout"><div class="col-left">(very) delicious!</div><div class="col-right">(<b>nagyon</b>) /ˈnɒɟon/ <b style="color: magenta;">finom</b></div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="🍜" data-id="card_34" style="display: none;"><div class="two-column-layout"><div class="col-left">tiene buena pinta</div><div class="col-right">nagyon jól <b>néz ki</b>!</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="🍜" data-id="card_35" style="display: none;"><div class="two-column-layout"><div class="col-left">coffee</div><div class="col-right">kávé</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="🍜" data-id="card_36" style="display: none;"><div class="two-column-layout"><div class="col-left">milk</div><div class="col-right">tej</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="🍜" data-id="card_37" style="display: none;"><div class="two-column-layout"><div class="col-left">how much?</div><div class="col-right">mennyibe kerül?</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="🛍️" data-id="card_38" style="display: none;"><div class="two-column-layout"><div class="col-left">(sólo) this, please</div><div class="col-right">(csak) <b style="color: magenta;">ezt</b> kerem</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="🛍️" data-id="card_39" style="display: none;"><div class="two-column-layout"><div class="col-left">one of those, please</div><div class="col-right"><b style="color: magenta;">egyet abból</b>, kérem</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="🛍️" data-id="card_40" style="display: none;"><div class="two-column-layout"><div class="col-left">here you go (paying)</div><div class="col-right"><b>tessék</b> /ˈtɛʃːeːk/</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="👤" data-id="card_41" style="display: none;"><div class="two-column-layout"><div class="col-left">me llamo J</div><div class="col-right">Jose vagyok /<b>vɒ</b>ɟok/</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="👤" data-id="card_42" style="display: none;"><div class="two-column-layout"><div class="col-left">soy español / ~  de Esp.</div><div class="col-right"><b style="color: magenta;"><u>s</u>panyol 'vagyok</b> /ˈʃp<b style="color: magenta;">ɒ</b>ɲol/ /v<b style="color: magenta;">ɒ</b>ɟok/</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="🧺" data-id="card_43" style="display: none;"><div class="two-column-layout"><div class="col-left">Hungría</div><div class="col-right">Magyaror<b>sz</b>ág <b>/s/</b></div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="🧺" data-id="card_44" style="display: none;"><div class="two-column-layout"><div class="col-left">España</div><div class="col-right"><b style="color: magenta;"><u>s</u>panyol-ország-ból</b> jöttem</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="🧺" data-id="card_45" style="display: none;"><div class="two-column-layout"><div class="col-left">nice or beautiful</div><div class="col-right">szép</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="🧺" data-id="card_46" style="display: none;"><div class="two-column-layout"><div class="col-left">sólo</div><div class="col-right"><b>csak</b> /t͡ʃɒk/</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="🧺" data-id="card_47" style="display: none;"><div class="two-column-layout"><div class="col-left">and</div><div class="col-right">és</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="🧺" data-id="card_48" style="display: none;"><div class="two-column-layout"><div class="col-left">but</div><div class="col-right">de</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="🧺" data-id="card_49" style="display: none;"><div class="two-column-layout"><div class="col-left">or</div><div class="col-right">vagy</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="🧺" data-id="card_50" style="display: none;"><div class="two-column-layout"><div class="col-left">el húngaro es difícil!</div><div class="col-right">a magyar nehéz!</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="🧺" data-id="card_51" style="display: none;"><div class="two-column-layout"><div class="col-left">un paquete de malboro gold y un mechero pequeño</div><div class="col-right">egy Marlboro Goldot kérek és kis <b>öngyújtó</b></div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="💯Números" data-id="card_52" style="display: none;"><div class="two-column-layout"><div class="col-left">1</div><div class="col-right">egy</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="💯Números" data-id="card_53" style="display: none;"><div class="two-column-layout"><div class="col-left">2</div><div class="col-right">kettő (<b>ket</b> when expressing quantity)</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="💯Números" data-id="card_54" style="display: none;"><div class="two-column-layout"><div class="col-left">3</div><div class="col-right">három</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="💯Números" data-id="card_55" style="display: none;"><div class="two-column-layout"><div class="col-left">4</div><div class="col-right">né<b>gy</b></div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="💯Números" data-id="card_56" style="display: none;"><div class="two-column-layout"><div class="col-left">5</div><div class="col-right">öt</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="💯Números" data-id="card_57" style="display: none;"><div class="two-column-layout"><div class="col-left">6</div><div class="col-right">hat</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="💯Números" data-id="card_58" style="display: none;"><div class="two-column-layout"><div class="col-left">7</div><div class="col-right">hét</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="💯Números" data-id="card_59" style="display: none;"><div class="two-column-layout"><div class="col-left">8</div><div class="col-right">nyolc</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="💯Números" data-id="card_60" style="display: none;"><div class="two-column-layout"><div class="col-left">9</div><div class="col-right">kilenc</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="💯Números" data-id="card_61" style="display: none;"><div class="two-column-layout"><div class="col-left">10</div><div class="col-right">tíz</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="💯Números" data-id="card_62" style="display: none;"><div class="two-column-layout"><div class="col-left">100</div><div class="col-right"><b>száz</b> /saaz/</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="💯Números" data-id="card_63" style="display: none;"><div class="two-column-layout"><div class="col-left">200</div><div class="col-right">kétszáz /KET-saaz/</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="💯Números" data-id="card_64" style="display: none;"><div class="two-column-layout"><div class="col-left">300</div><div class="col-right">háromszáz</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="💯Números" data-id="card_65" style="display: none;"><div class="two-column-layout"><div class="col-left">400</div><div class="col-right">négyszáz</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="💯Números" data-id="card_66" style="display: none;"><div class="two-column-layout"><div class="col-left">500</div><div class="col-right">ötszáz</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="💯Números" data-id="card_67" style="display: none;"><div class="two-column-layout"><div class="col-left">600</div><div class="col-right">hatszáz</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="💯Números" data-id="card_68" style="display: none;"><div class="two-column-layout"><div class="col-left">700</div><div class="col-right">hétszáz</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="💯Números" data-id="card_69" style="display: none;"><div class="two-column-layout"><div class="col-left">800</div><div class="col-right">nyolcszáz</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="💯Números" data-id="card_70" style="display: none;"><div class="two-column-layout"><div class="col-left">900</div><div class="col-right">kilencszáz</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="💯Números" data-id="card_71" style="display: none;"><div class="two-column-layout"><div class="col-left">1000</div><div class="col-right"><b>ezer</b></div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="💯Números" data-id="card_72" style="display: none;"><div class="two-column-layout"><div class="col-left">2000</div><div class="col-right">kétezer</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="💯Números" data-id="card_73" style="display: none;"><div class="two-column-layout"><div class="col-left">3000</div><div class="col-right">háromezer</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="💯Números" data-id="card_74" style="display: none;"><div class="two-column-layout"><div class="col-left">4000</div><div class="col-right">négyezer</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="💯Números" data-id="card_75" style="display: none;"><div class="two-column-layout"><div class="col-left">5000</div><div class="col-right">ötezer</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="💯Números" data-id="card_76" style="display: none;"><div class="two-column-layout"><div class="col-left">6000</div><div class="col-right">hatezer</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="💯Números" data-id="card_77" style="display: none;"><div class="two-column-layout"><div class="col-left">7000</div><div class="col-right">hétezer</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="💯Números" data-id="card_78" style="display: none;"><div class="two-column-layout"><div class="col-left">8000</div><div class="col-right">nyolcezer</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="💯Números" data-id="card_79" style="display: none;"><div class="two-column-layout"><div class="col-left">9000</div><div class="col-right">kilencezer</div></div><button class="pin-toggle" title="Pin element">📌</button></div><div class="phrase-card" data-category="💯Números" data-id="card_80" style="display: none;"><div class="two-column-layout"><div class="col-left">10000</div><div class="col-right">tízezer</div></div><button class="pin-toggle" title="Pin element">📌</button></div></div>
+        </div>
+
+        <!-- Banda Inferior Frozen -->
+        <div class="menu-container bottom-frozen" id="menuWrapperBottom">
+            <div class="menu-summary" id="menuSummaryBottom" style="display: none;">
+                <div class="menu-summary-text" id="menuSummaryTextBottom" onclick="toggleDropdown(event, 'dropdownBottom')"></div>
+                <div class="category-dropdown" id="dropdownBottom" style="display: none;"><div class="dropdown-item pinned-item" onclick="filterPinnedOnly()">📌 Pinned</div><div class="dropdown-item" onclick="filterPhrases('💹', '💹')">💹</div><div class="dropdown-item" onclick="filterPhrases('🙋 - 👋', '🙋 - 👋')">🙋 - 👋</div><div class="dropdown-item" onclick="filterPhrases('🙇 - 🙏', '🙇 - 🙏')">🙇 - 🙏</div><div class="dropdown-item" onclick="filterPhrases('🤷 - 👌 - ✋', '🤷 - 👌 - ✋')">🤷 - 👌 - ✋</div><div class="dropdown-item" onclick="filterPhrases('🍜', '🍜')">🍜</div><div class="dropdown-item" onclick="filterPhrases('🛍️', '🛍️')">🛍️</div><div class="dropdown-item" onclick="filterPhrases('👤', '👤')">👤</div><div class="dropdown-item" onclick="filterPhrases('🧺', '🧺')">🧺</div><div class="dropdown-item" onclick="filterPhrases('💯Números', '💯Números')">💯Números</div></div>
+                <div class="header-actions">
+                    <button class="header-btn header-go-pinned-btn" id="headerGoPinnedBtnBottom" onclick="filterPinnedOnly()">📌 Pinned</button>
+                    <button class="header-btn header-unpin-btn" id="headerUnpinBtnBottom" onclick="unpinAllItems()"><span>X</span> Remove Pins</button>
+                    <button class="header-btn header-back-btn" id="headerBackBtnBottom" onclick="resetView()">↩ Back</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
+
+    <script>
+        let currentMode = 'category'; 
+        let currentActiveCategory = '';
+        let isSingleColumnMode = false;
+        let globalCategories = new Set(["💹","🙋 - 👋","🙇 - 🙏","🤷 - 👌 - ✋","🍜","🛍️","👤","🧺","💯Números"]);
+
+        document.addEventListener('click', () => {
+            closeAllDropdowns();
+        });
+
+        window.addEventListener('DOMContentLoaded', () => {
+            setupStaticCards();
+        });
+
+        function setupStaticCards() {
+            const staticCards = document.querySelectorAll('.phrase-card');
+            if (staticCards.length > 0) {
+                staticCards.forEach(card => {
+                    const pinBtn = card.querySelector('.pin-toggle');
+                    if (pinBtn) {
+                        pinBtn.onclick = function(e) {
+                            e.stopPropagation();
+                            togglePinItem(card);
+                        };
+                    }
+                });
+            }
+        }
+
+        // Live Search reactiva con ocultación temporal de botones de categoría
+        function liveSearch(query) {
+            const cleanQuery = query.toLowerCase().trim();
+            const cards = document.querySelectorAll('.phrase-card');
+            const btnContainer = document.getElementById('actualButtons');
+            
+            // Si el buscador se vacía, restablece la vista limpia previa y vuelve a mostrar las categorías
+            if (cleanQuery === '') {
+                if (btnContainer) btnContainer.classList.remove('is-searching');
+                
+                if (currentActiveCategory && currentMode !== 'pinned') {
+                    filterPhrases(currentActiveCategory, currentActiveCategory);
+                } else if (currentMode === 'pinned') {
+                    filterPinnedOnly();
+                } else {
+                    resetView();
+                }
+                return;
+            }
+
+            // Cambiar modo a búsqueda temporal y añadir clase para ocultar los botones de categorías
+            currentMode = 'search';
+            if (btnContainer) btnContainer.classList.add('is-searching');
+            
+            // Filtrar las tarjetas en tiempo real
+            cards.forEach(card => {
+                const textContent = card.innerText.toLowerCase();
+                if (textContent.includes(cleanQuery)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        function buildAppFromInput() {
+            const rawText = document.getElementById('rawData').value.trim();
+            if(!rawText) return alert("Please paste some data first!");
+
+            const lines = rawText.split('\n');
+            globalCategories.clear();
+            const phrasesList = document.getElementById('phrasesList');
+            const actualButtons = document.getElementById('actualButtons');
+
+            phrasesList.innerHTML = '';
+            actualButtons.innerHTML = '';
+            isSingleColumnMode = false;
+            currentActiveCategory = '';
+            currentMode = 'category';
+            if (actualButtons) actualButtons.classList.remove('is-searching');
+
+            // Fila contenedora superior: Botón Pinned (75%) primero, Search Box (25%) segundo
+            const searchRow = document.createElement('div');
+            searchRow.className = 'search-pinned-row';
+
+            const pinnedBtn = document.createElement('button');
+            pinnedBtn.className = 'category-btn pinned-cat-btn';
+            pinnedBtn.setAttribute('onclick', "filterPinnedOnly()");
+            pinnedBtn.innerText = '📌 Pinned';
+
+            const searchInput = document.createElement('input');
+            searchInput.type = 'text';
+            searchInput.className = 'search-box';
+            searchInput.id = 'liveSearchBox';
+            searchInput.placeholder = '';
+            searchInput.setAttribute('oninput', "liveSearch(this.value)");
+
+            searchRow.appendChild(pinnedBtn);
+            searchRow.appendChild(searchInput);
+            actualButtons.appendChild(searchRow);
+
+            lines.forEach((line, index) => {
+                if(!line.trim()) return;
+                
+                let parts = line.split('\t').map(p => p.trim());
+                if(parts.length < 2) {
+                    parts = line.split(/ {2,}/).map(p => p.trim());
+                }
+
+                let cat = "All_Items";
+                let col1Text = "";
+                let col2Text = "";
+
+                if (parts.length === 1) {
+                    col1Text = parts[0];
+                } else if (parts.length === 2) {
+                    col1Text = parts[0];
+                    col2Text = parts[1];
+                } else {
+                    if (parts[0] !== "") {
+                        cat = parts[0];
+                        globalCategories.add(cat);
+                    }
+                    col1Text = parts[1];
+                    col2Text = parts[2] || "";
+                }
+
+                const card = document.createElement('div');
+                card.className = 'phrase-card';
+                card.setAttribute('data-category', cat);
+                card.setAttribute('data-id', 'card_' + index);
+                
+                if (col1Text !== "" && col2Text !== "") {
+                    const layoutDiv = document.createElement('div');
+                    layoutDiv.className = 'two-column-layout';
+
+                    const leftDiv = document.createElement('div');
+                    leftDiv.className = 'col-left';
+                    leftDiv.innerHTML = col1Text;
+                    
+                    const rightDiv = document.createElement('div');
+                    rightDiv.className = 'col-right';
+                    rightDiv.innerHTML = col2Text;
+
+                    layoutDiv.appendChild(leftDiv);
+                    layoutDiv.appendChild(rightDiv);
+                    card.appendChild(layoutDiv);
+                } else {
+                    const singleDiv = document.createElement('div');
+                    singleDiv.className = 'single-column-text';
+                    singleDiv.innerHTML = col1Text !== "" ? col1Text : col2Text;
+                    card.appendChild(singleDiv);
+                }
+
+                const pinBtn = document.createElement('button');
+                pinBtn.className = 'pin-toggle';
+                pinBtn.innerHTML = '📌';
+                pinBtn.title = 'Pin element';
+                pinBtn.onclick = function(e) {
+                    e.stopPropagation();
+                    togglePinItem(card);
+                };
+                card.appendChild(pinBtn);
+
+                phrasesList.appendChild(card);
+            });
+
+            if (globalCategories.size === 0) {
+                isSingleColumnMode = true;
+            }
+
+            if (!isSingleColumnMode) {
+                globalCategories.forEach(cat => {
+                    const btn = document.createElement('button');
+                    btn.className = 'category-btn';
+                    const safeCat = cat.replace(/'/g, "\\'");
+                    btn.setAttribute('onclick', `filterPhrases('${safeCat}', '${safeCat}')`);
+                    btn.innerText = cat;
+                    actualButtons.appendChild(btn);
+                });
+                renderDropdownMenus();
+            } else {
+                const cards = document.querySelectorAll('.phrase-card');
+                cards.forEach(card => card.style.display = 'block');
+                pinnedBtn.style.flex = "1 1 auto";
+            }
+
+            document.getElementById('setupContainer').style.display = 'none';
+            document.getElementById('appContainer').style.display = 'block';
+            document.getElementById('floatingControls').style.display = 'flex'; 
+        }
+
+        function renderDropdownMenus() {
+            const topDropdown = document.getElementById('dropdownTop');
+            const bottomDropdown = document.getElementById('dropdownBottom');
+            
+            let htmlContent = `<div class="dropdown-item pinned-item" onclick="filterPinnedOnly()">📌 Pinned</div>`;
+            globalCategories.forEach(cat => {
+                const safeCat = cat.replace(/'/g, "\\'");
+                htmlContent += `<div class="dropdown-item" onclick="filterPhrases('${safeCat}', '${safeCat}')">${cat}</div>`;
+            });
+
+            topDropdown.innerHTML = htmlContent;
+            bottomDropdown.innerHTML = htmlContent;
+        }
+
+        function toggleDropdown(event, id) {
+            event.stopPropagation();
+            const targetMenu = document.getElementById(id);
+            const isOpen = targetMenu.style.display === 'block';
+            closeAllDropdowns();
+            if (!isOpen) {
+                targetMenu.style.display = 'block';
+            }
+        }
+
+        function closeAllDropdowns() {
+            document.getElementById('dropdownTop').style.display = 'none';
+            document.getElementById('dropdownBottom').style.display = 'none';
+        }
+
+        function togglePinItem(cardElement) {
+            cardElement.classList.toggle('is-pinned');
+            if (currentMode === 'pinned' && !cardElement.classList.contains('is-pinned')) {
+                cardElement.style.display = 'none';
+                checkPinnedCountOrReset();
+            }
+        }
+
+        function filterPhrases(category, labelText) {
+            currentMode = 'category';
+            currentActiveCategory = category;
+            const cards = document.querySelectorAll('.phrase-card');
+            
+            // Si filtramos por categoría de forma manual, nos aseguramos de limpiar el estado de búsqueda visual
+            const btnContainer = document.getElementById('actualButtons');
+            if (btnContainer) btnContainer.classList.remove('is-searching');
+            const searchBox = document.getElementById('liveSearchBox');
+            if(searchBox) { searchBox.value = ''; }
+
+            cards.forEach(card => {
+                if (card.getAttribute('data-category') === category) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            updateMenuUI(labelText + " ▾");
+            closeAllDropdowns();
+        }
+
+        function filterPinnedOnly() {
+            const cards = document.querySelectorAll('.phrase-card');
+            let pinnedCount = 0;
+
+            cards.forEach(card => {
+                if (card.classList.contains('is-pinned')) {
+                    card.style.display = 'block';
+                    pinnedCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            if(pinnedCount === 0) {
+                alert("You don't have any items pinned yet! Click the 📌 symbol on the cards.");
+                return;
+            }
+
+            currentMode = 'pinned';
+            updateMenuUI("📌 Clipboard ▾");
+            closeAllDropdowns();
+        }
+
+        function checkPinnedCountOrReset() {
+            const visibleCards = Array.from(document.querySelectorAll('.phrase-card')).filter(c => c.style.display === 'block');
+            if (visibleCards.length === 0) {
+                resetView();
+            }
+        }
+
+        function unpinAllItems() {
+            if(confirm("Do you want to unpin all items?")) {
+                const cards = document.querySelectorAll('.phrase-card');
+                cards.forEach(card => card.classList.remove('is-pinned'));
+                resetView();
+            }
+        }
+
+        function updateMenuUI(summaryText) {
+            document.getElementById('actualButtons').style.display = 'none';
+            
+            document.getElementById('menuSummaryText').innerText = summaryText;
+            document.getElementById('menuSummaryTextBottom').innerText = summaryText;
+            
+            document.getElementById('menuSummary').style.display = 'flex';
+            document.getElementById('menuSummaryBottom').style.display = 'flex';
+            
+            const backText = isSingleColumnMode ? "↩ Show All" : "↩ Back";
+            document.getElementById('headerBackBtn').innerText = backText;
+            document.getElementById('headerBackBtnBottom').innerText = backText;
+
+            const isPinnedMode = (currentMode === 'pinned');
+            document.getElementById('headerUnpinBtn').style.display = isPinnedMode ? 'block' : 'none'; 
+            document.getElementById('headerUnpinBtnBottom').style.display = isPinnedMode ? 'block' : 'none'; 
+            document.getElementById('headerGoPinnedBtn').style.display = isPinnedMode ? 'none' : 'block'; 
+            document.getElementById('headerGoPinnedBtnBottom').style.display = isPinnedMode ? 'none' : 'block'; 
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function resetView() {
+            const cards = document.querySelectorAll('.phrase-card');
+            
+            // Si salimos de la vista, limpiamos el input y quitamos el filtro visual de búsqueda
+            const searchBox = document.getElementById('liveSearchBox');
+            if(searchBox) { searchBox.value = ''; }
+            
+            const btnContainer = document.getElementById('actualButtons');
+            if (btnContainer) btnContainer.classList.remove('is-searching');
+
+            currentActiveCategory = '';
+            currentMode = 'category';
+
+            if(isSingleColumnMode) {
+                cards.forEach(card => card.style.display = 'block');
+                document.getElementById('actualButtons').style.display = 'flex';
+                document.getElementById('menuSummary').style.display = 'none';
+                document.getElementById('menuSummaryBottom').style.display = 'none';
+            } else {
+                cards.forEach(card => card.style.display = 'none');
+                document.getElementById('actualButtons').style.display = 'flex';
+                document.getElementById('menuSummary').style.display = 'none';
+                document.getElementById('menuSummaryBottom').style.display = 'none';
+            }
+            closeAllDropdowns();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function backToInputSetup() {
+            document.getElementById('appContainer').style.display = 'none';
+            document.getElementById('floatingControls').style.display = 'none';
+            document.getElementById('setupContainer').style.display = 'block';
+            document.getElementById('rawData').value = '';
+            document.getElementById('rawData').focus();
+        }
+
+        function downloadCurrentAsImage() {
+            const target = document.getElementById('captureTarget');
+            const visibleCards = Array.from(target.querySelectorAll('.phrase-card')).filter(c => c.style.display !== 'none');
+            
+            if (visibleCards.length === 0) {
+                return alert("There are no visible phrases to export! Please select a view or category first.");
+            }
+
+            const generateCanvas = () => {
+                target.classList.add('hide-pins-snapshot');
+
+                html2canvas(target, {
+                    backgroundColor: "#f8f9fa",
+                    logging: false,
+                    scale: 2, 
+                    useCORS: true,
+                    removeContainer: true
+                }).then(canvas => {
+                    target.classList.remove('hide-pins-snapshot');
+                    const imgData = canvas.toDataURL('image/png');
+                    
+                    const link = document.createElement('a');
+                    link.href = imgData;
+                    link.download = `phrases_export_${currentMode}.png`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }).catch(err => {
+                    target.classList.remove('hide-pins-snapshot');
+                    console.error("Error creating image canvas:", err);
+                    alert("Sorry, an error occurred while rendering the image.");
+                });
+            };
+
+            if (typeof html2canvas === 'undefined') {
+                const script = document.createElement('script');
+                script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
+                script.onload = generateCanvas;
+                script.onerror = () => alert("Could not fetch the image processing library. Check your internet connection.");
+                document.head.appendChild(script);
+            } else {
+                generateCanvas();
+            }
+        }
+
+        function downloadCurrentHTML() {
+            const docClone = document.documentElement.cloneNode(true);
+            
+            const setupBlock = docClone.querySelector('#setupContainer');
+            if (setupBlock) setupBlock.remove();
+            
+            const backToInputBtnClone = docClone.querySelector('#backToInputBtn');
+            if (backToInputBtnClone) backToInputBtnClone.remove();
+
+            const controlsBlock = docClone.querySelector('#floatingControls');
+            if (controlsBlock) controlsBlock.remove();
+            
+            const appBlock = docClone.querySelector('#appContainer');
+            if (appBlock) appBlock.style.display = 'block';
+
+            const summaryBlock = docClone.querySelector('#menuSummary');
+            if (summaryBlock) summaryBlock.style.display = 'none';
+
+            const summaryBlockBottom = docClone.querySelector('#menuSummaryBottom');
+            if (summaryBlockBottom) summaryBlockBottom.style.display = 'none';
+
+            const actualBtnsWrapper = docClone.querySelector('#actualButtons');
+            if (actualBtnsWrapper) actualBtnsWrapper.style.display = 'flex';
+
+            const cleanCards = docClone.querySelectorAll('.phrase-card');
+            cleanCards.forEach(card => {
+                card.style.display = isSingleColumnMode ? 'block' : 'none';
+                card.classList.remove('is-pinned');
+            });
+
+            const cleanScript = docClone.querySelector('script');
+            if(cleanScript) {
+                let categoriesArrayStr = JSON.stringify(Array.from(globalCategories));
+                let scriptContent = cleanScript.innerHTML;
+                scriptContent = scriptContent.replace(/let isSingleColumnMode = (true|false);/, `let isSingleColumnMode = ${isSingleColumnMode};`);
+                scriptContent = scriptContent.replace(/let globalCategories = new Set\(\);/, `let globalCategories = new Set(${categoriesArrayStr});`);
+                
+                scriptContent += `\nwindow.addEventListener('DOMContentLoaded', () => { 
+                    if(!isSingleColumnMode) { renderDropdownMenus(); } 
+                    setupStaticCards();
+                });`;
+                cleanScript.innerHTML = scriptContent;
+            }
+
+            const totalSource = "<!DOCTYPE html>\n" + docClone.outerHTML;
+            const blob = new Blob([totalSource], { type: "text/html;charset=utf-8" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "phrases_clean_app.html";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    
+window.addEventListener('DOMContentLoaded', () => { 
+                    if(!isSingleColumnMode) { renderDropdownMenus(); } 
+                    setupStaticCards();
+                });</script>
+
+</body></html>
