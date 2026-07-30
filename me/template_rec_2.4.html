@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phrase Filter</title>
+    <style>
+        :root {
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-color: #212529;
+            --primary-color: #4a90e2;
+            --accent-blue: #1a73e8;
+            --pinned-color: #ff9800;
+            --border-radius: 12px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 16px;
+            padding-bottom: 90px; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Input Setup Styling */
+        #setupContainer {
+            width: 100%;
+            max-width: 600px;
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            box-sizing: border-box;
+        }
+
+        #setupContainer h2 {
+            margin-top: 0;
+            font-size: 1.3rem;
+        }
+
+        textarea {
+            width: 100%;
+            height: 250px;
+            padding: 12px;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 1rem;
+            box-sizing: border-box;
+            resize: vertical;
+            margin-bottom: 15px;
+        }
+
+        .primary-btn {
+            width: 100%;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 14px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+        }
+
+        /* App Layout Styles */
+        #appContainer {
+            display: none;
+            width: 100%;
+            max-width: 600px;
+            padding-bottom: 80px; 
+        }
+
+        .menu-container {
+            width: 100%;
+            margin-bottom: 20px;
+            background-color: var(--bg-color);
+            border-radius: var(--border-radius);
+            position: sticky;
+            top: 0;
+            z-index: 900;
+            padding-top: 4px;
+            padding-bottom: 4px;
+            box-sizing: border-box;
+        }
+
+        .menu-container.bottom-frozen {
+            position: fixed;
+            bottom: 0;
+            top: auto;
+            left: 50%;
+            transform: translateX(-50%);
+            max-width: 600px;
+            margin-bottom: 0;
+            padding: 8px 16px;
+            box-sizing: border-box;
+            z-index: 999;
+            background: transparent;
+            pointer-events: none; 
+        }
+        
+        .menu-container.bottom-frozen > * {
+            pointer-events: auto;
+        }
+
+        .menu-summary {
+            display: none;
+            padding: 10px 14px;
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
+            border-radius: var(--border-radius);
+            align-items: center;
+            justify-content: space-between;
+            box-sizing: border-box;
+            gap: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .menu-summary-text {
+            cursor: pointer;
+            flex: 1;
+            padding: 4px 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: flex;
+            align-items: center;
+        }
+
+        .category-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+            z-index: 1001;
+            max-height: 250px;
+            overflow-y: auto;
+            margin-top: 4px;
+        }
+
+        .bottom-frozen .category-dropdown {
+            top: auto;
+            bottom: 100%;
+            margin-top: 0;
+            margin-bottom: 4px;
+        }
+
+        .dropdown-item {
+            padding: 12px 16px;
+            color: var(--text-color);
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: normal;
+            border-bottom: 1px solid #eee;
+        }
+
+        .dropdown-item:hover {
+            background-color: #f1f3f5;
+        }
+
+        .dropdown-item.pinned-item {
+            color: var(--pinned-color);
+            font-weight: bold;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .header-btn {
+            border: none;
+            padding: 8px 12px;
+            font-size: 0.95rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            white-space: nowrap;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+        }
+
+        .header-back-btn { background-color: #6c757d; color: white; }
+        .header-unpin-btn { display: none; background-color: #dc3545; color: white; }
+        .header-go-pinned-btn { background-color: var(--pinned-color); color: white; }
+
+        .button-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 12px;
+            justify-content: center;
+            background-color: #ffffff;
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+        .search-pinned-row {
+            display: flex;
+            width: 100%;
+            gap: 10px;
+            margin-bottom: 2px;
+            box-sizing: border-box;
+        }
+
+        .search-box {
+            flex: 0 0 calc(25% - 5px);
+            width: 25%;
+            padding: 14px 10px;
+            font-size: 1.1rem;
+            border: 2px solid #ccc;
+            border-radius: var(--border-radius);
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        .search-box:focus { border-color: var(--primary-color); }
+
+        .category-btn {
+            flex: 1 1 calc(50% - 10px);
+            padding: 14px 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border: 2px solid var(--primary-color);
+            border-radius: var(--border-radius);
+            background-color: transparent;
+            color: var(--primary-color);
+            cursor: pointer;
+            text-align: center;
+            box-sizing: border-box;
+        }
+
+        .category-btn.pinned-cat-btn {
+            flex: 0 0 calc(75% - 5px) !important;
+            width: 75%;
+            border-color: var(--pinned-color);
+            color: var(--pinned-color);
+            background-color: rgba(255, 152, 0, 0.05);
+        }
+
+        .button-container.is-searching .category-btn:not(.pinned-cat-btn) {
+            display: none !important;
+        }
+
+        .phrases-export-wrapper {
+            width: 100%;
+            padding: 12px;
+            box-sizing: border-box;
+            background-color: var(--bg-color);
+        }
+
+        .phrases-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        /* Panel Exclusivo de Adición en Modo Edición */
+        .adder-panel {
+            display: none;
+            background: #ffffff;
+            padding: 16px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+            border: 2px dashed var(--primary-color);
+            margin-bottom: 14px;
+            flex-direction: column;
+            gap: 12px;
+            box-sizing: border-box;
+            width: 100%;
+        }
+        .adder-row { display: flex; gap: 10px; align-items: center; width: 100%; }
+        .adder-select { padding: 10px; font-size: 1rem; border-radius: 8px; border: 1px solid #ccc; flex: 1; }
+        .adder-input { padding: 10px; font-size: 1rem; border-radius: 8px; border: 1px solid #ccc; flex: 2; }
+        .adder-btn { background-color: var(--primary-color); color: white; border: none; padding: 10px 16px; font-weight: bold; border-radius: 8px; cursor: pointer; white-space: nowrap; }
+
+        .phrase-card {
+            position: relative;
+            background-color: var(--card-bg);
+            padding: 16px;
+            padding-right: 50px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border-left: 5px solid var(--primary-color);
+            display: none;
+            animation: fadeIn 0.3s ease forwards;
+            font-size: 1.15rem;
+            line-height: 1.4;
+            color: var(--text-color);
+        }
+
+        .phrase-card.is-pinned { border-left-color: var(--pinned-color); }
+        .phrase-card.is-newly-added { border-left-color: #2ecc71 !important; background-color: #f9fffb; }
+
+        .two-column-layout { display: flex; width: 100%; gap: 16px; }
+        .col-left, .col-right { flex: 1; word-break: break-word; }
+        .col-left { font-weight: 600; color: var(--text-color); }
+        .col-right { color: #555555; }
+        .single-column-text { width: 100%; word-break: break-word; font-weight: 500; }
+
+        .edit-input {
+            width: 100%;
+            padding: 6px 10px;
+            font-size: 1.1rem;
+            border: 1px dashed #aaa;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+        .edit-input:focus { border-color: var(--accent-blue); outline: none; }
+
+        .pin-toggle {
+            position: absolute;
+            top: 50%;
+            right: 15px;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            font-size: 1.3rem;
+            cursor: pointer;
+            opacity: 0.3;
+            transition: opacity 0.2s;
+            user-select: none;
+        }
+
+        .phrase-card.is-pinned .pin-toggle, .pin-toggle:hover { opacity: 1; }
+
+        .floating-controls {
+            position: fixed;
+            bottom: 80px; 
+            right: 20px;
+            display: none; 
+            flex-direction: column;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        .floating-controls button {
+            color: white;
+            border: none;
+            padding: 14px 22px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+            white-space: nowrap;
+        }
+
+        .download-btn { background-color: #28a745; }
+        .image-btn { background-color: #9b59b6; }
+        .back-input-btn { background-color: #6c757d; }
+        
+        .edit-mode-btn { background-color: #e67e22; }
+        .save-edit-btn { background-color: #27ae60; display: none; }
+
+        .hide-pins-snapshot .pin-toggle { display: none !important; }
+        .hide-pins-snapshot .phrase-card { animation: none !important; opacity: 1 !important; padding-right: 16px !important; color: #000000 !important; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="setupContainer">
+        <h2>Paste your data here:</h2>
+        <textarea id="rawData" placeholder="Category [TAB] Column 1 text [TAB] Column 2 text..."></textarea>
+        <button class="primary-btn" onclick="buildAppFromInput()">Generate App</button>
+    </div>
+
+    <div id="appContainer">
+        <div class="menu-container" id="menuWrapper">
+            <div class="menu-summary" id="menuSummary">
+                <div class="menu-summary-text" id="menuSummaryText" onclick="toggleDropdown(event, 'dropdownTop')"></div>
+                <div class="category-dropdown" id="dropdownTop"></div>
+                <div class="header-actions">
+                    <button class="header-btn header-go-pinned-btn" id="headerGoPinnedBtn" onclick="filterPinnedOnly()">📌 Pinned</button>
+                    <button class="header-btn header-unpin-btn" id="headerUnpinBtn" onclick="unpinAllItems()"><span>X</span> Remove Pins</button>
+                    <button class="header-btn header-back-btn" id="headerBackBtn" onclick="resetView()">↩ Back</button>
+                </div>
+            </div>
+            <div class="button-container" id="actualButtons"></div>
+        </div>
+
+        <div class="phrases-export-wrapper" id="captureTarget">
+            <div class="adder-panel" id="itemAdderPanel">
+                <div style="font-weight: bold; font-size: 0.95rem; color: var(--primary-color);">➕ Add New Item to Current View:</div>
+                <div class="adder-row">
+                    <select class="adder-select" id="newCardCategory"></select>
+                    <input type="text" class="adder-input" id="newCardContent" placeholder="Column 1 text [TAB or COMMA] Column 2 text">
+                    <button class="adder-btn" onclick="addNewItemOnTheFly()">Add Item</button>
+                </div>
+            </div>
+            <div class="phrases-container" id="phrasesList"></div>
+        </div>
+
+        <div class="menu-container bottom-frozen" id="menuWrapperBottom">
+            <div class="menu-summary" id="menuSummaryBottom">
+                <div class="menu-summary-text" id="menuSummaryTextBottom" onclick="toggleDropdown(event, 'dropdownBottom')"></div>
+                <div class="category-dropdown" id="dropdownBottom"></div>
+                <div class="header-actions">
+                    <button class="header-btn header-go-pinned-btn" id="headerGoPinnedBtnBottom" onclick="filterPinnedOnly()">📌 Pinned</button>
+                    <button class="header-btn header-unpin-btn" id="headerUnpinBtnBottom" onclick="unpinAllItems()"><span>X</span> Remove Pins</button>
+                    <button class="header-btn header-back-btn" id="headerBackBtnBottom" onclick="resetView()">↩ Back</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="floating-controls" id="floatingControls">
+        <button class="back-input-btn" id="backToInputBtn" onclick="backToInputSetup()">↩ Back to Input</button>
+        <button class="image-btn" id="imgBtn" onclick="downloadCurrentAsImage()">📸 to Image</button>
+        <button class="download-btn" id="htmlBtn" onclick="downloadCurrentHTML()">💾 Generate</button>
+    </div>
+
+    <script>
+        let currentMode = 'category'; 
+        let currentActiveCategory = '';
+        let isSingleColumnMode = false;
+        let globalCategories = new Set();
+        let isEditingEnabled = false;
+
+        document.addEventListener('click', () => closeAllDropdowns());
+
+        function liveSearch(query) {
+            const cleanQuery = query.toLowerCase().trim();
+            const cards = document.querySelectorAll('.phrase-card');
+            const btnContainer = document.getElementById('actualButtons');
+            
+            if (cleanQuery === '') {
+                if (btnContainer) btnContainer.classList.remove('is-searching');
+                if (currentActiveCategory && currentMode !== 'pinned') {
+                    filterPhrases(currentActiveCategory, currentActiveCategory);
+                } else if (currentMode === 'pinned') {
+                    filterPinnedOnly();
+                } else {
+                    resetView();
+                }
+                return;
+            }
+
+            currentMode = 'search';
+            if (btnContainer) btnContainer.classList.add('is-searching');
+            
+            cards.forEach(card => {
+                let textContent = "";
+                if(typeof isEditingEnabled !== 'undefined' && isEditingEnabled) {
+                    const inputs = card.querySelectorAll('.edit-input');
+                    inputs.forEach(i => textContent += " " + i.value.toLowerCase());
+                } else {
+                    textContent = card.innerText.toLowerCase();
+                }
+                
+                if (textContent.includes(cleanQuery)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        // Helper helper function to parse Excel text block properly handling wrapped multi-line cells
+        function parseExcelSpreadsheetRows(text) {
+            const lines = [];
+            let row = [''];
+            let inQuotes = false;
+
+            for (let i = 0; i < text.length; i++) {
+                let c = text[i];
+                let next = text[i+1];
+
+                if (c === '"') {
+                    if (inQuotes && next === '"') { row[row.length - 1] += '"'; i++; } 
+                    else { inQuotes = !inQuotes; }
+                } else if (c === '\t' && !inQuotes) {
+                    row.push('');
+                } else if ((c === '\n' || c === '\r') && !inQuotes) {
+                    if (c === '\r' && next === '\n') { i++; }
+                    lines.push(row);
+                    row = [''];
+                } else {
+                    row[row.length - 1] += c;
+                }
+            }
+            if (row.length > 1 || row[0] !== '') lines.push(row);
+            return lines;
+        }
+
+        function buildAppFromInput() {
+            const rawText = document.getElementById('rawData').value;
+            if(!rawText.trim()) return alert("Please paste some data first!");
+
+            const parsedRows = parseExcelSpreadsheetRows(rawText);
+            globalCategories.clear();
+            const phrasesList = document.getElementById('phrasesList');
+            const actualButtons = document.getElementById('actualButtons');
+
+            phrasesList.innerHTML = '';
+            actualButtons.innerHTML = '';
+            isSingleColumnMode = false;
+            currentActiveCategory = '';
+            currentMode = 'category';
+
+            const searchRow = document.createElement('div');
+            searchRow.className = 'search-pinned-row';
+
+            const pinnedBtn = document.createElement('button');
+            pinnedBtn.className = 'category-btn pinned-cat-btn';
+            pinnedBtn.setAttribute('onclick', "filterPinnedOnly()");
+            pinnedBtn.innerText = '📌 Pinned';
+
+            const searchInput = document.createElement('input');
+            searchInput.type = 'text';
+            searchInput.className = 'search-box';
+            searchInput.id = 'liveSearchBox';
+            searchInput.setAttribute('oninput', "liveSearch(this.value)");
+
+            searchRow.appendChild(pinnedBtn);
+            searchRow.appendChild(searchInput);
+            actualButtons.appendChild(searchRow);
+
+            parsedRows.forEach((parts) => {
+                if(parts.length === 0 || (parts.length === 1 && parts[0].trim() === "")) return;
+
+                let cat = "All_Items";
+                let col1Text = "";
+                let col2Text = "";
+
+                if (parts.length === 1) {
+                    col1Text = parts[0].trim();
+                } else if (parts.length === 2) {
+                    col1Text = parts[0].trim();
+                    col2Text = parts[1].trim();
+                } else {
+                    if (parts[0].trim() !== "") {
+                        cat = parts[0].trim();
+                        globalCategories.add(cat);
+                    }
+                    col1Text = parts[1].trim();
+                    col2Text = parts[2] || "";
+                    col2Text = col2Text.trim();
+                }
+
+                // FIXED: Convert Alt+Enter plain newlines into HTML breaks safely
+                const htmlCol1 = col1Text.replace(/\n/g, "<br>");
+                const htmlCol2 = col2Text.replace(/\n/g, "<br>");
+
+                const card = document.createElement('div');
+                card.className = 'phrase-card';
+                card.setAttribute('data-category', cat);
+                card.setAttribute('data-orig-col1', col1Text);
+                card.setAttribute('data-orig-col2', col2Text);
+                
+                // FIXED: Using .innerHTML instead of .innerText to preserve injected HTML tags
+                if (col1Text !== "" && col2Text !== "") {
+                    const layoutDiv = document.createElement('div');
+                    layoutDiv.className = 'two-column-layout';
+
+                    const leftDiv = document.createElement('div');
+                    leftDiv.className = 'col-left';
+                    leftDiv.innerHTML = htmlCol1;
+                    
+                    const rightDiv = document.createElement('div');
+                    rightDiv.className = 'col-right';
+                    rightDiv.innerHTML = htmlCol2;
+
+                    layoutDiv.appendChild(leftDiv);
+                    layoutDiv.appendChild(rightDiv);
+                    card.appendChild(layoutDiv);
+                } else {
+                    const singleDiv = document.createElement('div');
+                    singleDiv.className = 'single-column-text';
+                    singleDiv.innerHTML = col1Text !== "" ? htmlCol1 : htmlCol2;
+                    card.appendChild(singleDiv);
+                }
+
+                const pinBtn = document.createElement('button');
+                pinBtn.className = 'pin-toggle';
+                pinBtn.innerHTML = '📌';
+                pinBtn.setAttribute('onclick', "event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))");
+                card.appendChild(pinBtn);
+                phrasesList.appendChild(card);
+            });
+
+            if (globalCategories.size === 0) isSingleColumnMode = true;
+
+            if (!isSingleColumnMode) {
+                globalCategories.forEach(cat => {
+                    const btn = document.createElement('button');
+                    btn.className = 'category-btn';
+                    const safeCat = cat.replace(/'/g, "\\'");
+                    btn.setAttribute('onclick', `filterPhrases('${safeCat}', '${safeCat}')`);
+                    btn.innerText = cat;
+                    actualButtons.appendChild(btn);
+                });
+                renderDropdownMenus();
+            } else {
+                const cards = document.querySelectorAll('.phrase-card');
+                cards.forEach(card => card.style.display = 'block');
+                pinnedBtn.style.flex = "1 1 auto";
+            }
+
+            document.getElementById('setupContainer').style.display = 'none';
+            document.getElementById('appContainer').style.display = 'block';
+            document.getElementById('floatingControls').style.display = 'flex'; 
+        }
+
+        function downloadCurrentHTML() {
+            const docClone = document.documentElement.cloneNode(true);
+            
+            if(docClone.querySelector('#setupContainer')) docClone.querySelector('#setupContainer').remove();
+            if(docClone.querySelector('#backToInputBtn')) docClone.querySelector('#backToInputBtn').remove();
+            
+            const targetControls = docClone.querySelector('#floatingControls');
+            if (targetControls) {
+                targetControls.innerHTML = `
+                    <button class="edit-mode-btn" id="editModeBtn" onclick="enableLiveEditing()">✏️ Edit Data</button>
+                    <button class="save-edit-btn" id="saveEditBtn" onclick="saveAndExportCorrectedFiles()">💾 Save & Export Changes</button>
+                    <button class="image-btn" id="imgBtn" onclick="downloadCurrentAsImage()">📸 to Image</button>
+                `;
+            }
+
+            const appBlock = docClone.querySelector('#appContainer');
+            if (appBlock) appBlock.style.display = 'block';
+            if (docClone.querySelector('#menuSummary')) docClone.querySelector('#menuSummary').style.display = 'none';
+            if (docClone.querySelector('#menuSummaryBottom')) docClone.querySelector('#menuSummaryBottom').style.display = 'none';
+            
+            const actualBtnsWrapper = docClone.querySelector('#actualButtons');
+            if (actualBtnsWrapper) {
+                actualBtnsWrapper.style.display = 'flex';
+                actualBtnsWrapper.classList.remove('is-searching');
+            }
+
+            const cleanCards = docClone.querySelectorAll('.phrase-card');
+            cleanCards.forEach(c => {
+                c.style.display = isSingleColumnMode ? 'block' : 'none';
+                c.classList.remove('is-pinned');
+            });
+
+            const cleanScript = docClone.querySelector('script');
+            if(cleanScript) {
+                let categoriesArrayStr = JSON.stringify(Array.from(globalCategories));
+                let scriptContent = cleanScript.innerHTML;
+                
+                scriptContent = scriptContent.replace(/let isSingleColumnMode = (true|false);/, `let isSingleColumnMode = ${isSingleColumnMode};`);
+                scriptContent = scriptContent.replace(/let globalCategories = new Set\(\);/, `let globalCategories = new Set(${categoriesArrayStr});`);
+                
+                scriptContent += `
+                
+                function enableLiveEditing() {
+                    isEditingEnabled = true;
+                    
+                    const selectElement = document.getElementById('newCardCategory');
+                    if(selectElement) {
+                        selectElement.innerHTML = '';
+                        if(isSingleColumnMode) {
+                            selectElement.innerHTML = '<option value="All_Items">Default Category</option>';
+                        } else {
+                            globalCategories.forEach(cat => {
+                                selectElement.innerHTML += \`<option value="\${cat}">\${cat}</option>\`;
+                            });
+                        }
+                    }
+                    
+                    document.getElementById('itemAdderPanel').style.display = 'flex';
+                    
+                    const cards = document.querySelectorAll('.phrase-card');
+                    cards.forEach(card => {
+                        card.style.display = 'block';
+                        const colLeft = card.querySelector('.col-left');
+                        const colRight = card.querySelector('.col-right');
+                        const singleCol = card.querySelector('.single-column-text');
+
+                        if(colLeft && colRight) {
+                            const val1 = card.getAttribute('data-orig-col1');
+                            const val2 = card.getAttribute('data-orig-col2');
+                            colLeft.innerHTML = \`<input type="text" class="edit-input inp-col1" value="\${val1.replace(/"/g, '&quot;')}">\`;
+                            colRight.innerHTML = \`<input type="text" class="edit-input inp-col2" value="\${val2.replace(/"/g, '&quot;')}">\`;
+                        } else if(singleCol) {
+                            const val1 = card.getAttribute('data-orig-col1') || card.getAttribute('data-orig-col2');
+                            singleCol.innerHTML = \`<input type="text" class="edit-input inp-single" value="\${val1.replace(/"/g, '&quot;')}">\`;
+                        }
+                    });
+                    document.getElementById('editModeBtn').style.display = 'none';
+                    document.getElementById('imgBtn').style.display = 'none';
+                    document.getElementById('saveEditBtn').style.display = 'block';
+                }
+
+                function addNewItemOnTheFly() {
+                    const content = document.getElementById('newCardContent').value.trim();
+                    const category = document.getElementById('newCardCategory').value;
+                    if(!content) return alert("Please type some text into the box first!");
+                    
+                    let parts = content.split('\\t').map(p => p.trim());
+                    if(parts.length < 2) {
+                        parts = content.split(',').map(p => p.trim());
+                    }
+                    
+                    let col1Text = parts[0];
+                    let col2Text = parts[1] || "";
+                    
+                    const phrasesList = document.getElementById('phrasesList');
+                    const card = document.createElement('div');
+                    card.className = 'phrase-card is-newly-added';
+                    card.style.display = 'block';
+                    card.setAttribute('data-category', category);
+                    card.setAttribute('data-orig-col1', col1Text);
+                    card.setAttribute('data-orig-col2', col2Text);
+                    card.setAttribute('data-is-brand-new', 'true'); 
+                    
+                    const htmlCol1 = col1Text.replace(/\\n/g, "<br>");
+                    const htmlCol2 = col2Text.replace(/\\n/g, "<br>");
+
+                    if(col1Text !== "" && col2Text !== "") {
+                        card.innerHTML = \`
+                            <div class="two-column-layout">
+                                <div class="col-left"><input type="text" class="edit-input inp-col1" value="\${col1Text.replace(/"/g, '&quot;')}"></div>
+                                <div class="col-right"><input type="text" class="edit-input inp-col2" value="\${col2Text.replace(/"/g, '&quot;')}"></div>
+                            </div>
+                        \`;
+                    } else {
+                        card.innerHTML = \`
+                            <div class="single-column-text">
+                                <input type="text" class="edit-input inp-single" value="\${col1Text.replace(/"/g, '&quot;')}">
+                            </div>
+                        \`;
+                    }
+                    
+                    const pinBtn = document.createElement('button');
+                    pinBtn.className = 'pin-toggle';
+                    pinBtn.innerHTML = '📌';
+                    pinBtn.setAttribute('onclick', "event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))");
+                    card.appendChild(pinBtn);
+                    
+                    phrasesList.insertBefore(card, phrasesList.firstChild);
+                    document.getElementById('newCardContent').value = '';
+                    document.getElementById('newCardContent').focus();
+                }
+
+                function saveAndExportCorrectedFiles() {
+                    const cards = document.querySelectorAll('.phrase-card');
+                    let txtContent = "";
+                    let hasNewAdditions = false;
+
+                    cards.forEach(card => {
+                        const cat = card.getAttribute('data-category');
+                        const isBrandNew = card.getAttribute('data-is-brand-new') === 'true';
+                        
+                        let newCol1 = card.getAttribute('data-orig-col1');
+                        let newCol2 = card.getAttribute('data-orig-col2');
+
+                        const inpCol1 = card.querySelector('.inp-col1');
+                        const inpCol2 = card.querySelector('.inp-col2');
+                        const inpSingle = card.querySelector('.inp-single');
+
+                        if(inpCol1 && inpCol2) {
+                            newCol1 = inpCol1.value.trim();
+                            newCol2 = inpCol2.value.trim();
+                        } else if(inpSingle) {
+                            if(card.getAttribute('data-orig-col1') !== "") { newCol1 = inpSingle.value.trim(); } 
+                            else { newCol2 = inpSingle.value.trim(); }
+                        }
+
+                        if(isBrandNew) {
+                            hasNewAdditions = true;
+                            if(!isSingleColumnMode) { txtContent += \`\${cat}\\t\${newCol1}\\t\${newCol2}\\n\`; } 
+                            else { txtContent += newCol2 !== "" ? \`\${newCol1}\\t\${newCol2}\\n\` : \`\${newCol1}\\n\`; }
+                        }
+
+                        card.setAttribute('data-orig-col1', newCol1);
+                        card.setAttribute('data-orig-col2', newCol2);
+
+                        const htmlCol1 = newCol1.replace(/\\n/g, "<br>");
+                        const htmlCol2 = newCol2.replace(/\\n/g, "<br>");
+
+                        const colLeft = card.querySelector('.col-left');
+                        const colRight = card.querySelector('.col-right');
+                        const singleCol = card.querySelector('.single-column-text');
+
+                        if(colLeft && colRight) { colLeft.innerHTML = htmlCol1; colRight.innerHTML = htmlCol2; } 
+                        else if(singleCol) { singleCol.innerHTML = newCol1 !== "" ? htmlCol1 : htmlCol2; }
+                    });
+
+                    if(!hasNewAdditions) {
+                        if(!confirm("No new items were added to the list. Do you want to download the files anyway?")) return;
+                    }
+
+                    if(txtContent !== "") {
+                        const blobTxt = new Blob([txtContent], { type: "text/plain;charset=utf-8" });
+                        const linkTxt = document.createElement("a");
+                        linkTxt.href = URL.createObjectURL(blobTxt);
+                        linkTxt.download = "newly_added_rows.txt";
+                        document.body.appendChild(linkTxt);
+                        linkTxt.click();
+                        document.body.removeChild(linkTxt);
+                    }
+
+                    const docNestedClone = document.documentElement.cloneNode(true);
+                    
+                    const nestedControls = docNestedClone.querySelector('#floatingControls');
+                    if(nestedControls) {
+                        nestedControls.querySelector('#editModeBtn').style.display = 'block';
+                        nestedControls.querySelector('#imgBtn').style.display = 'block';
+                        nestedControls.querySelector('#saveEditBtn').style.display = 'none';
+                    }
+
+                    if(docNestedClone.querySelector('#itemAdderPanel')) {
+                        docNestedClone.querySelector('#itemAdderPanel').style.display = 'none';
+                    }
+
+                    const cleanNestedCards = docNestedClone.querySelectorAll('.phrase-card');
+                    cleanNestedCards.forEach(c => {
+                        c.style.display = isSingleColumnMode ? 'block' : 'none';
+                        c.classList.remove('is-pinned');
+                        c.classList.remove('is-newly-added');
+                        c.removeAttribute('data-is-brand-new'); 
+                    });
+                    
+                    const nestedBtnsWrapper = docNestedClone.querySelector('#actualButtons');
+                    if (nestedBtnsWrapper) {
+                        nestedBtnsWrapper.style.display = 'flex';
+                        nestedBtnsWrapper.classList.remove('is-searching');
+                    }
+                    if (docNestedClone.querySelector('#menuSummary')) docNestedClone.querySelector('#menuSummary').style.display = 'none';
+                    if (docNestedClone.querySelector('#menuSummaryBottom')) docNestedClone.querySelector('#menuSummaryBottom').style.display = 'none';
+
+                    const totalNestedSource = "<!DOCTYPE html>\\n" + docNestedClone.outerHTML;
+                    const blobHtml = new Blob([totalNestedSource], { type: "text/html;charset=utf-8" });
+                    const linkHtml = document.createElement("a");
+                    linkHtml.href = URL.createObjectURL(blobHtml);
+                    linkHtml.download = "phrases_clean_app_added.html"; 
+                    document.body.appendChild(linkHtml);
+                    linkHtml.click();
+                    document.body.removeChild(linkHtml);
+
+                    isEditingEnabled = false;
+                    document.getElementById('itemAdderPanel').style.display = 'none';
+                    document.getElementById('editModeBtn').style.display = 'block';
+                    document.getElementById('imgBtn').style.display = 'block';
+                    document.getElementById('saveEditBtn').style.display = 'none';
+                    
+                    document.querySelectorAll('.phrase-card').forEach(c => {
+                        c.classList.remove('is-newly-added');
+                        c.removeAttribute('data-is-brand-new');
+                    });
+                    
+                    resetView();
+                }
+                
+                window.addEventListener('DOMContentLoaded', () => { 
+                    if(!isSingleColumnMode) { renderDropdownMenus(); } 
+                });`;
+                
+                cleanScript.innerHTML = scriptContent;
+            }
+
+            const totalSource = "<!DOCTYPE html>\n" + docClone.outerHTML;
+            const blob = new Blob([totalSource], { type: "text/html;charset=utf-8" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "phrases_clean_app.html";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function renderDropdownMenus() {
+            const topDropdown = document.getElementById('dropdownTop');
+            const bottomDropdown = document.getElementById('dropdownBottom');
+            let htmlContent = `<div class="dropdown-item pinned-item" onclick="filterPinnedOnly()">📌 Pinned</div>`;
+            globalCategories.forEach(cat => {
+                const safeCat = cat.replace(/'/g, "\\'");
+                htmlContent += `<div class="dropdown-item" onclick="filterPhrases('${safeCat}', '${safeCat}')">${cat}</div>`;
+            });
+            topDropdown.innerHTML = htmlContent;
+            bottomDropdown.innerHTML = htmlContent;
+        }
+
+        function toggleDropdown(event, id) {
+            event.stopPropagation();
+            const targetMenu = document.getElementById(id);
+            const isOpen = targetMenu.style.display === 'block';
+            closeAllDropdowns();
+            if (!isOpen) targetMenu.style.display = 'block';
+        }
+
+        function closeAllDropdowns() {
+            document.getElementById('dropdownTop').style.display = 'none';
+            document.getElementById('dropdownBottom').style.display = 'none';
+        }
+
+        function togglePinItem(cardElement) {
+            if(typeof isEditingEnabled !== 'undefined' && isEditingEnabled) return; 
+            cardElement.classList.toggle('is-pinned');
+            if (currentMode === 'pinned' && !cardElement.classList.contains('is-pinned')) {
+                cardElement.style.display = 'none';
+                checkPinnedCountOrReset();
+            }
+        }
+
+        function filterPhrases(category, labelText) {
+            if(typeof isEditingEnabled !== 'undefined' && isEditingEnabled) return;
+            currentMode = 'category';
+            currentActiveCategory = category;
+            const cards = document.querySelectorAll('.phrase-card');
+            
+            const btnContainer = document.getElementById('actualButtons');
+            if (btnContainer) btnContainer.classList.remove('is-searching');
+            const searchBox = document.getElementById('liveSearchBox');
+            if(searchBox) searchBox.value = '';
+
+            cards.forEach(card => {
+                if (card.getAttribute('data-category') === category) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+            updateMenuUI(labelText + " ▾");
+            closeAllDropdowns();
+        }
+
+        function filterPinnedOnly() {
+            if(typeof isEditingEnabled !== 'undefined' && isEditingEnabled) return;
+            const cards = document.querySelectorAll('.phrase-card');
+            let pinnedCount = 0;
+            cards.forEach(card => {
+                if (card.classList.contains('is-pinned')) {
+                    card.style.display = 'block';
+                    pinnedCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+            if(pinnedCount === 0) {
+                alert("You don't have any items pinned yet!");
+                return;
+            }
+            currentMode = 'pinned';
+            updateMenuUI("📌 Clipboard ▾");
+            closeAllDropdowns();
+        }
+
+        function checkPinnedCountOrReset() {
+            const visibleCards = Array.from(document.querySelectorAll('.phrase-card')).filter(c => c.style.display === 'block');
+            if (visibleCards.length === 0) resetView();
+        }
+
+        function unpinAllItems() {
+            const cards = document.querySelectorAll('.phrase-card');
+            cards.forEach(card => card.classList.remove('is-pinned'));
+            resetView();
+        }
+
+        function updateMenuUI(summaryText) {
+            document.getElementById('actualButtons').style.display = 'none';
+            document.getElementById('menuSummaryText').innerText = summaryText;
+            document.getElementById('menuSummaryTextBottom').innerText = summaryText;
+            document.getElementById('menuSummary').style.display = 'flex';
+            document.getElementById('menuSummaryBottom').style.display = 'flex';
+            
+            const backText = isSingleColumnMode ? "↩ Show All" : "↩ Back";
+            document.getElementById('headerBackBtn').innerText = backText;
+            document.getElementById('headerBackBtnBottom').innerText = backText;
+
+            const isPinnedMode = (currentMode === 'pinned');
+            document.getElementById('headerUnpinBtn').style.display = isPinnedMode ? 'block' : 'none'; 
+            document.getElementById('headerUnpinBtnBottom').style.display = isPinnedMode ? 'block' : 'none'; 
+            document.getElementById('headerGoPinnedBtn').style.display = isPinnedMode ? 'none' : 'block'; 
+            document.getElementById('headerGoPinnedBtnBottom').style.display = isPinnedMode ? 'none' : 'block'; 
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function resetView() {
+            const cards = document.querySelectorAll('.phrase-card');
+            const searchBox = document.getElementById('liveSearchBox');
+            if(searchBox) searchBox.value = ''; 
+            const btnContainer = document.getElementById('actualButtons');
+            if (btnContainer) btnContainer.classList.remove('is-searching');
+
+            currentActiveCategory = '';
+            currentMode = 'category';
+
+            if(isSingleColumnMode) {
+                cards.forEach(card => card.style.display = 'block');
+            } else {
+                cards.forEach(card => card.style.display = 'none');
+            }
+            document.getElementById('actualButtons').style.display = 'flex';
+            document.getElementById('menuSummary').style.display = 'none';
+            document.getElementById('menuSummaryBottom').style.display = 'none';
+            closeAllDropdowns();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function backToInputSetup() {
+            document.getElementById('appContainer').style.display = 'none';
+            document.getElementById('floatingControls').style.display = 'none';
+            document.getElementById('setupContainer').style.display = 'block';
+            document.getElementById('rawData').value = '';
+            document.getElementById('rawData').focus();
+        }
+
+        function downloadCurrentAsImage() {
+            const target = document.getElementById('captureTarget');
+            const visibleCards = Array.from(target.querySelectorAll('.phrase-card')).filter(c => c.style.display !== 'none');
+            if (visibleCards.length === 0) return alert("There are no visible phrases to export!");
+
+            const generateCanvas = () => {
+                target.classList.add('hide-pins-snapshot');
+                html2canvas(target, { backgroundColor: "#f8f9fa", scale: 2, useCORS: true }).then(canvas => {
+                    target.classList.remove('hide-pins-snapshot');
+                    const imgData = canvas.toDataURL('image/png');
+                    const link = document.createElement('a');
+                    link.href = imgData;
+                    link.download = `phrases_export_${currentMode}.png`;
+                    link.click();
+                }).catch(() => target.classList.remove('hide-pins-snapshot'));
+            };
+
+            if (typeof html2canvas === 'undefined') {
+                const script = document.createElement('script');
+                script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
+                script.onload = generateCanvas;
+                document.head.appendChild(script);
+            } else {
+                generateCanvas();
+            }
+        }
+    </script>
+</body>
+</html>
