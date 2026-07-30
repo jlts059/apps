@@ -270,6 +270,25 @@
             gap: 14px;
         }
 
+        /* Panel Exclusivo de Adición en Modo Edición */
+        .adder-panel {
+            display: none;
+            background: #ffffff;
+            padding: 16px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+            border: 2px dashed var(--primary-color);
+            margin-bottom: 14px;
+            flex-direction: column;
+            gap: 12px;
+            box-sizing: border-box;
+            width: 100%;
+        }
+        .adder-row { display: flex; gap: 10px; align-items: center; width: 100%; }
+        .adder-select { padding: 10px; font-size: 1rem; border-radius: 8px; border: 1px solid #ccc; flex: 1; }
+        .adder-input { padding: 10px; font-size: 1rem; border-radius: 8px; border: 1px solid #ccc; flex: 2; }
+        .adder-btn { background-color: var(--primary-color); color: white; border: none; padding: 10px 16px; font-weight: bold; border-radius: 8px; cursor: pointer; white-space: nowrap; }
+
         .phrase-card {
             position: relative;
             background-color: var(--card-bg);
@@ -286,6 +305,7 @@
         }
 
         .phrase-card.is-pinned { border-left-color: var(--pinned-color); }
+        .phrase-card.is-newly-added { border-left-color: #2ecc71 !important; background-color: #f9fffb; }
 
         .two-column-layout { display: flex; width: 100%; gap: 16px; }
         .col-left, .col-right { flex: 1; word-break: break-word; }
@@ -293,7 +313,6 @@
         .col-right { color: #555555; }
         .single-column-text { width: 100%; word-break: break-word; font-weight: 500; }
 
-        /* Inputs de edición (Estilos inyectados que heredará el clon) */
         .edit-input {
             width: 100%;
             padding: 6px 10px;
@@ -346,7 +365,6 @@
         .image-btn { background-color: #9b59b6; }
         .back-input-btn { background-color: #6c757d; }
         
-        /* Botones dinámicos exclusivos del HTML generado */
         .edit-mode-btn { background-color: #e67e22; }
         .save-edit-btn { background-color: #27ae60; display: none; }
 
@@ -378,7 +396,16 @@
         </div>
 
         <div class="phrases-export-wrapper" id="captureTarget">
-            <div class="phrases-container" id="phrasesList"><div class="phrase-card" data-category="💹" data-orig-col1="50, &lt;b&gt;100&lt;/b&gt;, 200" data-orig-col2="0.15, &lt;b&gt;0.30&lt;/b&gt;, 0.60€" style="display: none;"><div class="two-column-layout"><div class="col-left">50, <b>100</b>, 200</div><div class="col-right">0.15, <b>0.30</b>, 0.60€</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💹" data-orig-col1="&lt;b&gt;350&lt;/b&gt;, 500, &lt;b&gt;700&lt;/b&gt;" data-orig-col2="&lt;b&gt;1€&lt;/b&gt;, 1,50€, &lt;b&gt;2€&lt;/b&gt;" style="display: none;"><div class="two-column-layout"><div class="col-left"><b>350</b>, 500, <b>700</b></div><div class="col-right"><b>1€</b>, 1,50€, <b>2€</b></div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💹" data-orig-col1="800, 900, &lt;b&gt;1000&lt;/b&gt;" data-orig-col2="2.25, 2.50, &lt;b&gt;2.75&lt;/b&gt;€" style="display: none;"><div class="two-column-layout"><div class="col-left">800, 900, <b>1000</b></div><div class="col-right">2.25, 2.50, <b>2.75</b>€</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💹" data-orig-col1="A partir de 1,000€, si el pico es menos/más de 500€ redondear pabajo/parriba, x3 y" data-orig-col2="quitarle o sumarle: • 1-2k ➜ 0.50 |• 2-3k ➜ 1€ |• &gt;4-10k ➜ 1,50€ |• &gt;10k ➜ 2€" style="display: none;"><div class="two-column-layout"><div class="col-left">A partir de 1,000€, si el pico es menos/más de 500€ redondear pabajo/parriba, x3 y</div><div class="col-right">quitarle o sumarle: • 1-2k ➜ 0.50 |• 2-3k ➜ 1€ |• &gt;4-10k ➜ 1,50€ |• &gt;10k ➜ 2€</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🙋 - 👋" data-orig-col1="buenos días / good afternoon" data-orig-col2="&lt;b&gt;jó&lt;/b&gt; &lt;u&gt;na&lt;/u&gt;pot!" style="display: none;"><div class="two-column-layout"><div class="col-left">buenos días / good afternoon</div><div class="col-right"><b>jó</b> <u>na</u>pot!</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🙋 - 👋" data-orig-col1="good morning" data-orig-col2="jó reggelt!" style="display: none;"><div class="two-column-layout"><div class="col-left">good morning</div><div class="col-right">jó reggelt!</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🙋 - 👋" data-orig-col1="good evening" data-orig-col2="jó estét!" style="display: none;"><div class="two-column-layout"><div class="col-left">good evening</div><div class="col-right">jó estét!</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🙋 - 👋" data-orig-col1="bye x2" data-orig-col2="&quot;• &lt;b style=&quot;&quot;color: black;&quot;&quot;&gt;viszlát!&lt;/b&gt;" style="display: none;"><div class="two-column-layout"><div class="col-left">bye x2</div><div class="col-right">"• <b style="" color:="" black;""="">viszlát!</b></div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="All_Items" data-orig-col1="• &lt;b style=&quot;&quot;color: magenta;&quot;&quot;&gt;viszont&lt;u&gt;lá&lt;/u&gt;tásra!&lt;/b&gt; /visont-latashrə/&quot;" data-orig-col2="" style="display: none;"><div class="single-column-text">• <b style="" color:="" magenta;""="">viszont<u>lá</u>tásra!</b> /visont-latashrə/"</div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🙋 - 👋" data-orig-col1="hi+bye x1" data-orig-col2="szia! /sí-ah/" style="display: none;"><div class="two-column-layout"><div class="col-left">hi+bye x1</div><div class="col-right">szia! /sí-ah/</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🙋 - 👋" data-orig-col1="qué tal? - bien - y tú?" data-orig-col2="&lt;b style=&quot;color: magenta;&quot;&gt;hodgy vadgy?&lt;/b&gt; /hoɟ voɟ/ + &lt;b style=&quot;color: magenta;&quot;&gt;jól vagyok!&lt;/b&gt; + &lt;b style=&quot;color: magenta;&quot;&gt;és te?&lt;/b&gt;" style="display: none;"><div class="two-column-layout"><div class="col-left">qué tal? - bien - y tú?</div><div class="col-right"><b style="color: magenta;">hodgy vadgy?</b> /hoɟ voɟ/ + <b style="color: magenta;">jól vagyok!</b> + <b style="color: magenta;">és te?</b></div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🙇 - 🙏" data-orig-col1="excuse-me" data-orig-col2="&lt;b style=&quot;color: magenta;&quot;&gt;elnézést&lt;/b&gt; /'eynezesht/" style="display: none;"><div class="two-column-layout"><div class="col-left">excuse-me</div><div class="col-right"><b style="color: magenta;">elnézést</b> /'eynezesht/</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🙇 - 🙏" data-orig-col1="sorry" data-orig-col2="&lt;b style=&quot;color: magenta;&quot;&gt;bocsánat&lt;/b&gt; /'&lt;u&gt;bo&lt;/u&gt; &lt;u&gt;cha:&lt;/u&gt;not/ | • &lt;b&gt;bocs(i)&lt;/b&gt; (clq)" style="display: none;"><div class="two-column-layout"><div class="col-left">sorry</div><div class="col-right"><b style="color: magenta;">bocsánat</b> /'<u>bo</u> <u>cha:</u>not/ | • <b>bocs(i)</b> (clq)</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🙇 - 🙏" data-orig-col1="• (muchas) gracias x2 + you're welcome" data-orig-col2="• &lt;b style=&quot;color: magenta;&quot;&gt;köszönöm&lt;/b&gt; (&lt;b&gt;szép&lt;/b&gt;en /'sepen/) • köszi + &lt;b&gt;szívesem&lt;/b&gt; /SÍ-veshem/" style="display: none;"><div class="two-column-layout"><div class="col-left">• (muchas) gracias x2 + you're welcome</div><div class="col-right">• <b style="color: magenta;">köszönöm</b> (<b>szép</b>en /'sepen/) • köszi + <b>szívesem</b> /SÍ-veshem/</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🙇 - 🙏" data-orig-col1="no hablo húngaro - only that!" data-orig-col2="&lt;b style=&quot;color: magenta;&quot;&gt;nem beszélek magyarul&lt;/b&gt; /beselek/ (...) &lt;b&gt;hát, csak ennyi&lt;/b&gt;" style="display: none;"><div class="two-column-layout"><div class="col-left">no hablo húngaro - only that!</div><div class="col-right"><b style="color: magenta;">nem beszélek magyarul</b> /beselek/ (...) <b>hát, csak ennyi</b></div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🤷 - 👌 - ✋" data-orig-col1="okay x1, (very) good x2" data-orig-col2="&lt;b style=&quot;color: magenta;&quot;&gt;• oké | • (nagyon) jó | • rendben&lt;/b&gt;" style="display: none;"><div class="two-column-layout"><div class="col-left">okay x1, (very) good x2</div><div class="col-right"><b style="color: magenta;">• oké | • (nagyon) jó | • rendben</b></div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🤷 - 👌 - ✋" data-orig-col1="super!" data-orig-col2="• &lt;b style=&quot;color: magenta;&quot;&gt;szuper&lt;/b&gt; | • remek" style="display: none;"><div class="two-column-layout"><div class="col-left">super!</div><div class="col-right">• <b style="color: magenta;">szuper</b> | • remek</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🤷 - 👌 - ✋" data-orig-col1="I'm good!" data-orig-col2="jo vagyok" style="display: none;"><div class="two-column-layout"><div class="col-left">I'm good!</div><div class="col-right">jo vagyok</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🤷 - 👌 - ✋" data-orig-col1="sí" data-orig-col2="i&lt;u&gt;gen&lt;/u&gt;" style="display: none;"><div class="two-column-layout"><div class="col-left">sí</div><div class="col-right">i<u>gen</u></div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🤷 - 👌 - ✋" data-orig-col1="no" data-orig-col2="nem" style="display: none;"><div class="two-column-layout"><div class="col-left">no</div><div class="col-right">nem</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🤷 - 👌 - ✋" data-orig-col1="I don't understand" data-orig-col2="bocsánat &lt;b style=&quot;color: magenta;&quot;&gt;nem ertem&lt;b&gt; csak spanyolul beszélek (vagy angolul)" style="display: none;"><div class="two-column-layout"><div class="col-left">I don't understand</div><div class="col-right">bocsánat <b style="color: magenta;">nem ertem<b> csak spanyolul beszélek (vagy angolul)</b></b></div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🤷 - 👌 - ✋" data-orig-col1="habla inglés?" data-orig-col2="&lt;b style=&quot;color: magenta;&quot;&gt;beszél angolul?&lt;/b&gt; /besel angolul/" style="display: none;"><div class="two-column-layout"><div class="col-left">habla inglés?</div><div class="col-right"><b style="color: magenta;">beszél angolul?</b> /besel angolul/</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🤷 - 👌 - ✋" data-orig-col1="solo hablo español" data-orig-col2="&lt;b&gt;cs&lt;/b&gt;ak spanyolul beszélek" style="display: none;"><div class="two-column-layout"><div class="col-left">solo hablo español</div><div class="col-right"><b>cs</b>ak spanyolul beszélek</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🤷 - 👌 - ✋" data-orig-col1="momentito…" data-orig-col2="egy pillanat..." style="display: none;"><div class="two-column-layout"><div class="col-left">momentito…</div><div class="col-right">egy pillanat...</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🤷 - 👌 - ✋" data-orig-col1="this is the metro, &lt;b&gt;right?&lt;/b&gt;" data-orig-col2="ez a metró, &lt;b&gt;ugye&lt;/b&gt;?" style="display: none;"><div class="two-column-layout"><div class="col-left">this is the metro, <b>right?</b></div><div class="col-right">ez a metró, <b>ugye</b>?</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🍜" data-orig-col1="excuse-me, donde está el WC?" data-orig-col2="elnézést, hol van a WC?" style="display: none;"><div class="two-column-layout"><div class="col-left">excuse-me, donde está el WC?</div><div class="col-right">elnézést, hol van a WC?</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🍜" data-orig-col1="una birra por favó + grande &amp; pequeña" data-orig-col2="egy &lt;b&gt;póhar&lt;/b&gt; / körso &lt;b&gt;sört&lt;/b&gt;, kérem                     + nagy /nɒɟ/ &amp; &lt;b&gt;kis&lt;/b&gt; OR korsó + póhar" style="display: none;"><div class="two-column-layout"><div class="col-left">una birra por favó + grande &amp; pequeña</div><div class="col-right">egy <b>póhar</b> / körso <b>sört</b>, kérem                     + nagy /nɒɟ/ &amp; <b>kis</b> OR korsó + póhar</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🍜" data-orig-col1="two waters, please: one still and one sparkling" data-orig-col2="két &lt;b&gt;vizet&lt;/b&gt;, kérek: egy szénsav&lt;u&gt;menteset&lt;/u&gt; és egy szénsav&lt;u&gt;asat&lt;/u&gt; / &lt;u&gt;ˈseːnʃɒv&lt;/b&gt;ˈseːnʃɒv&lt;u&gt;mɛntɛʃɛt&lt;/u&gt; eːʃ ɛɟ ˈseːnʃɒv&lt;u&gt;ɒʃɒt&lt;/u&gt;/" style="display: none;"><div class="two-column-layout"><div class="col-left">two waters, please: one still and one sparkling</div><div class="col-right">két <b>vizet</b>, kérek: egy szénsav<u>menteset</u> és egy szénsav<u>asat</u> / <u>ˈseːnʃɒvˈseːnʃɒv<u>mɛntɛʃɛt</u> eːʃ ɛɟ ˈseːnʃɒv<u>ɒʃɒt</u>/</u></div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🍜" data-orig-col1="two coffees with milk, please" data-orig-col2="két &lt;b&gt;tejes&lt;u&gt;kávét&lt;/u&gt;&lt;/b&gt;, kérek. Egy növényi / laktózmentes &lt;b&gt;tej&lt;/b&gt;jel" style="display: none;"><div class="two-column-layout"><div class="col-left">two coffees with milk, please</div><div class="col-right">két <b>tejes<u>kávét</u></b>, kérek. Egy növényi / laktózmentes <b>tej</b>jel</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🍜" data-orig-col1="excuse-me, queremos pagar" data-orig-col2="elnézést, fizetni szeretnék" style="display: none;"><div class="two-column-layout"><div class="col-left">excuse-me, queremos pagar</div><div class="col-right">elnézést, fizetni szeretnék</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🍜" data-orig-col1="can we pay? + the bill please - (with) card" data-orig-col2="&lt;b style=&quot;color: magenta;&quot;&gt;fizetünk?&lt;/b&gt; / fize&lt;b&gt;the&lt;/b&gt;tünk, kérem? / &lt;b&gt;a számlát&lt;/b&gt;, kérem &lt;b&gt;+&lt;/b&gt;  &lt;b&gt;kártyával&lt;/b&gt;" style="display: none;"><div class="two-column-layout"><div class="col-left">can we pay? + the bill please - (with) card</div><div class="col-right"><b style="color: magenta;">fizetünk?</b> / fize<b>the</b>tünk, kérem? / <b>a számlát</b>, kérem <b>+</b>  <b>kártyával</b></div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🍜" data-orig-col1="I try in Hungarian" data-orig-col2="megpróbálom magyarul" style="display: none;"><div class="two-column-layout"><div class="col-left">I try in Hungarian</div><div class="col-right">megpróbálom magyarul</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🍜" data-orig-col1="salud!" data-orig-col2="&lt;b&gt;egészségedre&lt;/b&gt;! /ɛ-ɡeːʃːeːɡɛdrɛ/" style="display: none;"><div class="two-column-layout"><div class="col-left">salud!</div><div class="col-right"><b>egészségedre</b>! /ɛ-ɡeːʃːeːɡɛdrɛ/</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🍜" data-orig-col1="(very) delicious!" data-orig-col2="(&lt;b&gt;nagyon&lt;/b&gt;) /ˈnɒɟon/&lt;/b&gt; &lt;b style=&quot;color: magenta;&quot;&gt;finom&lt;/b&gt;" style="display: none;"><div class="two-column-layout"><div class="col-left">(very) delicious!</div><div class="col-right">(<b>nagyon</b>) /ˈnɒɟon/ <b style="color: magenta;">finom</b></div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🍜" data-orig-col1="tiene buena pinta" data-orig-col2="nagyon jól &lt;b&gt;néz ki&lt;/b&gt;!" style="display: none;"><div class="two-column-layout"><div class="col-left">tiene buena pinta</div><div class="col-right">nagyon jól <b>néz ki</b>!</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🍜" data-orig-col1="coffee" data-orig-col2="kávé" style="display: none;"><div class="two-column-layout"><div class="col-left">coffee</div><div class="col-right">kávé</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🍜" data-orig-col1="milk" data-orig-col2="tej" style="display: none;"><div class="two-column-layout"><div class="col-left">milk</div><div class="col-right">tej</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🍜" data-orig-col1="how much?" data-orig-col2="mennyibe kerül?" style="display: none;"><div class="two-column-layout"><div class="col-left">how much?</div><div class="col-right">mennyibe kerül?</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🛍️" data-orig-col1="(sólo) this, please" data-orig-col2="(csak) &lt;b style=&quot;color: magenta;&quot;&gt;ezt&lt;/b&gt; kerem" style="display: none;"><div class="two-column-layout"><div class="col-left">(sólo) this, please</div><div class="col-right">(csak) <b style="color: magenta;">ezt</b> kerem</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🛍️" data-orig-col1="one of those, please" data-orig-col2="&lt;b style=&quot;color: magenta;&quot;&gt;egyet abból&lt;/b&gt;, kérem" style="display: none;"><div class="two-column-layout"><div class="col-left">one of those, please</div><div class="col-right"><b style="color: magenta;">egyet abból</b>, kérem</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🛍️" data-orig-col1="anything else? x3 no thank you" data-orig-col2="&lt;b&gt;mást&lt;/b&gt; kér? / valami &lt;b&gt;mást&lt;/b&gt;? / még valamit? + nem kös..." style="display: none;"><div class="two-column-layout"><div class="col-left">anything else? x3 no thank you</div><div class="col-right"><b>mást</b> kér? / valami <b>mást</b>? / még valamit? + nem kös...</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🛍️" data-orig-col1="here you go (paying)" data-orig-col2="&lt;b&gt;tessék&lt;/b&gt; /ˈtɛʃːeːk/" style="display: none;"><div class="two-column-layout"><div class="col-left">here you go (paying)</div><div class="col-right"><b>tessék</b> /ˈtɛʃːeːk/</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="👤" data-orig-col1="me llamo J" data-orig-col2="Jose vagyok /&lt;b&gt;vɒ&lt;/b&gt;ɟok/" style="display: none;"><div class="two-column-layout"><div class="col-left">me llamo J</div><div class="col-right">Jose vagyok /<b>vɒ</b>ɟok/</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="👤" data-orig-col1="soy español / ~  de Esp." data-orig-col2="&lt;b style=&quot;color: magenta;&quot;&gt;&lt;u&gt;s&lt;/u&gt;panyol 'vagyok&lt;/b&gt; /ˈʃp&lt;b style=&quot;color: magenta;&quot;&gt;ɒ&lt;/b&gt;ɲol/ /v&lt;b style=&quot;color: magenta;&quot;&gt;ɒ&lt;/b&gt;ɟok/" style="display: none;"><div class="two-column-layout"><div class="col-left">soy español / ~  de Esp.</div><div class="col-right"><b style="color: magenta;"><u>s</u>panyol 'vagyok</b> /ˈʃp<b style="color: magenta;">ɒ</b>ɲol/ /v<b style="color: magenta;">ɒ</b>ɟok/</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🧺" data-orig-col1="Hungría" data-orig-col2="Magyaror&lt;b&gt;sz&lt;/b&gt;ág &lt;b&gt;/s/&lt;/b&gt;" style="display: none;"><div class="two-column-layout"><div class="col-left">Hungría</div><div class="col-right">Magyaror<b>sz</b>ág <b>/s/</b></div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🧺" data-orig-col1="España" data-orig-col2="&lt;b style=&quot;color: magenta;&quot;&gt;&lt;u&gt;s&lt;/u&gt;panyol-ország-ból&lt;/b&gt; jöttem" style="display: none;"><div class="two-column-layout"><div class="col-left">España</div><div class="col-right"><b style="color: magenta;"><u>s</u>panyol-ország-ból</b> jöttem</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🧺" data-orig-col1="nice or beautiful" data-orig-col2="szép" style="display: none;"><div class="two-column-layout"><div class="col-left">nice or beautiful</div><div class="col-right">szép</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🧺" data-orig-col1="sólo" data-orig-col2="&lt;b&gt;csak&lt;/b&gt; /t͡ʃɒk/" style="display: none;"><div class="two-column-layout"><div class="col-left">sólo</div><div class="col-right"><b>csak</b> /t͡ʃɒk/</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🧺" data-orig-col1="and" data-orig-col2="és" style="display: none;"><div class="two-column-layout"><div class="col-left">and</div><div class="col-right">és</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🧺" data-orig-col1="but" data-orig-col2="de" style="display: none;"><div class="two-column-layout"><div class="col-left">but</div><div class="col-right">de</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🧺" data-orig-col1="or" data-orig-col2="vagy" style="display: none;"><div class="two-column-layout"><div class="col-left">or</div><div class="col-right">vagy</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🧺" data-orig-col1="el húngaro es difícil!" data-orig-col2="a magyar nehéz!" style="display: none;"><div class="two-column-layout"><div class="col-left">el húngaro es difícil!</div><div class="col-right">a magyar nehéz!</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🧺" data-orig-col1="un paquete de malboro gold y un mechero pequeño" data-orig-col2="egy Marlboro Goldot kérek és kis &lt;b&gt;öngyújtó&lt;/b&gt;" style="display: none;"><div class="two-column-layout"><div class="col-left">un paquete de malboro gold y un mechero pequeño</div><div class="col-right">egy Marlboro Goldot kérek és kis <b>öngyújtó</b></div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="1" data-orig-col2="egy" style="display: none;"><div class="two-column-layout"><div class="col-left">1</div><div class="col-right">egy</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="2" data-orig-col2="kettő (&lt;b&gt;ket&lt;/b&gt; when expressing quantity)" style="display: none;"><div class="two-column-layout"><div class="col-left">2</div><div class="col-right">kettő (<b>ket</b> when expressing quantity)</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="3" data-orig-col2="három" style="display: none;"><div class="two-column-layout"><div class="col-left">3</div><div class="col-right">három</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="4" data-orig-col2="né&lt;b&gt;gy&lt;/b&gt;" style="display: none;"><div class="two-column-layout"><div class="col-left">4</div><div class="col-right">né<b>gy</b></div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="5" data-orig-col2="öt" style="display: none;"><div class="two-column-layout"><div class="col-left">5</div><div class="col-right">öt</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="6" data-orig-col2="hat" style="display: none;"><div class="two-column-layout"><div class="col-left">6</div><div class="col-right">hat</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="7" data-orig-col2="hét" style="display: none;"><div class="two-column-layout"><div class="col-left">7</div><div class="col-right">hét</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="8" data-orig-col2="nyolc" style="display: none;"><div class="two-column-layout"><div class="col-left">8</div><div class="col-right">nyolc</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="9" data-orig-col2="kilenc" style="display: none;"><div class="two-column-layout"><div class="col-left">9</div><div class="col-right">kilenc</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="10" data-orig-col2="tíz" style="display: none;"><div class="two-column-layout"><div class="col-left">10</div><div class="col-right">tíz</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="100" data-orig-col2="&lt;b&gt;száz&lt;/b&gt; /saaz/" style="display: none;"><div class="two-column-layout"><div class="col-left">100</div><div class="col-right"><b>száz</b> /saaz/</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="200" data-orig-col2="kétszáz /KET-saaz/" style="display: none;"><div class="two-column-layout"><div class="col-left">200</div><div class="col-right">kétszáz /KET-saaz/</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="300" data-orig-col2="háromszáz" style="display: none;"><div class="two-column-layout"><div class="col-left">300</div><div class="col-right">háromszáz</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="400" data-orig-col2="négyszáz" style="display: none;"><div class="two-column-layout"><div class="col-left">400</div><div class="col-right">négyszáz</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="500" data-orig-col2="ötszáz" style="display: none;"><div class="two-column-layout"><div class="col-left">500</div><div class="col-right">ötszáz</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="600" data-orig-col2="hatszáz" style="display: none;"><div class="two-column-layout"><div class="col-left">600</div><div class="col-right">hatszáz</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="700" data-orig-col2="hétszáz" style="display: none;"><div class="two-column-layout"><div class="col-left">700</div><div class="col-right">hétszáz</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="800" data-orig-col2="nyolcszáz" style="display: none;"><div class="two-column-layout"><div class="col-left">800</div><div class="col-right">nyolcszáz</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="900" data-orig-col2="kilencszáz" style="display: none;"><div class="two-column-layout"><div class="col-left">900</div><div class="col-right">kilencszáz</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="1000" data-orig-col2="&lt;b&gt;ezer&lt;/b&gt;" style="display: none;"><div class="two-column-layout"><div class="col-left">1000</div><div class="col-right"><b>ezer</b></div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="2000" data-orig-col2="kétezer" style="display: none;"><div class="two-column-layout"><div class="col-left">2000</div><div class="col-right">kétezer</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="3000" data-orig-col2="háromezer" style="display: none;"><div class="two-column-layout"><div class="col-left">3000</div><div class="col-right">háromezer</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="4000" data-orig-col2="négyezer" style="display: none;"><div class="two-column-layout"><div class="col-left">4000</div><div class="col-right">négyezer</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="5000" data-orig-col2="ötezer" style="display: none;"><div class="two-column-layout"><div class="col-left">5000</div><div class="col-right">ötezer</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="6000" data-orig-col2="hatezer" style="display: none;"><div class="two-column-layout"><div class="col-left">6000</div><div class="col-right">hatezer</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="7000" data-orig-col2="hétezer" style="display: none;"><div class="two-column-layout"><div class="col-left">7000</div><div class="col-right">hétezer</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="8000" data-orig-col2="nyolcezer" style="display: none;"><div class="two-column-layout"><div class="col-left">8000</div><div class="col-right">nyolcezer</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="9000" data-orig-col2="kilencezer" style="display: none;"><div class="two-column-layout"><div class="col-left">9000</div><div class="col-right">kilencezer</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="10000" data-orig-col2="tízezer" style="display: none;"><div class="two-column-layout"><div class="col-left">10000</div><div class="col-right">tízezer</div></div><button class="pin-toggle">📌</button></div></div>
+            <!-- Panel contenedor del formulario dinámico de adición rápida -->
+            <div class="adder-panel" id="itemAdderPanel">
+                <div style="font-weight: bold; font-size: 0.95rem; color: var(--primary-color);">➕ Add New Item to Current View:</div>
+                <div class="adder-row">
+                    <select class="adder-select" id="newCardCategory"></select>
+                    <input type="text" class="adder-input" id="newCardContent" placeholder="Column 1 text [TAB or COMMA] Column 2 text">
+                    <button class="adder-btn" onclick="addNewItemOnTheFly()">Add Item</button>
+                </div>
+            </div>
+            <div class="phrases-container" id="phrasesList"><div class="phrase-card" data-category="💹" data-orig-col1="50, &lt;b&gt;100&lt;/b&gt;, 200" data-orig-col2="0.15, &lt;b&gt;0.30&lt;/b&gt;, 0.60€" style="display: none;"><div class="two-column-layout"><div class="col-left">50, <b>100</b>, 200</div><div class="col-right">0.15, <b>0.30</b>, 0.60€</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💹" data-orig-col1="&lt;b&gt;350&lt;/b&gt;, 500, &lt;b&gt;700&lt;/b&gt;" data-orig-col2="&lt;b&gt;1€&lt;/b&gt;, 1,50€, &lt;b&gt;2€&lt;/b&gt;" style="display: none;"><div class="two-column-layout"><div class="col-left"><b>350</b>, 500, <b>700</b></div><div class="col-right"><b>1€</b>, 1,50€, <b>2€</b></div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💹" data-orig-col1="800, 900, &lt;b&gt;1000&lt;/b&gt;" data-orig-col2="2.25, 2.50, &lt;b&gt;2.75&lt;/b&gt;€" style="display: none;"><div class="two-column-layout"><div class="col-left">800, 900, <b>1000</b></div><div class="col-right">2.25, 2.50, <b>2.75</b>€</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💹" data-orig-col1="A partir de 1,000€, si el pico es menos/más de 500€ redondear pabajo/parriba, x3 y" data-orig-col2="quitarle o sumarle: • 1-2k ➜ 0.50 |• 2-3k ➜ 1€ |• &gt;4-10k ➜ 1,50€ |• &gt;10k ➜ 2€" style="display: none;"><div class="two-column-layout"><div class="col-left">A partir de 1,000€, si el pico es menos/más de 500€ redondear pabajo/parriba, x3 y</div><div class="col-right">quitarle o sumarle: • 1-2k ➜ 0.50 |• 2-3k ➜ 1€ |• &gt;4-10k ➜ 1,50€ |• &gt;10k ➜ 2€</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🙋 - 👋" data-orig-col1="buenos días / good afternoon" data-orig-col2="&lt;b&gt;jó&lt;/b&gt; &lt;u&gt;na&lt;/u&gt;pot!" style="display: none;"><div class="two-column-layout"><div class="col-left">buenos días / good afternoon</div><div class="col-right"><b>jó</b> <u>na</u>pot!</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🙋 - 👋" data-orig-col1="good morning" data-orig-col2="jó reggelt!" style="display: none;"><div class="two-column-layout"><div class="col-left">good morning</div><div class="col-right">jó reggelt!</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🙋 - 👋" data-orig-col1="good evening" data-orig-col2="jó estét!" style="display: none;"><div class="two-column-layout"><div class="col-left">good evening</div><div class="col-right">jó estét!</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🙋 - 👋" data-orig-col1="bye x2" data-orig-col2="&quot;• &lt;b style=&quot;&quot;color: black;&quot;&quot;&gt;viszlát!&lt;/b&gt;" style="display: none;"><div class="two-column-layout"><div class="col-left">bye x2</div><div class="col-right">"• <b style="" color:="" black;""="">viszlát!</b></div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="All_Items" data-orig-col1="• &lt;b style=&quot;&quot;color: magenta;&quot;&quot;&gt;viszont&lt;u&gt;lá&lt;/u&gt;tásra!&lt;/b&gt; /visont-latashrə/&quot;" data-orig-col2="" style="display: none;"><div class="single-column-text">• <b style="" color:="" magenta;""="">viszont<u>lá</u>tásra!</b> /visont-latashrə/"</div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🙋 - 👋" data-orig-col1="hi+bye x1" data-orig-col2="szia! /sí-ah/" style="display: none;"><div class="two-column-layout"><div class="col-left">hi+bye x1</div><div class="col-right">szia! /sí-ah/</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🙋 - 👋" data-orig-col1="qué tal? - bien - y tú?" data-orig-col2="&lt;b style=&quot;color: magenta;&quot;&gt;hodgy vadgy?&lt;/b&gt; /hoɟ voɟ/ + &lt;b style=&quot;color: magenta;&quot;&gt;jól vagyok!&lt;/b&gt; + &lt;b style=&quot;color: magenta;&quot;&gt;és te?&lt;/b&gt;" style="display: none;"><div class="two-column-layout"><div class="col-left">qué tal? - bien - y tú?</div><div class="col-right"><b style="color: magenta;">hodgy vadgy?</b> /hoɟ voɟ/ + <b style="color: magenta;">jól vagyok!</b> + <b style="color: magenta;">és te?</b></div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🙇 - 🙏" data-orig-col1="excuse-me" data-orig-col2="&lt;b style=&quot;color: magenta;&quot;&gt;elnézést&lt;/b&gt; /'eynezesht/" style="display: none;"><div class="two-column-layout"><div class="col-left">excuse-me</div><div class="col-right"><b style="color: magenta;">elnézést</b> /'eynezesht/</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🙇 - 🙏" data-orig-col1="sorry" data-orig-col2="&lt;b style=&quot;color: magenta;&quot;&gt;bocsánat&lt;/b&gt; /'&lt;u&gt;bo&lt;/u&gt; &lt;u&gt;cha:&lt;/u&gt;not/ | • &lt;b&gt;bocs(i)&lt;/b&gt; (clq)" style="display: none;"><div class="two-column-layout"><div class="col-left">sorry</div><div class="col-right"><b style="color: magenta;">bocsánat</b> /'<u>bo</u> <u>cha:</u>not/ | • <b>bocs(i)</b> (clq)</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🙇 - 🙏" data-orig-col1="• (muchas) gracias x2 + you're welcome" data-orig-col2="• &lt;b style=&quot;color: magenta;&quot;&gt;köszönöm&lt;/b&gt; (&lt;b&gt;szép&lt;/b&gt;en /'sepen/) • köszi + &lt;b&gt;szívesem&lt;/b&gt; /SÍ-veshem/" style="display: none;"><div class="two-column-layout"><div class="col-left">• (muchas) gracias x2 + you're welcome</div><div class="col-right">• <b style="color: magenta;">köszönöm</b> (<b>szép</b>en /'sepen/) • köszi + <b>szívesem</b> /SÍ-veshem/</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🙇 - 🙏" data-orig-col1="no hablo húngaro - only that!" data-orig-col2="&lt;b style=&quot;color: magenta;&quot;&gt;nem beszélek magyarul&lt;/b&gt; /beselek/ (...) &lt;b&gt;hát, csak ennyi&lt;/b&gt;" style="display: none;"><div class="two-column-layout"><div class="col-left">no hablo húngaro - only that!</div><div class="col-right"><b style="color: magenta;">nem beszélek magyarul</b> /beselek/ (...) <b>hát, csak ennyi</b></div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🤷 - 👌 - ✋" data-orig-col1="okay x1, (very) good x2" data-orig-col2="&lt;b style=&quot;color: magenta;&quot;&gt;• oké | • (nagyon) jó | • rendben&lt;/b&gt;" style="display: none;"><div class="two-column-layout"><div class="col-left">okay x1, (very) good x2</div><div class="col-right"><b style="color: magenta;">• oké | • (nagyon) jó | • rendben</b></div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🤷 - 👌 - ✋" data-orig-col1="super!" data-orig-col2="• &lt;b style=&quot;color: magenta;&quot;&gt;szuper&lt;/b&gt; | • remek" style="display: none;"><div class="two-column-layout"><div class="col-left">super!</div><div class="col-right">• <b style="color: magenta;">szuper</b> | • remek</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🤷 - 👌 - ✋" data-orig-col1="I'm good!" data-orig-col2="jo vagyok" style="display: none;"><div class="two-column-layout"><div class="col-left">I'm good!</div><div class="col-right">jo vagyok</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🤷 - 👌 - ✋" data-orig-col1="sí" data-orig-col2="i&lt;u&gt;gen&lt;/u&gt;" style="display: none;"><div class="two-column-layout"><div class="col-left">sí</div><div class="col-right">i<u>gen</u></div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🤷 - 👌 - ✋" data-orig-col1="no" data-orig-col2="nem" style="display: none;"><div class="two-column-layout"><div class="col-left">no</div><div class="col-right">nem</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🤷 - 👌 - ✋" data-orig-col1="I don't understand" data-orig-col2="bocsánat &lt;b style=&quot;color: magenta;&quot;&gt;nem ertem&lt;b&gt; csak spanyolul beszélek (vagy angolul)" style="display: none;"><div class="two-column-layout"><div class="col-left">I don't understand</div><div class="col-right">bocsánat <b style="color: magenta;">nem ertem<b> csak spanyolul beszélek (vagy angolul)</b></b></div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🤷 - 👌 - ✋" data-orig-col1="habla inglés?" data-orig-col2="&lt;b style=&quot;color: magenta;&quot;&gt;beszél angolul?&lt;/b&gt; /besel angolul/" style="display: none;"><div class="two-column-layout"><div class="col-left">habla inglés?</div><div class="col-right"><b style="color: magenta;">beszél angolul?</b> /besel angolul/</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🤷 - 👌 - ✋" data-orig-col1="solo hablo español" data-orig-col2="&lt;b&gt;cs&lt;/b&gt;ak spanyolul beszélek" style="display: none;"><div class="two-column-layout"><div class="col-left">solo hablo español</div><div class="col-right"><b>cs</b>ak spanyolul beszélek</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🤷 - 👌 - ✋" data-orig-col1="sólo sé eso" data-orig-col2="&lt;b style=&quot;color: magenta;&quot;&gt;csak ennyit tudok &lt;b&gt;" style="display: none;"><div class="two-column-layout"><div class="col-left">sólo sé eso</div><div class="col-right"><b style="color: magenta;">csak ennyit tudok <b></b></b></div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🤷 - 👌 - ✋" data-orig-col1="momentito…" data-orig-col2="egy pillanat..." style="display: none;"><div class="two-column-layout"><div class="col-left">momentito…</div><div class="col-right">egy pillanat...</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🤷 - 👌 - ✋" data-orig-col1="this is the metro, &lt;b&gt;right?&lt;/b&gt;" data-orig-col2="ez a metró, &lt;b&gt;ugye&lt;/b&gt;?" style="display: none;"><div class="two-column-layout"><div class="col-left">this is the metro, <b>right?</b></div><div class="col-right">ez a metró, <b>ugye</b>?</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🍜" data-orig-col1="excuse-me, donde está el WC?" data-orig-col2="elnézést, hol van a WC?" style="display: none;"><div class="two-column-layout"><div class="col-left">excuse-me, donde está el WC?</div><div class="col-right">elnézést, hol van a WC?</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🍜" data-orig-col1="una birra por favó + grande &amp; pequeña" data-orig-col2="egy &lt;b&gt;póhar&lt;/b&gt; / körso &lt;b&gt;sört&lt;/b&gt;, kérem                     + nagy /nɒɟ/ &amp; &lt;b&gt;kis&lt;/b&gt; OR korsó + póhar" style="display: none;"><div class="two-column-layout"><div class="col-left">una birra por favó + grande &amp; pequeña</div><div class="col-right">egy <b>póhar</b> / körso <b>sört</b>, kérem                     + nagy /nɒɟ/ &amp; <b>kis</b> OR korsó + póhar</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🍜" data-orig-col1="two waters, please: one still and one sparkling" data-orig-col2="két &lt;b&gt;vizet&lt;/b&gt;, kérek: egy szénsav&lt;u&gt;menteset&lt;/u&gt; és egy szénsav&lt;u&gt;asat&lt;/u&gt; / &lt;u&gt;ˈseːnʃɒv&lt;/b&gt;ˈseːnʃɒv&lt;u&gt;mɛntɛʃɛt&lt;/u&gt; eːʃ ɛɟ ˈseːnʃɒv&lt;u&gt;ɒʃɒt&lt;/u&gt;/" style="display: none;"><div class="two-column-layout"><div class="col-left">two waters, please: one still and one sparkling</div><div class="col-right">két <b>vizet</b>, kérek: egy szénsav<u>menteset</u> és egy szénsav<u>asat</u> / <u>ˈseːnʃɒvˈseːnʃɒv<u>mɛntɛʃɛt</u> eːʃ ɛɟ ˈseːnʃɒv<u>ɒʃɒt</u>/</u></div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🍜" data-orig-col1="two coffees with milk, please" data-orig-col2="két &lt;b&gt;tejes&lt;u&gt;kávét&lt;/u&gt;&lt;/b&gt;, kérek. Egy növényi / laktózmentes &lt;b&gt;tej&lt;/b&gt;jel" style="display: none;"><div class="two-column-layout"><div class="col-left">two coffees with milk, please</div><div class="col-right">két <b>tejes<u>kávét</u></b>, kérek. Egy növényi / laktózmentes <b>tej</b>jel</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🍜" data-orig-col1="excuse-me, queremos pagar" data-orig-col2="elnézést, fizetni szeretnék" style="display: none;"><div class="two-column-layout"><div class="col-left">excuse-me, queremos pagar</div><div class="col-right">elnézést, fizetni szeretnék</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🍜" data-orig-col1="can we pay? + the bill please - (with) card" data-orig-col2="&lt;b style=&quot;color: magenta;&quot;&gt;fizetünk?&lt;/b&gt; / fize&lt;b&gt;the&lt;/b&gt;tünk, kérem? / &lt;b&gt;a számlát&lt;/b&gt;, kérem &lt;b&gt;+&lt;/b&gt;  &lt;b&gt;kártyával&lt;/b&gt;" style="display: none;"><div class="two-column-layout"><div class="col-left">can we pay? + the bill please - (with) card</div><div class="col-right"><b style="color: magenta;">fizetünk?</b> / fize<b>the</b>tünk, kérem? / <b>a számlát</b>, kérem <b>+</b>  <b>kártyával</b></div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🍜" data-orig-col1="I try in Hungarian" data-orig-col2="megpróbálom magyarul" style="display: none;"><div class="two-column-layout"><div class="col-left">I try in Hungarian</div><div class="col-right">megpróbálom magyarul</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🍜" data-orig-col1="salud!" data-orig-col2="&lt;b&gt;egészségedre&lt;/b&gt;! /ɛ-ɡeːʃːeːɡɛdrɛ/" style="display: none;"><div class="two-column-layout"><div class="col-left">salud!</div><div class="col-right"><b>egészségedre</b>! /ɛ-ɡeːʃːeːɡɛdrɛ/</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🍜" data-orig-col1="(very) delicious!" data-orig-col2="(&lt;b&gt;nagyon&lt;/b&gt;) /ˈnɒɟon/&lt;/b&gt; &lt;b style=&quot;color: magenta;&quot;&gt;finom&lt;/b&gt;" style="display: none;"><div class="two-column-layout"><div class="col-left">(very) delicious!</div><div class="col-right">(<b>nagyon</b>) /ˈnɒɟon/ <b style="color: magenta;">finom</b></div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🍜" data-orig-col1="tiene buena pinta" data-orig-col2="nagyon jól &lt;b&gt;néz ki&lt;/b&gt;!" style="display: none;"><div class="two-column-layout"><div class="col-left">tiene buena pinta</div><div class="col-right">nagyon jól <b>néz ki</b>!</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🍜" data-orig-col1="coffee" data-orig-col2="kávé" style="display: none;"><div class="two-column-layout"><div class="col-left">coffee</div><div class="col-right">kávé</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🍜" data-orig-col1="milk" data-orig-col2="tej" style="display: none;"><div class="two-column-layout"><div class="col-left">milk</div><div class="col-right">tej</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🍜" data-orig-col1="how much?" data-orig-col2="mennyibe kerül?" style="display: none;"><div class="two-column-layout"><div class="col-left">how much?</div><div class="col-right">mennyibe kerül?</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🛍️" data-orig-col1="(sólo) this, please" data-orig-col2="(csak) &lt;b style=&quot;color: magenta;&quot;&gt;ezt&lt;/b&gt; kerem" style="display: none;"><div class="two-column-layout"><div class="col-left">(sólo) this, please</div><div class="col-right">(csak) <b style="color: magenta;">ezt</b> kerem</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🛍️" data-orig-col1="one of those, please" data-orig-col2="&lt;b style=&quot;color: magenta;&quot;&gt;egyet abból&lt;/b&gt;, kérem" style="display: none;"><div class="two-column-layout"><div class="col-left">one of those, please</div><div class="col-right"><b style="color: magenta;">egyet abból</b>, kérem</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🛍️" data-orig-col1="anything else? x3 no thank you" data-orig-col2="&lt;b&gt;mást&lt;/b&gt; kér? / valami &lt;b&gt;mást&lt;/b&gt;? / még valamit? + nem kös..." style="display: none;"><div class="two-column-layout"><div class="col-left">anything else? x3 no thank you</div><div class="col-right"><b>mást</b> kér? / valami <b>mást</b>? / még valamit? + nem kös...</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🛍️" data-orig-col1="here you go (paying)" data-orig-col2="&lt;b&gt;tessék&lt;/b&gt; /ˈtɛʃːeːk/" style="display: none;"><div class="two-column-layout"><div class="col-left">here you go (paying)</div><div class="col-right"><b>tessék</b> /ˈtɛʃːeːk/</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="👤" data-orig-col1="me llamo J" data-orig-col2="Jose vagyok /&lt;b&gt;vɒ&lt;/b&gt;ɟok/" style="display: none;"><div class="two-column-layout"><div class="col-left">me llamo J</div><div class="col-right">Jose vagyok /<b>vɒ</b>ɟok/</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="👤" data-orig-col1="soy español / ~  de Esp." data-orig-col2="&lt;b style=&quot;color: magenta;&quot;&gt;&lt;u&gt;s&lt;/u&gt;panyol 'vagyok&lt;/b&gt; /ˈʃp&lt;b style=&quot;color: magenta;&quot;&gt;ɒ&lt;/b&gt;ɲol/ /v&lt;b style=&quot;color: magenta;&quot;&gt;ɒ&lt;/b&gt;ɟok/" style="display: none;"><div class="two-column-layout"><div class="col-left">soy español / ~  de Esp.</div><div class="col-right"><b style="color: magenta;"><u>s</u>panyol 'vagyok</b> /ˈʃp<b style="color: magenta;">ɒ</b>ɲol/ /v<b style="color: magenta;">ɒ</b>ɟok/</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🧺" data-orig-col1="Hungría" data-orig-col2="Magyaror&lt;b&gt;sz&lt;/b&gt;ág &lt;b&gt;/s/&lt;/b&gt;" style="display: none;"><div class="two-column-layout"><div class="col-left">Hungría</div><div class="col-right">Magyaror<b>sz</b>ág <b>/s/</b></div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🧺" data-orig-col1="España" data-orig-col2="&lt;b style=&quot;color: magenta;&quot;&gt;&lt;u&gt;s&lt;/u&gt;panyol-ország-ból&lt;/b&gt; jöttem" style="display: none;"><div class="two-column-layout"><div class="col-left">España</div><div class="col-right"><b style="color: magenta;"><u>s</u>panyol-ország-ból</b> jöttem</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🧺" data-orig-col1="nice or beautiful" data-orig-col2="szép" style="display: none;"><div class="two-column-layout"><div class="col-left">nice or beautiful</div><div class="col-right">szép</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🧺" data-orig-col1="sólo" data-orig-col2="&lt;b&gt;csak&lt;/b&gt; /t͡ʃɒk/" style="display: none;"><div class="two-column-layout"><div class="col-left">sólo</div><div class="col-right"><b>csak</b> /t͡ʃɒk/</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🧺" data-orig-col1="and" data-orig-col2="és" style="display: none;"><div class="two-column-layout"><div class="col-left">and</div><div class="col-right">és</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🧺" data-orig-col1="but" data-orig-col2="de" style="display: none;"><div class="two-column-layout"><div class="col-left">but</div><div class="col-right">de</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🧺" data-orig-col1="or" data-orig-col2="vagy" style="display: none;"><div class="two-column-layout"><div class="col-left">or</div><div class="col-right">vagy</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🧺" data-orig-col1="el húngaro es difícil!" data-orig-col2="a magyar nehéz!" style="display: none;"><div class="two-column-layout"><div class="col-left">el húngaro es difícil!</div><div class="col-right">a magyar nehéz!</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="🧺" data-orig-col1="un paquete de malboro gold y un mechero pequeño" data-orig-col2="egy Marlboro Goldot kérek és kis &lt;b&gt;öngyújtó&lt;/b&gt;" style="display: none;"><div class="two-column-layout"><div class="col-left">un paquete de malboro gold y un mechero pequeño</div><div class="col-right">egy Marlboro Goldot kérek és kis <b>öngyújtó</b></div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="1" data-orig-col2="egy" style="display: none;"><div class="two-column-layout"><div class="col-left">1</div><div class="col-right">egy</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="2" data-orig-col2="kettő (&lt;b&gt;ket&lt;/b&gt; when expressing quantity)" style="display: none;"><div class="two-column-layout"><div class="col-left">2</div><div class="col-right">kettő (<b>ket</b> when expressing quantity)</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="3" data-orig-col2="három" style="display: none;"><div class="two-column-layout"><div class="col-left">3</div><div class="col-right">három</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="4" data-orig-col2="né&lt;b&gt;gy&lt;/b&gt;" style="display: none;"><div class="two-column-layout"><div class="col-left">4</div><div class="col-right">né<b>gy</b></div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="5" data-orig-col2="öt" style="display: none;"><div class="two-column-layout"><div class="col-left">5</div><div class="col-right">öt</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="6" data-orig-col2="hat" style="display: none;"><div class="two-column-layout"><div class="col-left">6</div><div class="col-right">hat</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="7" data-orig-col2="hét" style="display: none;"><div class="two-column-layout"><div class="col-left">7</div><div class="col-right">hét</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="8" data-orig-col2="nyolc" style="display: none;"><div class="two-column-layout"><div class="col-left">8</div><div class="col-right">nyolc</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="9" data-orig-col2="kilenc" style="display: none;"><div class="two-column-layout"><div class="col-left">9</div><div class="col-right">kilenc</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="10" data-orig-col2="tíz" style="display: none;"><div class="two-column-layout"><div class="col-left">10</div><div class="col-right">tíz</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="100" data-orig-col2="&lt;b&gt;száz&lt;/b&gt; /saaz/" style="display: none;"><div class="two-column-layout"><div class="col-left">100</div><div class="col-right"><b>száz</b> /saaz/</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="200" data-orig-col2="kétszáz /KET-saaz/" style="display: none;"><div class="two-column-layout"><div class="col-left">200</div><div class="col-right">kétszáz /KET-saaz/</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="300" data-orig-col2="háromszáz" style="display: none;"><div class="two-column-layout"><div class="col-left">300</div><div class="col-right">háromszáz</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="400" data-orig-col2="négyszáz" style="display: none;"><div class="two-column-layout"><div class="col-left">400</div><div class="col-right">négyszáz</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="500" data-orig-col2="ötszáz" style="display: none;"><div class="two-column-layout"><div class="col-left">500</div><div class="col-right">ötszáz</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="600" data-orig-col2="hatszáz" style="display: none;"><div class="two-column-layout"><div class="col-left">600</div><div class="col-right">hatszáz</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="700" data-orig-col2="hétszáz" style="display: none;"><div class="two-column-layout"><div class="col-left">700</div><div class="col-right">hétszáz</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="800" data-orig-col2="nyolcszáz" style="display: none;"><div class="two-column-layout"><div class="col-left">800</div><div class="col-right">nyolcszáz</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="900" data-orig-col2="kilencszáz" style="display: none;"><div class="two-column-layout"><div class="col-left">900</div><div class="col-right">kilencszáz</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="1000" data-orig-col2="&lt;b&gt;ezer&lt;/b&gt;" style="display: none;"><div class="two-column-layout"><div class="col-left">1000</div><div class="col-right"><b>ezer</b></div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="2000" data-orig-col2="kétezer" style="display: none;"><div class="two-column-layout"><div class="col-left">2000</div><div class="col-right">kétezer</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="3000" data-orig-col2="háromezer" style="display: none;"><div class="two-column-layout"><div class="col-left">3000</div><div class="col-right">háromezer</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="4000" data-orig-col2="négyezer" style="display: none;"><div class="two-column-layout"><div class="col-left">4000</div><div class="col-right">négyezer</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="5000" data-orig-col2="ötezer" style="display: none;"><div class="two-column-layout"><div class="col-left">5000</div><div class="col-right">ötezer</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="6000" data-orig-col2="hatezer" style="display: none;"><div class="two-column-layout"><div class="col-left">6000</div><div class="col-right">hatezer</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="7000" data-orig-col2="hétezer" style="display: none;"><div class="two-column-layout"><div class="col-left">7000</div><div class="col-right">hétezer</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="8000" data-orig-col2="nyolcezer" style="display: none;"><div class="two-column-layout"><div class="col-left">8000</div><div class="col-right">nyolcezer</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="9000" data-orig-col2="kilencezer" style="display: none;"><div class="two-column-layout"><div class="col-left">9000</div><div class="col-right">kilencezer</div></div><button class="pin-toggle">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="10000" data-orig-col2="tízezer" style="display: none;"><div class="two-column-layout"><div class="col-left">10000</div><div class="col-right">tízezer</div></div><button class="pin-toggle">📌</button></div></div>
         </div>
 
         <div class="menu-container bottom-frozen" id="menuWrapperBottom">
@@ -405,7 +432,7 @@
         let currentActiveCategory = '';
         let isSingleColumnMode = false;
         let globalCategories = new Set(["💹","🙋 - 👋","🙇 - 🙏","🤷 - 👌 - ✋","🍜","🛍️","👤","🧺","💯Números"]);
-        let isEditingEnabled = false; // Declarada global para compatibilidad de búsqueda del clon
+        let isEditingEnabled = false;
 
         document.addEventListener('click', () => closeAllDropdowns());
 
@@ -431,7 +458,6 @@
             
             cards.forEach(card => {
                 let textContent = "";
-                // Maneja la búsqueda tanto si está el modo edición activo en el clon como si está normal
                 if(typeof isEditingEnabled !== 'undefined' && isEditingEnabled) {
                     const inputs = card.querySelectorAll('.edit-input');
                     inputs.forEach(i => textContent += " " + i.value.toLowerCase());
@@ -568,15 +594,12 @@
             document.getElementById('floatingControls').style.display = 'flex'; 
         }
 
-        // --- INYECCIÓN DINÁMICA DE LA MAGIA AUTOSUFICIENTE DE EDICIÓN ---
         function downloadCurrentHTML() {
             const docClone = document.documentElement.cloneNode(true);
             
-            // 1. Limpieza de elementos del constructor original en el clon
             if(docClone.querySelector('#setupContainer')) docClone.querySelector('#setupContainer').remove();
             if(docClone.querySelector('#backToInputBtn')) docClone.querySelector('#backToInputBtn').remove();
             
-            // 2. Modificar el panel de controles flotantes del Clon para incrustar el botón de edición
             const targetControls = docClone.querySelector('#floatingControls');
             if (targetControls) {
                 targetControls.innerHTML = `
@@ -586,7 +609,6 @@
                 `;
             }
 
-            // 3. Garantizar estados limpios e iniciales en el clon exportado
             const appBlock = docClone.querySelector('#appContainer');
             if (appBlock) appBlock.style.display = 'block';
             if (docClone.querySelector('#menuSummary')) docClone.querySelector('#menuSummary').style.display = 'none';
@@ -604,22 +626,36 @@
                 c.classList.remove('is-pinned');
             });
 
-            // 4. Adjuntar e inyectar las funciones JavaScript exclusivas de edición dentro del clon autónomo
             const cleanScript = docClone.querySelector('script');
             if(cleanScript) {
                 let categoriesArrayStr = JSON.stringify(Array.from(globalCategories));
                 let scriptContent = cleanScript.innerHTML;
                 
-                // Fijar los valores cacheados actuales
                 scriptContent = scriptContent.replace(/let isSingleColumnMode = (true|false);/, `let isSingleColumnMode = ${isSingleColumnMode};`);
                 scriptContent = scriptContent.replace(/let globalCategories = new Set\(\);/, `let globalCategories = new Set(${categoriesArrayStr});`);
                 
-                // Inyectar las dos funciones especiales al final del script del clon
+                // INYECCIÓN DE LA NUEVA LÓGICA DE EDICIÓN Y ADICIÓN DINÁMICA
                 scriptContent += `
                 
                 function enableLiveEditing() {
                     isEditingEnabled = true;
-                    alert("Editing mode activated! All items are now visible and editable. Make your corrections directly inside the boxes.");
+                    
+                    // Rellenar dinámicamente el selector de categorías del formulario superior
+                    const selectElement = document.getElementById('newCardCategory');
+                    if(selectElement) {
+                        selectElement.innerHTML = '';
+                        if(isSingleColumnMode) {
+                            selectElement.innerHTML = '<option value="All_Items">Default Category</option>';
+                        } else {
+                            globalCategories.forEach(cat => {
+                                selectElement.innerHTML += \`<option value="\${cat}">\${cat}</option>\`;
+                            });
+                        }
+                    }
+                    
+                    // Mostrar el panel superior para añadir nuevos registros
+                    document.getElementById('itemAdderPanel').style.display = 'flex';
+                    
                     const cards = document.querySelectorAll('.phrase-card');
                     cards.forEach(card => {
                         card.style.display = 'block';
@@ -642,17 +678,67 @@
                     document.getElementById('saveEditBtn').style.display = 'block';
                 }
 
+                function addNewItemOnTheFly() {
+                    const content = document.getElementById('newCardContent').value.trim();
+                    const category = document.getElementById('newCardCategory').value;
+                    if(!content) return alert("Please type some text into the box first!");
+                    
+                    // Detección automática por tabulador o coma
+                    let parts = content.split('\\t').map(p => p.trim());
+                    if(parts.length < 2) {
+                        parts = content.split(',').map(p => p.trim());
+                    }
+                    
+                    let col1Text = parts[0];
+                    let col2Text = parts[1] || "";
+                    
+                    const phrasesList = document.getElementById('phrasesList');
+                    const card = document.createElement('div');
+                    card.className = 'phrase-card is-newly-added';
+                    card.style.display = 'block';
+                    card.setAttribute('data-category', category);
+                    card.setAttribute('data-orig-col1', col1Text);
+                    card.setAttribute('data-orig-col2', col2Text);
+                    card.setAttribute('data-is-brand-new', 'true'); // Bandera para rastrear solo las adiciones
+                    
+                    if(col1Text !== "" && col2Text !== "") {
+                        card.innerHTML = \`
+                            <div class="two-column-layout">
+                                <div class="col-left"><input type="text" class="edit-input inp-col1" value="\${col1Text.replace(/"/g, '&quot;')}"></div>
+                                <div class="col-right"><input type="text" class="edit-input inp-col2" value="\${col2Text.replace(/"/g, '&quot;')}"></div>
+                            </div>
+                        \`;
+                    } else {
+                        card.innerHTML = \`
+                            <div class="single-column-text">
+                                <input type="text" class="edit-input inp-single" value="\${col1Text.replace(/"/g, '&quot;')}">
+                            </div>
+                        \`;
+                    }
+                    
+                    const pinBtn = document.createElement('button');
+                    pinBtn.className = 'pin-toggle';
+                    pinBtn.innerHTML = '📌';
+                    pinBtn.onclick = function(e) { e.stopPropagation(); togglePinItem(card); };
+                    card.appendChild(pinBtn);
+                    
+                    // Insertar al inicio de la lista para visibilidad inmediata
+                    phrasesList.insertBefore(card, phrasesList.firstChild);
+                    document.getElementById('newCardContent').value = '';
+                    document.getElementById('newCardContent').focus();
+                }
+
                 function saveAndExportCorrectedFiles() {
                     const cards = document.querySelectorAll('.phrase-card');
                     let txtContent = "";
-                    let changesDetected = 0;
+                    let hasNewAdditions = false;
 
                     cards.forEach(card => {
                         const cat = card.getAttribute('data-category');
-                        const origCol1 = card.getAttribute('data-orig-col1');
-                        const origCol2 = card.getAttribute('data-orig-col2');
-                        let newCol1 = origCol1;
-                        let newCol2 = origCol2;
+                        const isBrandNew = card.getAttribute('data-is-brand-new') === 'true';
+                        
+                        let newCol1 = card.getAttribute('data-orig-col1');
+                        let newCol2 = card.getAttribute('data-orig-col2');
 
                         const inpCol1 = card.querySelector('.inp-col1');
                         const inpCol2 = card.querySelector('.inp-col2');
@@ -662,11 +748,13 @@
                             newCol1 = inpCol1.value.trim();
                             newCol2 = inpCol2.value.trim();
                         } else if(inpSingle) {
-                            if(origCol1 !== "") { newCol1 = inpSingle.value.trim(); } else { newCol2 = inpSingle.value.trim(); }
+                            if(card.getAttribute('data-orig-col1') !== "") { newCol1 = inpSingle.value.trim(); } 
+                            else { newCol2 = inpSingle.value.trim(); }
                         }
 
-                        if(newCol1 !== origCol1 || newCol2 !== origCol2) {
-                            changesDetected++;
+                        // Guardar en el TXT solo si es un ítem nuevo
+                        if(isBrandNew) {
+                            hasNewAdditions = true;
                             if(!isSingleColumnMode) { txtContent += \`\${cat}\\t\${newCol1}\\t\${newCol2}\\n\`; } 
                             else { txtContent += newCol2 !== "" ? \`\${newCol1}\\t\${newCol2}\\n\` : \`\${newCol1}\\n\`; }
                         }
@@ -682,24 +770,23 @@
                         else if(singleCol) { singleCol.innerHTML = newCol1 !== "" ? newCol1 : newCol2; }
                     });
 
-                    if(changesDetected === 0) {
-                        if(!confirm("No changes were made to any row. Do you want to download the files anyway?")) return;
+                    if(!hasNewAdditions) {
+                        if(!confirm("No new items were added to the list. Do you want to download the files anyway?")) return;
                     }
 
+                    // Descargar archivo TXT exclusivo con las adiciones
                     if(txtContent !== "") {
                         const blobTxt = new Blob([txtContent], { type: "text/plain;charset=utf-8" });
                         const linkTxt = document.createElement("a");
                         linkTxt.href = URL.createObjectURL(blobTxt);
-                        linkTxt.download = "modified_rows_only.txt";
+                        linkTxt.download = "newly_added_rows.txt";
                         document.body.appendChild(linkTxt);
                         linkTxt.click();
                         document.body.removeChild(linkTxt);
                     }
 
-                    // AUTO-CLONACIÓN CORREGIDA: El archivo genera una nueva copia de sí mismo con los cambios en limpio
                     const docNestedClone = document.documentElement.cloneNode(true);
                     
-                    // Restablecer los botones flotantes al estado de lectura para la nueva versión del archivo
                     const nestedControls = docNestedClone.querySelector('#floatingControls');
                     if(nestedControls) {
                         nestedControls.querySelector('#editModeBtn').style.display = 'block';
@@ -707,10 +794,17 @@
                         nestedControls.querySelector('#saveEditBtn').style.display = 'none';
                     }
 
+                    // Quitar el panel de adición en la visualización normal del nuevo clon resultante
+                    if(docNestedClone.querySelector('#itemAdderPanel')) {
+                        docNestedClone.querySelector('#itemAdderPanel').style.display = 'none';
+                    }
+
                     const cleanNestedCards = docNestedClone.querySelectorAll('.phrase-card');
                     cleanNestedCards.forEach(c => {
                         c.style.display = isSingleColumnMode ? 'block' : 'none';
                         c.classList.remove('is-pinned');
+                        c.classList.remove('is-newly-added');
+                        c.removeAttribute('data-is-brand-new'); // Reseteado para futuras ediciones
                     });
                     
                     const nestedBtnsWrapper = docNestedClone.querySelector('#actualButtons');
@@ -725,21 +819,28 @@
                     const blobHtml = new Blob([totalNestedSource], { type: "text/html;charset=utf-8" });
                     const linkHtml = document.createElement("a");
                     linkHtml.href = URL.createObjectURL(blobHtml);
-                    linkHtml.download = "phrases_clean_app_corrected.html";
+                    linkHtml.download = "phrases_clean_app_added.html"; // Guardado con sufijo '_added'
                     document.body.appendChild(linkHtml);
                     linkHtml.click();
                     document.body.removeChild(linkHtml);
 
                     isEditingEnabled = false;
+                    document.getElementById('itemAdderPanel').style.display = 'none';
                     document.getElementById('editModeBtn').style.display = 'block';
                     document.getElementById('imgBtn').style.display = 'block';
                     document.getElementById('saveEditBtn').style.display = 'none';
+                    
+                    // Limpieza de colores en la app activa tras la operación
+                    document.querySelectorAll('.phrase-card').forEach(c => {
+                        c.classList.remove('is-newly-added');
+                        c.removeAttribute('data-is-brand-new');
+                    });
+                    
                     resetView();
                 }
                 
                 window.addEventListener('DOMContentLoaded', () => { 
                     if(!isSingleColumnMode) { renderDropdownMenus(); } 
-                    setupStaticCards();
                 });`;
                 
                 cleanScript.innerHTML = scriptContent;
@@ -924,7 +1025,23 @@
                 
                 function enableLiveEditing() {
                     isEditingEnabled = true;
-                    alert("Editing mode activated! All items are now visible and editable. Make your corrections directly inside the boxes.");
+                    
+                    // Rellenar dinámicamente el selector de categorías del formulario superior
+                    const selectElement = document.getElementById('newCardCategory');
+                    if(selectElement) {
+                        selectElement.innerHTML = '';
+                        if(isSingleColumnMode) {
+                            selectElement.innerHTML = '<option value="All_Items">Default Category</option>';
+                        } else {
+                            globalCategories.forEach(cat => {
+                                selectElement.innerHTML += `<option value="${cat}">${cat}</option>`;
+                            });
+                        }
+                    }
+                    
+                    // Mostrar el panel superior para añadir nuevos registros
+                    document.getElementById('itemAdderPanel').style.display = 'flex';
+                    
                     const cards = document.querySelectorAll('.phrase-card');
                     cards.forEach(card => {
                         card.style.display = 'block';
@@ -947,17 +1064,67 @@
                     document.getElementById('saveEditBtn').style.display = 'block';
                 }
 
+                function addNewItemOnTheFly() {
+                    const content = document.getElementById('newCardContent').value.trim();
+                    const category = document.getElementById('newCardCategory').value;
+                    if(!content) return alert("Please type some text into the box first!");
+                    
+                    // Detección automática por tabulador o coma
+                    let parts = content.split('\t').map(p => p.trim());
+                    if(parts.length < 2) {
+                        parts = content.split(',').map(p => p.trim());
+                    }
+                    
+                    let col1Text = parts[0];
+                    let col2Text = parts[1] || "";
+                    
+                    const phrasesList = document.getElementById('phrasesList');
+                    const card = document.createElement('div');
+                    card.className = 'phrase-card is-newly-added';
+                    card.style.display = 'block';
+                    card.setAttribute('data-category', category);
+                    card.setAttribute('data-orig-col1', col1Text);
+                    card.setAttribute('data-orig-col2', col2Text);
+                    card.setAttribute('data-is-brand-new', 'true'); // Bandera para rastrear solo las adiciones
+                    
+                    if(col1Text !== "" && col2Text !== "") {
+                        card.innerHTML = `
+                            <div class="two-column-layout">
+                                <div class="col-left"><input type="text" class="edit-input inp-col1" value="${col1Text.replace(/"/g, '&quot;')}"></div>
+                                <div class="col-right"><input type="text" class="edit-input inp-col2" value="${col2Text.replace(/"/g, '&quot;')}"></div>
+                            </div>
+                        `;
+                    } else {
+                        card.innerHTML = `
+                            <div class="single-column-text">
+                                <input type="text" class="edit-input inp-single" value="${col1Text.replace(/"/g, '&quot;')}">
+                            </div>
+                        `;
+                    }
+                    
+                    const pinBtn = document.createElement('button');
+                    pinBtn.className = 'pin-toggle';
+                    pinBtn.innerHTML = '📌';
+                    pinBtn.onclick = function(e) { e.stopPropagation(); togglePinItem(card); };
+                    card.appendChild(pinBtn);
+                    
+                    // Insertar al inicio de la lista para visibilidad inmediata
+                    phrasesList.insertBefore(card, phrasesList.firstChild);
+                    document.getElementById('newCardContent').value = '';
+                    document.getElementById('newCardContent').focus();
+                }
+
                 function saveAndExportCorrectedFiles() {
                     const cards = document.querySelectorAll('.phrase-card');
                     let txtContent = "";
-                    let changesDetected = 0;
+                    let hasNewAdditions = false;
 
                     cards.forEach(card => {
                         const cat = card.getAttribute('data-category');
-                        const origCol1 = card.getAttribute('data-orig-col1');
-                        const origCol2 = card.getAttribute('data-orig-col2');
-                        let newCol1 = origCol1;
-                        let newCol2 = origCol2;
+                        const isBrandNew = card.getAttribute('data-is-brand-new') === 'true';
+                        
+                        let newCol1 = card.getAttribute('data-orig-col1');
+                        let newCol2 = card.getAttribute('data-orig-col2');
 
                         const inpCol1 = card.querySelector('.inp-col1');
                         const inpCol2 = card.querySelector('.inp-col2');
@@ -967,11 +1134,13 @@
                             newCol1 = inpCol1.value.trim();
                             newCol2 = inpCol2.value.trim();
                         } else if(inpSingle) {
-                            if(origCol1 !== "") { newCol1 = inpSingle.value.trim(); } else { newCol2 = inpSingle.value.trim(); }
+                            if(card.getAttribute('data-orig-col1') !== "") { newCol1 = inpSingle.value.trim(); } 
+                            else { newCol2 = inpSingle.value.trim(); }
                         }
 
-                        if(newCol1 !== origCol1 || newCol2 !== origCol2) {
-                            changesDetected++;
+                        // Guardar en el TXT solo si es un ítem nuevo
+                        if(isBrandNew) {
+                            hasNewAdditions = true;
                             if(!isSingleColumnMode) { txtContent += `${cat}\t${newCol1}\t${newCol2}\n`; } 
                             else { txtContent += newCol2 !== "" ? `${newCol1}\t${newCol2}\n` : `${newCol1}\n`; }
                         }
@@ -987,24 +1156,23 @@
                         else if(singleCol) { singleCol.innerHTML = newCol1 !== "" ? newCol1 : newCol2; }
                     });
 
-                    if(changesDetected === 0) {
-                        if(!confirm("No changes were made to any row. Do you want to download the files anyway?")) return;
+                    if(!hasNewAdditions) {
+                        if(!confirm("No new items were added to the list. Do you want to download the files anyway?")) return;
                     }
 
+                    // Descargar archivo TXT exclusivo con las adiciones
                     if(txtContent !== "") {
                         const blobTxt = new Blob([txtContent], { type: "text/plain;charset=utf-8" });
                         const linkTxt = document.createElement("a");
                         linkTxt.href = URL.createObjectURL(blobTxt);
-                        linkTxt.download = "modified_rows_only.txt";
+                        linkTxt.download = "newly_added_rows.txt";
                         document.body.appendChild(linkTxt);
                         linkTxt.click();
                         document.body.removeChild(linkTxt);
                     }
 
-                    // AUTO-CLONACIÓN CORREGIDA: El archivo genera una nueva copia de sí mismo con los cambios en limpio
                     const docNestedClone = document.documentElement.cloneNode(true);
                     
-                    // Restablecer los botones flotantes al estado de lectura para la nueva versión del archivo
                     const nestedControls = docNestedClone.querySelector('#floatingControls');
                     if(nestedControls) {
                         nestedControls.querySelector('#editModeBtn').style.display = 'block';
@@ -1012,10 +1180,17 @@
                         nestedControls.querySelector('#saveEditBtn').style.display = 'none';
                     }
 
+                    // Quitar el panel de adición en la visualización normal del nuevo clon resultante
+                    if(docNestedClone.querySelector('#itemAdderPanel')) {
+                        docNestedClone.querySelector('#itemAdderPanel').style.display = 'none';
+                    }
+
                     const cleanNestedCards = docNestedClone.querySelectorAll('.phrase-card');
                     cleanNestedCards.forEach(c => {
                         c.style.display = isSingleColumnMode ? 'block' : 'none';
                         c.classList.remove('is-pinned');
+                        c.classList.remove('is-newly-added');
+                        c.removeAttribute('data-is-brand-new'); // Reseteado para futuras ediciones
                     });
                     
                     const nestedBtnsWrapper = docNestedClone.querySelector('#actualButtons');
@@ -1030,21 +1205,28 @@
                     const blobHtml = new Blob([totalNestedSource], { type: "text/html;charset=utf-8" });
                     const linkHtml = document.createElement("a");
                     linkHtml.href = URL.createObjectURL(blobHtml);
-                    linkHtml.download = "phrases_clean_app_corrected.html";
+                    linkHtml.download = "phrases_clean_app_added.html"; // Guardado con sufijo '_added'
                     document.body.appendChild(linkHtml);
                     linkHtml.click();
                     document.body.removeChild(linkHtml);
 
                     isEditingEnabled = false;
+                    document.getElementById('itemAdderPanel').style.display = 'none';
                     document.getElementById('editModeBtn').style.display = 'block';
                     document.getElementById('imgBtn').style.display = 'block';
                     document.getElementById('saveEditBtn').style.display = 'none';
+                    
+                    // Limpieza de colores en la app activa tras la operación
+                    document.querySelectorAll('.phrase-card').forEach(c => {
+                        c.classList.remove('is-newly-added');
+                        c.removeAttribute('data-is-brand-new');
+                    });
+                    
                     resetView();
                 }
                 
                 window.addEventListener('DOMContentLoaded', () => { 
                     if(!isSingleColumnMode) { renderDropdownMenus(); } 
-                    setupStaticCards();
                 });</script>
 
 </body></html>
