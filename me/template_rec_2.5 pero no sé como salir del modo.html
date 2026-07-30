@@ -216,11 +216,12 @@
             gap: 10px;
             margin-bottom: 2px;
             box-sizing: border-box;
+            align-items: center;
         }
 
         .search-box {
-            flex: 0 0 calc(25% - 5px);
-            width: 25%;
+            flex: 0 0 calc(30% - 6.6px);
+            width: 30%;
             padding: 14px 10px;
             font-size: 1.1rem;
             border: 2px solid #ccc;
@@ -246,12 +247,58 @@
         }
 
         .category-btn.pinned-cat-btn {
-            flex: 0 0 calc(75% - 5px) !important;
-            width: 75%;
+            flex: 0 0 calc(50% - 6.6px) !important;
+            width: 50%;
             border-color: var(--pinned-color);
             color: var(--pinned-color);
             background-color: rgba(255, 152, 0, 0.05);
         }
+
+        /* Settings Cog styling inside generated app layout */
+        .settings-cog-wrapper {
+            flex: 0 0 calc(20% - 6.6px);
+            position: relative;
+            display: flex;
+            box-sizing: border-box;
+        }
+
+        .settings-cog-btn {
+            width: 100%;
+            padding: 14px 0;
+            font-size: 1.2rem;
+            background: #ffffff;
+            border: 2px solid #ccc;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+        }
+
+        .cog-dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1002;
+            margin-top: 4px;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .cog-dropdown-item {
+            padding: 12px;
+            font-size: 1.3rem;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+        }
+        .cog-dropdown-item:last-child { border-bottom: none; }
+        .cog-dropdown-item:hover { background-color: #f1f3f5; }
 
         .button-container.is-searching .category-btn:not(.pinned-cat-btn) {
             display: none !important;
@@ -363,11 +410,9 @@
         }
 
         .download-btn { background-color: #28a745; }
-        .image-btn { background-color: #9b59b6; }
         .back-input-btn { background-color: #6c757d; }
         
-        .edit-mode-btn { background-color: #e67e22; }
-        .save-edit-btn { background-color: #27ae60; display: none; }
+        .save-edit-btn { background-color: #27ae60; display: none; position: fixed; bottom: 80px; right: 20px; color: white; border: none; padding: 14px 22px; font-size: 1rem; font-weight: bold; border-radius: 50px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.25); z-index: 1000; }
 
         .hide-pins-snapshot .pin-toggle { display: none !important; }
         .hide-pins-snapshot .phrase-card { animation: none !important; opacity: 1 !important; padding-right: 16px !important; color: #000000 !important; }
@@ -427,9 +472,10 @@
 
     <div class="floating-controls" id="floatingControls">
         <button class="back-input-btn" id="backToInputBtn" onclick="backToInputSetup()">↩ Back to Input</button>
-        <button class="image-btn" id="imgBtn" onclick="downloadCurrentAsImage()">📸 to Image</button>
         <button class="download-btn" id="htmlBtn" onclick="downloadCurrentHTML()">💾 Generate</button>
     </div>
+
+    <button class="save-edit-btn" id="saveEditBtn" onclick="saveAndExportCorrectedFiles()">💾 Save & Export Changes</button>
 
     <script>
         let currentMode = 'category'; 
@@ -438,7 +484,19 @@
         let globalCategories = new Set();
         let isEditingEnabled = false;
 
-        document.addEventListener('click', () => closeAllDropdowns());
+        document.addEventListener('click', () => {
+            closeAllDropdowns();
+            const cogDropdown = document.getElementById('cogDropdown');
+            if (cogDropdown) cogDropdown.style.display = 'none';
+        });
+
+        function toggleCogDropdown(event) {
+            event.stopPropagation();
+            const menu = document.getElementById('cogDropdown');
+            const isOpen = menu.style.display === 'block';
+            closeAllDropdowns();
+            menu.style.display = isOpen ? 'none' : 'block';
+        }
 
         function liveSearch(query) {
             const cleanQuery = query.toLowerCase().trim();
@@ -477,7 +535,6 @@
             });
         }
 
-        // Helper helper function to parse Excel text block properly handling wrapped multi-line cells
         function parseExcelSpreadsheetRows(text) {
             const lines = [];
             let row = [''];
@@ -559,7 +616,6 @@
                     col2Text = col2Text.trim();
                 }
 
-                // FIXED: Convert Alt+Enter plain newlines into HTML breaks safely
                 const htmlCol1 = col1Text.replace(/\n/g, "<br>");
                 const htmlCol2 = col2Text.replace(/\n/g, "<br>");
 
@@ -569,7 +625,6 @@
                 card.setAttribute('data-orig-col1', col1Text);
                 card.setAttribute('data-orig-col2', col2Text);
                 
-                // FIXED: Using .innerHTML instead of .innerText to preserve injected HTML tags
                 if (col1Text !== "" && col2Text !== "") {
                     const layoutDiv = document.createElement('div');
                     layoutDiv.className = 'two-column-layout';
@@ -627,15 +682,42 @@
             const docClone = document.documentElement.cloneNode(true);
             
             if(docClone.querySelector('#setupContainer')) docClone.querySelector('#setupContainer').remove();
-            if(docClone.querySelector('#backToInputBtn')) docClone.querySelector('#backToInputBtn').remove();
+            if(docClone.querySelector('#floatingControls')) docClone.querySelector('#floatingControls').remove();
             
-            const targetControls = docClone.querySelector('#floatingControls');
-            if (targetControls) {
-                targetControls.innerHTML = `
-                    <button class="edit-mode-btn" id="editModeBtn" onclick="enableLiveEditing()">✏️ Edit Data</button>
-                    <button class="save-edit-btn" id="saveEditBtn" onclick="saveAndExportCorrectedFiles()">💾 Save & Export Changes</button>
-                    <button class="image-btn" id="imgBtn" onclick="downloadCurrentAsImage()">📸 to Image</button>
-                `;
+            const actualBtnsWrapper = docClone.querySelector('#actualButtons');
+            if (actualBtnsWrapper) {
+                actualBtnsWrapper.style.display = 'flex';
+                actualBtnsWrapper.classList.remove('is-searching');
+                
+                const searchRow = actualBtnsWrapper.querySelector('.search-pinned-row');
+                if (searchRow) {
+                    searchRow.innerHTML = '';
+                    
+                    const cogWrapper = document.createElement('div');
+                    cogWrapper.className = 'settings-cog-wrapper';
+                    cogWrapper.innerHTML = `
+                        <button class="settings-cog-btn" onclick="toggleCogDropdown(event)">⚙️</button>
+                        <div class="cog-dropdown-menu" id="cogDropdown">
+                            <div class="cog-dropdown-item" title="Edit Data" onclick="enableLiveEditing()">✏️</div>
+                            <div class="cog-dropdown-item" title="To Image" onclick="downloadCurrentAsImage()">📸</div>
+                        </div>
+                    `;
+                    
+                    const pinnedBtn = document.createElement('button');
+                    pinnedBtn.className = 'category-btn pinned-cat-btn';
+                    pinnedBtn.setAttribute('onclick', "filterPinnedOnly()");
+                    pinnedBtn.innerText = '📌 Pinned';
+
+                    const searchInput = document.createElement('input');
+                    searchInput.type = 'text';
+                    searchInput.className = 'search-box';
+                    searchInput.id = 'liveSearchBox';
+                    searchInput.setAttribute('oninput', "liveSearch(this.value)");
+                    
+                    searchRow.appendChild(cogWrapper);
+                    searchRow.appendChild(pinnedBtn);
+                    searchRow.appendChild(searchInput);
+                }
             }
 
             const appBlock = docClone.querySelector('#appContainer');
@@ -643,12 +725,6 @@
             if (docClone.querySelector('#menuSummary')) docClone.querySelector('#menuSummary').style.display = 'none';
             if (docClone.querySelector('#menuSummaryBottom')) docClone.querySelector('#menuSummaryBottom').style.display = 'none';
             
-            const actualBtnsWrapper = docClone.querySelector('#actualButtons');
-            if (actualBtnsWrapper) {
-                actualBtnsWrapper.style.display = 'flex';
-                actualBtnsWrapper.classList.remove('is-searching');
-            }
-
             const cleanCards = docClone.querySelectorAll('.phrase-card');
             cleanCards.forEach(c => {
                 c.style.display = isSingleColumnMode ? 'block' : 'none';
@@ -699,8 +775,6 @@
                             singleCol.innerHTML = \`<input type="text" class="edit-input inp-single" value="\${val1.replace(/"/g, '&quot;')}">\`;
                         }
                     });
-                    document.getElementById('editModeBtn').style.display = 'none';
-                    document.getElementById('imgBtn').style.display = 'none';
                     document.getElementById('saveEditBtn').style.display = 'block';
                 }
 
@@ -815,13 +889,6 @@
 
                     const docNestedClone = document.documentElement.cloneNode(true);
                     
-                    const nestedControls = docNestedClone.querySelector('#floatingControls');
-                    if(nestedControls) {
-                        nestedControls.querySelector('#editModeBtn').style.display = 'block';
-                        nestedControls.querySelector('#imgBtn').style.display = 'block';
-                        nestedControls.querySelector('#saveEditBtn').style.display = 'none';
-                    }
-
                     if(docNestedClone.querySelector('#itemAdderPanel')) {
                         docNestedClone.querySelector('#itemAdderPanel').style.display = 'none';
                     }
@@ -841,6 +908,7 @@
                     }
                     if (docNestedClone.querySelector('#menuSummary')) docNestedClone.querySelector('#menuSummary').style.display = 'none';
                     if (docNestedClone.querySelector('#menuSummaryBottom')) docNestedClone.querySelector('#menuSummaryBottom').style.display = 'none';
+                    if (docNestedClone.querySelector('#saveEditBtn')) docNestedClone.querySelector('#saveEditBtn').style.display = 'none';
 
                     const totalNestedSource = "<!DOCTYPE html>\\n" + docNestedClone.outerHTML;
                     const blobHtml = new Blob([totalNestedSource], { type: "text/html;charset=utf-8" });
@@ -853,8 +921,6 @@
 
                     isEditingEnabled = false;
                     document.getElementById('itemAdderPanel').style.display = 'none';
-                    document.getElementById('editModeBtn').style.display = 'block';
-                    document.getElementById('imgBtn').style.display = 'block';
                     document.getElementById('saveEditBtn').style.display = 'none';
                     
                     document.querySelectorAll('.phrase-card').forEach(c => {
@@ -983,7 +1049,7 @@
 
             const isPinnedMode = (currentMode === 'pinned');
             document.getElementById('headerUnpinBtn').style.display = isPinnedMode ? 'block' : 'none'; 
-            document.getElementById('headerUnpinBtnBottom').style.display = isPinnedMode ? 'block' : 'none'; 
+            document.getElementById('headerUnpinBtnBottom').style.display = isPinnedMode ? 'none' : 'block'; 
             document.getElementById('headerGoPinnedBtn').style.display = isPinnedMode ? 'none' : 'block'; 
             document.getElementById('headerGoPinnedBtnBottom').style.display = isPinnedMode ? 'none' : 'block'; 
             window.scrollTo({ top: 0, behavior: 'smooth' });
