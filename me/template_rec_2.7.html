@@ -401,13 +401,18 @@
         .col-right { color: #555555; }
         .single-column-text { width: 100%; word-break: break-word; font-weight: 500; }
 
+        /* Fix 3: Added resize property rules, reset border, line-height, and padding for dynamic textareas */
         .edit-input {
             width: 100%;
-            padding: 6px 10px;
+            padding: 8px 10px;
             font-size: 1.1rem;
+            line-height: 1.4;
             border: 1px dashed #aaa;
             border-radius: 6px;
             box-sizing: border-box;
+            resize: none;
+            overflow: hidden;
+            font-family: inherit;
         }
         .edit-input:focus { border-color: var(--accent-blue); outline: none; }
 
@@ -425,7 +430,11 @@
             user-select: none;
         }
 
-        .phrase-card.is-pinned .pin-toggle, .pin-toggle:hover { opacity: 1; }
+        /* Fix 1: Removed persistent hover activation rules on non-hover layouts */
+        .phrase-card.is-pinned .pin-toggle { opacity: 1; }
+        @media(hover: hover) {
+            .pin-toggle:hover { opacity: 1; }
+        }
 
         .floating-controls {
             position: fixed;
@@ -452,30 +461,33 @@
         .download-btn { background-color: #28a745; }
         .back-input-btn { background-color: #6c757d; }
         
+        /* Fix 4: Adjusted panel layout attributes for dynamic top insertion position style */
         .edit-actions-panel {
             display: none; 
-            position: fixed; 
-            bottom: 80px; 
-            right: 20px; 
-            flex-direction: column; 
-            gap: 10px; 
-            z-index: 1000;
+            flex-direction: row; 
+            gap: 12px; 
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 14px;
         }
 
         .edit-actions-panel button {
             color: white; 
             border: none; 
-            padding: 14px 22px; 
-            font-size: 1.2rem; 
+            padding: 12px 20px; 
+            font-size: 1rem; 
             font-weight: bold; 
-            border-radius: 50px; 
+            border-radius: 8px; 
             cursor: pointer; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.25); 
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15); 
             white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
-        .save-edit-btn { background-color: #27ae60; }
-        .abandon-edit-btn { background-color: #dc3545; }
+        .save-edit-btn { background-color: #27ae60; flex: 2; justify-content: center; }
+        .abandon-edit-btn { background-color: #dc3545; flex: 1; justify-content: center; }
 
         .hide-pins-snapshot .pin-toggle { display: none !important; }
         .hide-pins-snapshot .phrase-card { animation: none !important; opacity: 1 !important; padding-right: 16px !important; color: #000000 !important; }
@@ -526,6 +538,12 @@
         <div class="main-screen-showcase-graphic" id="mainScreenShowcaseGraphic"></div>
 
         <div class="phrases-export-wrapper" id="captureTarget">
+            <!-- Fix 4: Relocated edit panel buttons right above editing layout boxes dynamically -->
+            <div class="edit-actions-panel" id="editActionsPanel">
+                <button class="save-edit-btn" id="saveEditBtn" onclick="saveAndExportCorrectedFiles()">💾 Save & Export Changes</button>
+                <button class="abandon-edit-btn" id="abandonEditBtn" onclick="abandonLiveEditing()">🚫 Close Edit</button>
+            </div>
+
             <div class="adder-panel" id="itemAdderPanel">
                 <div style="font-weight: bold; font-size: 0.95rem; color: var(--primary-color);">➕ Add New Item to Current View:</div>
                 <div class="adder-row">
@@ -553,11 +571,6 @@
     <div class="floating-controls" id="floatingControls">
         <button class="back-input-btn" id="backToInputBtn" onclick="backToInputSetup()">↩ Back to Input</button>
         <button class="download-btn" id="htmlBtn" onclick="downloadCurrentHTML()">💾 Generate</button>
-    </div>
-
-    <div class="edit-actions-panel" id="editActionsPanel">
-        <button class="abandon-edit-btn" id="abandonEditBtn" title="Abandon Changes" onclick="abandonLiveEditing()">🚫</button>
-        <button class="save-edit-btn" id="saveEditBtn" title="Save & Export Changes" onclick="saveAndExportCorrectedFiles()">💾</button>
     </div>
 
     <script>
@@ -864,8 +877,19 @@
                 
                 scriptContent += `
                 
+                /* Fix 3 Helper: Function to auto-calculate height of textareas based on value changes */
+                function handleTextareaResize(el) {
+                    el.style.height = 'auto';
+                    el.style.height = el.scrollHeight + 'px';
+                }
+
                 function enableLiveEditing() {
                     isEditingEnabled = true;
+                    
+                    /* Fix 2: Automatically hide category button sections when entering edit configuration mode */
+                    document.getElementById('actualButtons').style.display = 'none';
+                    document.getElementById('menuWrapper').style.display = 'none';
+                    document.getElementById('menuWrapperBottom').style.display = 'none';
                     
                     const selectElement = document.getElementById('newCardCategory');
                     if(selectElement) {
@@ -891,15 +915,21 @@
                         const colRight = card.querySelector('.col-right');
                         const singleCol = card.querySelector('.single-column-text');
 
+                        /* Fix 3 & 5: Converted into textareas with an input listener to track dynamic text changes and auto-resize */
+                        const resizeTrackerAttr = 'oninput="this.closest(\\\'.phrase-card\\\').setAttribute(\\\'data-is-edited\\\', \\\'true\\\'); handleTextareaResize(this);"';
+
                         if(colLeft && colRight) {
                             const val1 = card.getAttribute('data-orig-col1');
                             const val2 = card.getAttribute('data-orig-col2');
-                            colLeft.innerHTML = \`<input type="text" class="edit-input inp-col1" value="\${val1.replace(/"/g, '&quot;')}">\`;
-                            colRight.innerHTML = \`<input type="text" class="edit-input inp-col2" value="\${val2.replace(/"/g, '&quot;')}">\`;
+                            colLeft.innerHTML = \`<textarea rows="1" class="edit-input inp-col1" \${resizeTrackerAttr}>\${val1}</textarea>\`;
+                            colRight.innerHTML = \`<textarea rows="1" class="edit-input inp-col2" \${resizeTrackerAttr}>\${val2}</textarea>\`;
                         } else if(singleCol) {
                             const val1 = card.getAttribute('data-orig-col1') || card.getAttribute('data-orig-col2');
-                            singleCol.innerHTML = \`<input type="text" class="edit-input inp-single" value="\${val1.replace(/"/g, '&quot;')}">\`;
+                            singleCol.innerHTML = \`<textarea rows="1" class="edit-input inp-single" \${resizeTrackerAttr}>\${val1}</textarea>\`;
                         }
+                        
+                        /* Trigger initial resize values */
+                        card.querySelectorAll('.edit-input').forEach(textarea => handleTextareaResize(textarea));
                     });
                     document.getElementById('editActionsPanel').style.display = 'flex';
                 }
@@ -911,6 +941,7 @@
                     brandNewCards.forEach(c => c.remove());
 
                     cards.forEach(card => {
+                        card.removeAttribute('data-is-edited');
                         const newCol1 = card.getAttribute('data-orig-col1');
                         const newCol2 = card.getAttribute('data-orig-col2');
 
@@ -928,6 +959,10 @@
                     isEditingEnabled = false;
                     document.getElementById('itemAdderPanel').style.display = 'none';
                     document.getElementById('editActionsPanel').style.display = 'none';
+                    
+                    /* Fix 2: Restore category header UI views */
+                    document.getElementById('menuWrapper').style.display = 'block';
+                    document.getElementById('menuWrapperBottom').style.display = 'block';
                     resetView();
                 }
 
@@ -953,20 +988,20 @@
                     card.setAttribute('data-orig-col2', col2Text);
                     card.setAttribute('data-is-brand-new', 'true'); 
                     
-                    const htmlCol1 = col1Text.replace(/\\n/g, "<br>");
-                    const htmlCol2 = col2Text.replace(/\\n/g, "<br>");
+                    /* Fix 3 & 5: Added auto-resizing textareas and edit tracking attribute directly to runtime additions */
+                    const resizeTrackerAttr = 'oninput="this.closest(\\\'.phrase-card\\\').setAttribute(\\\'data-is-edited\\\', \\\'true\\\'); handleTextareaResize(this);"';
 
                     if(col1Text !== "" && col2Text !== "") {
                         card.innerHTML = \`
                             <div class="two-column-layout">
-                                <div class="col-left"><input type="text" class="edit-input inp-col1" value="\${col1Text.replace(/"/g, '&quot;')}"></div>
-                                <div class="col-right"><input type="text" class="edit-input inp-col2" value="\${col2Text.replace(/"/g, '&quot;')}"></div>
+                                <div class="col-left"><textarea rows="1" class="edit-input inp-col1" \${resizeTrackerAttr}>\${col1Text}</textarea></div>
+                                <div class="col-right"><textarea rows="1" class="edit-input inp-col2" \${resizeTrackerAttr}>\${col2Text}</textarea></div>
                             </div>
                         \`;
                     } else {
                         card.innerHTML = \`
                             <div class="single-column-text">
-                                <input type="text" class="edit-input inp-single" value="\${col1Text.replace(/"/g, '&quot;')}">\
+                                <textarea rows="1" class="edit-input inp-single" \${resizeTrackerAttr}>\${col1Text}</textarea>\
                             </div>
                         \`;
                     }
@@ -978,6 +1013,8 @@
                     card.appendChild(pinBtn);
                     
                     phrasesList.insertBefore(card, phrasesList.firstChild);
+                    card.querySelectorAll('.edit-input').forEach(textarea => handleTextareaResize(textarea));
+                    
                     document.getElementById('newCardContent').value = '';
                     document.getElementById('newCardContent').focus();
                 }
@@ -985,11 +1022,12 @@
                 function saveAndExportCorrectedFiles() {
                     const cards = document.querySelectorAll('.phrase-card');
                     let txtContent = "";
-                    let hasNewAdditions = false;
+                    let hasModifiedRows = false;
 
                     cards.forEach(card => {
                         const cat = card.getAttribute('data-category');
                         const isBrandNew = card.getAttribute('data-is-brand-new') === 'true';
+                        const isEdited = card.getAttribute('data-is-edited') === 'true';
                         
                         let newCol1 = card.getAttribute('data-orig-col1');
                         let newCol2 = card.getAttribute('data-orig-col2');
@@ -1006,14 +1044,16 @@
                             else { newCol2 = inpSingle.value.trim(); }
                         }
 
-                        if(isBrandNew) {
-                            hasNewAdditions = true;
+                        /* Fix 5: The row entry is ONLY appended to the output document if it has been edited or added */
+                        if(isBrandNew || isEdited) {
+                            hasModifiedRows = true;
                             if(!isSingleColumnMode) { txtContent += \`\${cat}\\t\${newCol1}\\t\${newCol2}\\n\`; } 
                             else { txtContent += newCol2 !== "" ? \`\${newCol1}\\t\${newCol2}\\n\` : \`\${newCol1}\\n\`; }
                         }
 
                         card.setAttribute('data-orig-col1', newCol1);
                         card.setAttribute('data-orig-col2', newCol2);
+                        card.removeAttribute('data-is-edited');
 
                         const htmlCol1 = newCol1.replace(/\\n/g, "<br>");
                         const htmlCol2 = newCol2.replace(/\\n/g, "<br>");
@@ -1026,15 +1066,16 @@
                         else if(singleCol) { singleCol.innerHTML = newCol1 !== "" ? htmlCol1 : htmlCol2; }
                     });
 
-                    if(!hasNewAdditions) {
-                        if(!confirm("No new items were added to the list. Do you want to download the files anyway?")) return;
+                    if(!hasModifiedRows) {
+                        alert("No changes or additions were detected to download.");
+                        return;
                     }
 
                     if(txtContent !== "") {
                         const blobTxt = new Blob([txtContent], { type: "text/plain;charset=utf-8" });
                         const linkTxt = document.createElement("a");
                         linkTxt.href = URL.createObjectURL(blobTxt);
-                        linkTxt.download = \`\${baseFilename}_added.txt\`;
+                        linkTxt.download = \`\${baseFilename}_modified.txt\`;
                         document.body.appendChild(linkTxt);
                         linkTxt.click();
                         document.body.removeChild(linkTxt);
@@ -1052,6 +1093,7 @@
                         c.classList.remove('is-pinned');
                         c.classList.remove('is-newly-added');
                         c.removeAttribute('data-is-brand-new'); 
+                        c.removeAttribute('data-is-edited');
                     });
                     
                     const nestedBtnsWrapper = docNestedClone.querySelector('#actualButtons');
@@ -1070,7 +1112,7 @@
                     const blobHtml = new Blob([totalNestedSource], { type: "text/html;charset=utf-8" });
                     const linkHtml = document.createElement("a");
                     linkHtml.href = URL.createObjectURL(blobHtml);
-                    linkHtml.download = \`\${baseFilename}_added.html\`; 
+                    linkHtml.download = \`\${baseFilename}_modified.html\`; 
                     document.body.appendChild(linkHtml);
                     linkHtml.click();
                     document.body.removeChild(linkHtml);
@@ -1078,6 +1120,9 @@
                     isEditingEnabled = false;
                     document.getElementById('itemAdderPanel').style.display = 'none';
                     document.getElementById('editActionsPanel').style.display = 'none';
+                    
+                    document.getElementById('menuWrapper').style.display = 'block';
+                    document.getElementById('menuWrapperBottom').style.display = 'block';
                     
                     document.querySelectorAll('.phrase-card').forEach(c => {
                         c.classList.remove('is-newly-added');
@@ -1137,6 +1182,12 @@
         function togglePinItem(cardElement) {
             if(typeof isEditingEnabled !== 'undefined' && isEditingEnabled) return; 
             cardElement.classList.toggle('is-pinned');
+            
+            /* Fix 1: Explicitly drops active element focus styling state on pin toggling */
+            if(document.activeElement) {
+                document.activeElement.blur();
+            }
+
             if (currentMode === 'pinned' && !cardElement.classList.contains('is-pinned')) {
                 cardElement.style.display = 'none';
                 checkPinnedCountOrReset();
@@ -1206,7 +1257,6 @@
             document.getElementById('headerGoPinnedBtn').style.display = isPinnedMode ? 'none' : 'block'; 
             document.getElementById('headerGoPinnedBtnBottom').style.display = isPinnedMode ? 'none' : 'block'; 
             
-            // Show/Hide the Clear button specifically depending on the Pinned state
             document.getElementById('headerUnpinBtn').style.display = isPinnedMode ? 'block' : 'none';
             document.getElementById('headerUnpinBtnBottom').style.display = isPinnedMode ? 'block' : 'none';
 
