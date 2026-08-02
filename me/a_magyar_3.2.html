@@ -1,0 +1,1754 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phrase Filter</title>
+    <style>
+        :root {
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-color: #212529;
+            --primary-color: #4a90e2;
+            --accent-blue: #1a73e8;
+            --pinned-color: #ff9800;
+            --border-radius: 12px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 16px;
+            padding-bottom: 90px; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Input Setup Styling */
+        #setupContainer {
+            width: 100%;
+            max-width: 600px;
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        #setupContainer h2 {
+            margin: 0 0 4px 0;
+            font-size: 1.3rem;
+        }
+
+        .setup-field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .setup-field label {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #495057;
+        }
+
+        .one-line-input {
+            width: 100%;
+            padding: 10px;
+            font-size: 1rem;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+
+        textarea {
+            width: 100%;
+            height: 220px;
+            padding: 12px;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 1rem;
+            box-sizing: border-box;
+            resize: vertical;
+        }
+
+        .primary-btn {
+            width: 100%;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 14px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            margin-top: 8px;
+        }
+
+        /* App Layout Styles */
+        #appContainer {
+            display: none;
+            width: 100%;
+            max-width: 600px;
+            padding-bottom: 80px; 
+        }
+
+        .menu-container {
+            width: 100%;
+            margin-bottom: 20px;
+            background-color: var(--bg-color);
+            border-radius: var(--border-radius);
+            position: sticky;
+            top: 0;
+            z-index: 900;
+            padding-top: 4px;
+            padding-bottom: 4px;
+            box-sizing: border-box;
+        }
+
+        .menu-container.bottom-frozen {
+            position: fixed;
+            bottom: 0;
+            top: auto;
+            left: 50%;
+            transform: translateX(-50%);
+            max-width: 600px;
+            margin-bottom: 0;
+            padding: 8px 16px;
+            box-sizing: border-box;
+            z-index: 999;
+            background: transparent;
+            pointer-events: none; 
+        }
+        
+        .menu-container.bottom-frozen > * {
+            pointer-events: auto;
+        }
+
+        .menu-summary {
+            display: none;
+            padding: 10px 14px;
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
+            border-radius: var(--border-radius);
+            align-items: center;
+            justify-content: space-between;
+            box-sizing: border-box;
+            gap: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .menu-summary-text {
+            cursor: pointer;
+            flex: 1;
+            padding: 4px 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: flex;
+            align-items: center;
+        }
+
+        .category-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+            z-index: 1001;
+            max-height: 250px;
+            overflow-y: auto;
+            margin-top: 4px;
+        }
+
+        .bottom-frozen .category-dropdown {
+            top: auto;
+            bottom: 100%;
+            margin-top: 0;
+            margin-bottom: 4px;
+        }
+
+        .dropdown-item {
+            padding: 12px 16px;
+            color: var(--text-color);
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: normal;
+            border-bottom: 1px solid #eee;
+        }
+
+        .dropdown-item:hover {
+            background-color: #f1f3f5;
+        }
+
+        .dropdown-item.pinned-item {
+            color: var(--pinned-color);
+            font-weight: bold;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .header-btn {
+            border: none;
+            padding: 8px 12px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            white-space: nowrap;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .header-back-btn { background-color: #6c757d; color: white; }
+        .header-unpin-btn { display: none; background-color: #dc3545; color: white; }
+        .header-go-pinned-btn { background-color: var(--pinned-color); color: white; }
+
+        .button-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 12px;
+            justify-content: center;
+            background-color: #ffffff;
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+        .search-pinned-row {
+            display: flex;
+            width: 100%;
+            gap: 10px;
+            margin-bottom: 2px;
+            box-sizing: border-box;
+            align-items: center;
+        }
+
+        .search-box {
+            flex: 1;
+            padding: 14px 10px;
+            font-size: 1.1rem;
+            border: 2px solid #ccc;
+            border-radius: var(--border-radius);
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        .search-box:focus { border-color: var(--primary-color); }
+
+        .category-btn {
+            flex: 1 1 calc(50% - 10px);
+            padding: 14px 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border: 2px solid var(--primary-color);
+            border-radius: var(--border-radius);
+            background-color: transparent;
+            color: var(--primary-color);
+            cursor: pointer;
+            text-align: center;
+            box-sizing: border-box;
+        }
+
+        .category-btn.pinned-cat-btn {
+            flex: 0 0 50px;
+            border-color: var(--pinned-color);
+            color: var(--pinned-color);
+            background-color: rgba(255, 152, 0, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .settings-cog-wrapper {
+            position: relative;
+            display: flex;
+            box-sizing: border-box;
+        }
+
+        .settings-cog-btn {
+            padding: 10px 12px;
+            font-size: 1.2rem;
+            background: #ffffff;
+            border: 2px solid #ccc;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .menu-summary .settings-cog-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border-color: transparent;
+        }
+
+        .cog-dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1002;
+            margin-top: 4px;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .cog-dropdown-item {
+            padding: 12px;
+            font-size: 1.3rem;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+        }
+        .cog-dropdown-item:last-child { border-bottom: none; }
+        .cog-dropdown-item:hover { background-color: #f1f3f5; }
+
+        .button-container.is-searching .category-btn:not(.pinned-cat-btn) {
+            display: none !important;
+        }
+
+        /* Showcase Graphic Panel Styles */
+        .main-screen-showcase-graphic {
+            display: none;
+            width: 100%;
+            margin-top: 20px;
+            box-sizing: border-box;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+        }
+
+        .main-screen-showcase-graphic img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .phrases-export-wrapper {
+            width: 100%;
+            padding: 12px;
+            box-sizing: border-box;
+            background-color: var(--bg-color);
+        }
+
+        .phrases-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        /* Editing Panel */
+        .adder-panel {
+            display: none;
+            background: #ffffff;
+            padding: 16px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+            border: 2px dashed var(--primary-color);
+            margin-bottom: 14px;
+            flex-direction: column;
+            gap: 12px;
+            box-sizing: border-box;
+            width: 100%;
+        }
+        .adder-row { display: flex; gap: 10px; align-items: center; width: 100%; }
+        .adder-select { padding: 10px; font-size: 1rem; border-radius: 8px; border: 1px solid #ccc; flex: 1; }
+        .adder-input { padding: 10px; font-size: 1rem; border-radius: 8px; border: 1px solid #ccc; flex: 2; }
+        .adder-btn { background-color: var(--primary-color); color: white; border: none; padding: 10px 16px; font-weight: bold; border-radius: 8px; cursor: pointer; white-space: nowrap; }
+
+        .phrase-card {
+            position: relative;
+            background-color: var(--card-bg);
+            padding: 16px;
+            padding-right: 50px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border-left: 5px solid var(--primary-color);
+            display: none;
+            animation: fadeIn 0.3s ease forwards;
+            font-size: 1.15rem;
+            line-height: 1.4;
+            color: var(--text-color);
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .phrase-card:hover {
+            box-shadow: 0 6px 12px rgba(0,0,0,0.08);
+        }
+
+        .phrase-card.is-pinned { border-left-color: var(--pinned-color); }
+        .phrase-card.is-newly-added { border-left-color: #2ecc71 !important; background-color: #f9fffb; }
+
+        .two-column-layout { display: flex; width: 100%; gap: 16px; }
+        .col-left, .col-right { flex: 1; word-break: break-word; }
+        .col-left { font-weight: 600; color: var(--text-color); }
+        .col-right { color: #555555; }
+        .single-column-text { width: 100%; word-break: break-word; font-weight: 500; }
+
+        .edit-input {
+            width: 100%;
+            padding: 8px 10px;
+            font-size: 1.1rem;
+            line-height: 1.4;
+            border: 1px dashed #aaa;
+            border-radius: 6px;
+            box-sizing: border-box;
+            resize: none;
+            overflow: hidden;
+            font-family: inherit;
+        }
+        .edit-input:focus { border-color: var(--accent-blue); outline: none; }
+
+        .pin-toggle {
+            position: absolute;
+            top: 50%;
+            right: 15px;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            font-size: 1.3rem;
+            cursor: pointer;
+            opacity: 0.3;
+            transition: opacity 0.2s;
+            user-select: none;
+            z-index: 10;
+        }
+
+        .phrase-card.is-pinned .pin-toggle { opacity: 1; }
+        @media(hover: hover) {
+            .pin-toggle:hover { opacity: 1; }
+        }
+
+        .floating-controls {
+            position: fixed;
+            bottom: 80px; 
+            right: 20px;
+            display: none; 
+            flex-direction: column;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        .floating-controls button {
+            color: white;
+            border: none;
+            padding: 14px 22px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+            white-space: nowrap;
+        }
+
+        .download-btn { background-color: #28a745; }
+        .back-input-btn { background-color: #6c757d; }
+        
+        .edit-actions-panel {
+            display: none; 
+            flex-direction: row; 
+            gap: 12px; 
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 14px;
+        }
+
+        .edit-actions-panel button {
+            color: white; 
+            border: none; 
+            padding: 12px 20px; 
+            font-size: 1rem; 
+            font-weight: bold; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15); 
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .save-edit-btn { background-color: #27ae60; flex: 2; justify-content: center; }
+        .abandon-edit-btn { background-color: #dc3545; flex: 1; justify-content: center; }
+
+        .hide-pins-snapshot .pin-toggle { display: none !important; }
+        .hide-pins-snapshot .phrase-card { animation: none !important; opacity: 1 !important; padding-right: 16px !important; color: #000000 !important; }
+
+        /* Focus Popover Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.65);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(3px);
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .modal-popover-card {
+            background: var(--card-bg);
+            padding: 30px;
+            padding-right: 60px; /* Leave space for pin */
+            border-radius: 16px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.3);
+            transform: scale(1.15);
+            animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            box-sizing: border-box;
+            position: relative;
+        }
+        .modal-popover-card .two-column-layout {
+            flex-direction: column;
+            gap: 16px;
+        }
+        .modal-popover-card .col-left {
+            font-size: 1.5rem;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        .modal-popover-card .col-right {
+            font-size: 1.3rem;
+            color: #495057;
+        }
+        .modal-popover-card .single-column-text {
+            font-size: 1.5rem;
+            text-align: center;
+        }
+        
+        /* Modal Pin Mirror Visual Fix */
+        .modal-popover-card .pin-toggle {
+            opacity: 0.3;
+            font-size: 1.6rem;
+            right: 20px;
+        }
+        .modal-popover-card.modal-is-pinned .pin-toggle {
+            opacity: 1;
+        }
+
+        /* Image Export Temporary Header style */
+        .export-snapshot-header {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: bold;
+            font-size: 1.3rem;
+            padding: 14px;
+            border-radius: var(--border-radius) var(--border-radius) 0 0;
+            margin-bottom: 10px;
+            text-align: left;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1.15); }
+        }
+    </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js">
+                
+                function handleTextareaResize(el) {
+                    el.style.height = 'auto';
+                    el.style.height = el.scrollHeight + 'px';
+                }
+
+                function enableLiveEditing() {
+                    isEditingEnabled = true;
+                    
+                    document.getElementById('actualButtons').style.display = 'none';
+                    document.getElementById('menuWrapper').style.display = 'none';
+                    document.getElementById('menuWrapperBottom').style.display = 'none';
+                    
+                    const selectElement = document.getElementById('newCardCategory');
+                    if(selectElement) {
+                        selectElement.innerHTML = '';
+                        if(isSingleColumnMode) {
+                            selectElement.innerHTML = '<option value="All_Items">Default Category</option>';
+                        } else {
+                            globalCategories.forEach(cat => {
+                                selectElement.innerHTML += `<option value="${cat}">${cat}</option>`;
+                            });
+                        }
+                    }
+                    
+                    document.getElementById('itemAdderPanel').style.display = 'flex';
+                    
+                    const imgBox = document.getElementById('mainScreenShowcaseGraphic');
+                    if(imgBox) imgBox.style.display = 'none';
+
+                    const cards = document.querySelectorAll('.phrase-card');
+                    cards.forEach(card => {
+                        card.style.display = 'block';
+                        const colLeft = card.querySelector('.col-left');
+                        const colRight = card.querySelector('.col-right');
+                        const singleCol = card.querySelector('.single-column-text');
+
+                        const resizeTrackerAttr = 'oninput="this.closest(\'.phrase-card\').setAttribute(\'data-is-edited\', \'true\'); handleTextareaResize(this);"';
+
+                        if(colLeft && colRight) {
+                            const val1 = card.getAttribute('data-orig-col1');
+                            const val2 = card.getAttribute('data-orig-col2');
+                            colLeft.innerHTML = `<textarea rows="1" class="edit-input inp-col1" ${resizeTrackerAttr}>${val1}</textarea>`;
+                            colRight.innerHTML = `<textarea rows="1" class="edit-input inp-col2" ${resizeTrackerAttr}>${val2}</textarea>`;
+                        } else if(singleCol) {
+                            const val1 = card.getAttribute('data-orig-col1') || card.getAttribute('data-orig-col2');
+                            singleCol.innerHTML = `<textarea rows="1" class="edit-input inp-single" ${resizeTrackerAttr}>${val1}</textarea>`;
+                        }
+                        
+                        card.querySelectorAll('.edit-input').forEach(textarea => handleTextareaResize(textarea));
+                    });
+                    document.getElementById('editActionsPanel').style.display = 'flex';
+                }
+
+                function abandonLiveEditing() {
+                    const cards = document.querySelectorAll('.phrase-card');
+                    
+                    const brandNewCards = document.querySelectorAll('.phrase-card[data-is-brand-new="true"]');
+                    brandNewCards.forEach(c => c.remove());
+
+                    cards.forEach(card => {
+                        card.removeAttribute('data-is-edited');
+                        const newCol1 = card.getAttribute('data-orig-col1');
+                        const newCol2 = card.getAttribute('data-orig-col2');
+
+                        const htmlCol1 = newCol1.replace(/\n/g, "<br>");
+                        const htmlCol2 = newCol2.replace(/\n/g, "<br>");
+
+                        const colLeft = card.querySelector('.col-left');
+                        const colRight = card.querySelector('.col-right');
+                        const singleCol = card.querySelector('.single-column-text');
+
+                        if(colLeft && colRight) { colLeft.innerHTML = htmlCol1; colRight.innerHTML = htmlCol2; } 
+                        else if(singleCol) { singleCol.innerHTML = newCol1 !== "" ? htmlCol1 : htmlCol2; }
+                    });
+
+                    isEditingEnabled = false;
+                    document.getElementById('itemAdderPanel').style.display = 'none';
+                    document.getElementById('editActionsPanel').style.display = 'none';
+                    
+                    document.getElementById('menuWrapper').style.display = 'block';
+                    document.getElementById('menuWrapperBottom').style.display = 'block';
+                    resetView();
+                }
+
+                function addNewItemOnTheFly() {
+                    const content = document.getElementById('newCardContent').value.trim();
+                    const category = document.getElementById('newCardCategory').value;
+                    if(!content) return alert("Please type some text into the box first!");
+                    
+                    let parts = content.split('\t').map(p => p.trim());
+                    if(parts.length < 2) {
+                        parts = content.split(',').map(p => p.trim());
+                    }
+                    
+                    let col1Text = parts[0];
+                    let col2Text = parts[1] || "";
+                    
+                    const phrasesList = document.getElementById('phrasesList');
+                    const card = document.createElement('div');
+                    card.className = 'phrase-card is-newly-added';
+                    card.style.display = 'block';
+                    card.setAttribute('data-category', category);
+                    card.setAttribute('data-orig-col1', col1Text);
+                    card.setAttribute('data-orig-col2', col2Text);
+                    card.setAttribute('data-is-brand-new', 'true'); 
+                    card.setAttribute('onclick', 'openPopoverModal(this)');
+                    
+                    const resizeTrackerAttr = 'oninput="this.closest(\'.phrase-card\').setAttribute(\'data-is-edited\', \'true\'); handleTextareaResize(this);"';
+
+                    if(col1Text !== "" && col2Text !== "") {
+                        card.innerHTML = `
+                            <div class="two-column-layout">
+                                <div class="col-left"><textarea rows="1" class="edit-input inp-col1" ${resizeTrackerAttr}>${col1Text}</textarea></div>
+                                <div class="col-right"><textarea rows="1" class="edit-input inp-col2" ${resizeTrackerAttr}>${col2Text}</textarea></div>
+                            </div>
+                        `;
+                    } else {
+                        card.innerHTML = `
+                            <div class="single-column-text">
+                                <textarea rows="1" class="edit-input inp-single" ${resizeTrackerAttr}>${col1Text}</textarea>                            </div>
+                        `;
+                    }
+                    
+                    const pinBtn = document.createElement('button');
+                    pinBtn.className = 'pin-toggle';
+                    pinBtn.innerHTML = '📌';
+                    pinBtn.setAttribute('onclick', "event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))");
+                    card.appendChild(pinBtn);
+                    
+                    phrasesList.insertBefore(card, phrasesList.firstChild);
+                    card.querySelectorAll('.edit-input').forEach(textarea => handleTextareaResize(textarea));
+                    
+                    document.getElementById('newCardContent').value = '';
+                    document.getElementById('newCardContent').focus();
+                }
+
+                function saveAndExportCorrectedFiles() {
+                    const cards = document.querySelectorAll('.phrase-card');
+                    let txtContent = "";
+                    let hasModifiedRows = false;
+
+                    cards.forEach(card => {
+                        const cat = card.getAttribute('data-category');
+                        const isBrandNew = card.getAttribute('data-is-brand-new') === 'true';
+                        const isEdited = card.getAttribute('data-is-edited') === 'true';
+                        
+                        let newCol1 = card.getAttribute('data-orig-col1');
+                        let newCol2 = card.getAttribute('data-orig-col2');
+
+                        const inpCol1 = card.querySelector('.inp-col1');
+                        const inpCol2 = card.querySelector('.inp-col2');
+                        const inpSingle = card.querySelector('.inp-single');
+
+                        if(inpCol1 && inpCol2) {
+                            newCol1 = inpCol1.value.trim();
+                            newCol2 = inpCol2.value.trim();
+                        } else if(inpSingle) {
+                            if(card.getAttribute('data-orig-col1') !== "") { newCol1 = inpSingle.value.trim(); } 
+                            else { newCol2 = inpSingle.value.trim(); }
+                        }
+
+                        if(isBrandNew || isEdited) {
+                            hasModifiedRows = true;
+                            if(!isSingleColumnMode) { txtContent += `${cat}\t${newCol1}\t${newCol2}\n`; } 
+                            else { txtContent += newCol2 !== "" ? `${newCol1}\t${newCol2}\n` : `${newCol1}\n`; }
+                        }
+
+                        card.setAttribute('data-orig-col1', newCol1);
+                        card.setAttribute('data-orig-col2', newCol2);
+                        card.removeAttribute('data-is-edited');
+
+                        const htmlCol1 = newCol1.replace(/\n/g, "<br>");
+                        const htmlCol2 = newCol2.replace(/\n/g, "<br>");
+
+                        const colLeft = card.querySelector('.col-left');
+                        const colRight = card.querySelector('.col-right');
+                        const singleCol = card.querySelector('.single-column-text');
+
+                        if(colLeft && colRight) { colLeft.innerHTML = htmlCol1; colRight.innerHTML = htmlCol2; } 
+                        else if(singleCol) { singleCol.innerHTML = newCol1 !== "" ? htmlCol1 : htmlCol2; }
+                    });
+
+                    if(!hasModifiedRows) {
+                        alert("No changes or additions were detected to download.");
+                        return;
+                    }
+
+                    if(txtContent !== "") {
+                        const blobTxt = new Blob([txtContent], { type: "text/plain;charset=utf-8" });
+                        const linkTxt = document.createElement("a");
+                        linkTxt.href = URL.createObjectURL(blobTxt);
+                        linkTxt.download = `${baseFilename}_modified.txt`;
+                        document.body.appendChild(linkTxt);
+                        linkTxt.click();
+                        document.body.removeChild(linkTxt);
+                    }
+
+                    const docNestedClone = document.documentElement.cloneNode(true);
+                    
+                    if(docNestedClone.querySelector('#itemAdderPanel')) {
+                        docNestedClone.querySelector('#itemAdderPanel').style.display = 'none';
+                    }
+                    if(docNestedClone.querySelector('#popoverModal')) {
+                        docNestedClone.querySelector('#popoverModal').style.display = 'none';
+                    }
+
+                    const cleanNestedCards = docNestedClone.querySelectorAll('.phrase-card');
+                    cleanNestedCards.forEach(c => {
+                        c.style.display = isSingleColumnMode ? 'block' : 'none';
+                        c.classList.remove('is-pinned');
+                        c.classList.remove('is-newly-added');
+                        c.removeAttribute('data-is-brand-new'); 
+                        c.removeAttribute('data-is-edited');
+                    });
+                    
+                    const nestedBtnsWrapper = docNestedClone.querySelector('#actualButtons');
+                    if (nestedBtnsWrapper) {
+                        nestedBtnsWrapper.style.display = 'flex';
+                        nestedBtnsWrapper.classList.remove('is-searching');
+                    }
+                    if (docNestedClone.querySelector('#menuSummary')) docNestedClone.querySelector('#menuSummary').style.display = 'none';
+                    if (docNestedClone.querySelector('#menuSummaryBottom')) docNestedClone.querySelector('#menuSummaryBottom').style.display = 'none';
+                    if (docNestedClone.querySelector('#editActionsPanel')) docNestedClone.querySelector('#editActionsPanel').style.display = 'none';
+                    
+                    const imgBoxNested = docNestedClone.querySelector('#mainScreenShowcaseGraphic');
+                    if(imgBoxNested && savedGraphicUrl) imgBoxNested.style.display = 'block';
+
+                    const totalNestedSource = "<!DOCTYPE html>\n" + docNestedClone.outerHTML;
+                    const blobHtml = new Blob([totalNestedSource], { type: "text/html;charset=utf-8" });
+                    const linkHtml = document.createElement("a");
+                    linkHtml.href = URL.createObjectURL(blobHtml);
+                    linkHtml.download = `${baseFilename}_modified.html`; 
+                    document.body.appendChild(linkHtml);
+                    linkHtml.click();
+                    document.body.removeChild(linkHtml);
+
+                    isEditingEnabled = false;
+                    document.getElementById('itemAdderPanel').style.display = 'none';
+                    document.getElementById('editActionsPanel').style.display = 'none';
+                    
+                    document.getElementById('menuWrapper').style.display = 'block';
+                    document.getElementById('menuWrapperBottom').style.display = 'block';
+                    
+                    document.querySelectorAll('.phrase-card').forEach(c => {
+                        c.classList.remove('is-newly-added');
+                        c.removeAttribute('data-is-brand-new');
+                    });
+                    
+                    resetView();
+                }
+                
+                window.addEventListener('DOMContentLoaded', () => { 
+                    if(!isSingleColumnMode) { renderDropdownMenus(); } 
+                    const initialImg = document.getElementById('mainScreenShowcaseGraphic');
+                    if(initialImg && savedGraphicUrl) {
+                        initialImg.innerHTML = `<img src="${savedGraphicUrl}" alt="Showcase Context Graphic">`;
+                        initialImg.style.display = 'block';
+                    }
+                });</script></head>
+<body>
+
+    
+
+    <div id="appContainer" style="display: block;">
+        <div class="menu-container" id="menuWrapper">
+            <div class="menu-summary" id="menuSummary" style="display: none;">
+                <div class="menu-summary-text" id="menuSummaryText" onclick="toggleDropdown(event, 'dropdownTop')">🛍️ ▾</div>
+                <div class="category-dropdown" id="dropdownTop" style="display: none;"><div class="dropdown-item pinned-item" onclick="filterPinnedOnly()">📌 Pinned</div><div class="dropdown-item" onclick="filterPhrases('💹', '💹')">💹</div><div class="dropdown-item" onclick="filterPhrases('🙋 - 👋', '🙋 - 👋')">🙋 - 👋</div><div class="dropdown-item" onclick="filterPhrases('🙇 - 🙏', '🙇 - 🙏')">🙇 - 🙏</div><div class="dropdown-item" onclick="filterPhrases('🤷 - 👌 - ✋', '🤷 - 👌 - ✋')">🤷 - 👌 - ✋</div><div class="dropdown-item" onclick="filterPhrases('🍜', '🍜')">🍜</div><div class="dropdown-item" onclick="filterPhrases('🛍️', '🛍️')">🛍️</div><div class="dropdown-item" onclick="filterPhrases('👤', '👤')">👤</div><div class="dropdown-item" onclick="filterPhrases('🧺', '🧺')">🧺</div><div class="dropdown-item" onclick="filterPhrases('💯Números', '💯Números')">💯Números</div></div>
+                <div class="header-actions" style="flex: 1; justify-content: flex-end;">
+                    <div class="settings-cog-wrapper">
+                        <button class="settings-cog-btn" onclick="toggleCogDropdown(event, 'cogDropdownHeader')">⚙️</button>
+                        <div class="cog-dropdown-menu" id="cogDropdownHeader" style="display: none;">
+                            <div class="cog-dropdown-item" title="Edit Data" onclick="enableLiveEditing()">✏️</div>
+                            <div class="cog-dropdown-item" title="To Image" onclick="downloadCurrentAsImage()">📸</div>
+                        </div>
+                    </div>
+                    <button class="header-btn header-go-pinned-btn" id="headerGoPinnedBtn" onclick="filterPinnedOnly()" style="display: block;">📌</button>
+                    <button class="header-btn header-unpin-btn" id="headerUnpinBtn" onclick="clearAllPins()" style="display: none;">🗑️</button>
+                    <button class="header-btn header-back-btn" id="headerBackBtn" onclick="resetView()">↩</button>
+                </div>
+            </div>
+            <div class="button-container" id="actualButtons" style="display: flex;"><div class="search-pinned-row"><div class="settings-cog-wrapper">
+                        <button class="settings-cog-btn" onclick="toggleCogDropdown(event, 'cogDropdown')">⚙️</button>
+                        <div class="cog-dropdown-menu" id="cogDropdown">
+                            <div class="cog-dropdown-item" title="Edit Data" onclick="enableLiveEditing()">✏️</div>
+                            <div class="cog-dropdown-item" title="To Image" onclick="downloadCurrentAsImage()">📸</div>
+                        </div>
+                    </div><button class="category-btn pinned-cat-btn" onclick="filterPinnedOnly()">📌</button><input type="text" class="search-box" id="liveSearchBox" oninput="liveSearch(this.value)"></div><button class="category-btn" onclick="filterPhrases('💹', '💹')">💹</button><button class="category-btn" onclick="filterPhrases('🙋 - 👋', '🙋 - 👋')">🙋 - 👋</button><button class="category-btn" onclick="filterPhrases('🙇 - 🙏', '🙇 - 🙏')">🙇 - 🙏</button><button class="category-btn" onclick="filterPhrases('🤷 - 👌 - ✋', '🤷 - 👌 - ✋')">🤷 - 👌 - ✋</button><button class="category-btn" onclick="filterPhrases('🍜', '🍜')">🍜</button><button class="category-btn" onclick="filterPhrases('🛍️', '🛍️')">🛍️</button><button class="category-btn" onclick="filterPhrases('👤', '👤')">👤</button><button class="category-btn" onclick="filterPhrases('🧺', '🧺')">🧺</button><button class="category-btn" onclick="filterPhrases('💯Números', '💯Números')">💯Números</button></div>
+        </div>
+
+        <div class="main-screen-showcase-graphic" id="mainScreenShowcaseGraphic" style="display: block;"><img src="https://cdn.britannica.com/55/1455-050-CCDFFCF0/Flag-Hungary.jpg?w=1000" alt="Showcase Context Graphic"></div>
+
+        <div class="phrases-export-wrapper" id="captureTarget">
+            <div class="edit-actions-panel" id="editActionsPanel">
+                <button class="save-edit-btn" id="saveEditBtn" onclick="saveAndExportCorrectedFiles()">💾 Save &amp; Export Changes</button>
+                <button class="abandon-edit-btn" id="abandonEditBtn" onclick="abandonLiveEditing()">🚫 Close Edit</button>
+            </div>
+
+            <div class="adder-panel" id="itemAdderPanel">
+                <div style="font-weight: bold; font-size: 0.95rem; color: var(--primary-color);">➕ Add New Item to Current View:</div>
+                <div class="adder-row">
+                    <select class="adder-select" id="newCardCategory"></select>
+                    <input type="text" class="adder-input" id="newCardContent" placeholder="Column 1 text [TAB or COMMA] Column 2 text">
+                    <button class="adder-btn" onclick="addNewItemOnTheFly()">Add Item</button>
+                </div>
+            </div>
+            <div class="phrases-container" id="phrasesList"><div class="phrase-card" data-category="💹" data-orig-col1="50, &lt;b&gt;100&lt;/b&gt;, 200" data-orig-col2="0.15, &lt;b&gt;0.30&lt;/b&gt;, 0.60€" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">50, <b>100</b>, 200</div><div class="col-right">0.15, <b>0.30</b>, 0.60€</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="💹" data-orig-col1="&lt;b&gt;350&lt;/b&gt;, 500, &lt;b&gt;700&lt;/b&gt;" data-orig-col2="&lt;b&gt;1€&lt;/b&gt;, 1,50€, &lt;b&gt;2€&lt;/b&gt;" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left"><b>350</b>, 500, <b>700</b></div><div class="col-right"><b>1€</b>, 1,50€, <b>2€</b></div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="💹" data-orig-col1="800, 900, &lt;b&gt;1000&lt;/b&gt;" data-orig-col2="2.25, 2.50, &lt;b&gt;2.75&lt;/b&gt;€" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">800, 900, <b>1000</b></div><div class="col-right">2.25, 2.50, <b>2.75</b>€</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="💹" data-orig-col1="A partir de 1,000€, si el pico es menos/más de 500€ redondear pabajo/parriba, x3 y" data-orig-col2="quitarle o sumarle:
+• 1-2k ➜ 0.50
+• 2-3k ➜ 1€
+• &gt;4-10k ➜ 1,50€
+• &gt;10k ➜ 2€" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">A partir de 1,000€, si el pico es menos/más de 500€ redondear pabajo/parriba, x3 y</div><div class="col-right">quitarle o sumarle:<br>• 1-2k ➜ 0.50<br>• 2-3k ➜ 1€<br>• &gt;4-10k ➜ 1,50€<br>• &gt;10k ➜ 2€</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="🙋 - 👋" data-orig-col1="buenos días / good afternoon" data-orig-col2="&lt;b&gt;jó&lt;/b&gt; &lt;u&gt;na&lt;/u&gt;pot!" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">buenos días / good afternoon</div><div class="col-right"><b>jó</b> <u>na</u>pot!</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="🙋 - 👋" data-orig-col1="good morning" data-orig-col2="jó reggelt!" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">good morning</div><div class="col-right">jó reggelt!</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="🙋 - 👋" data-orig-col1="good evening" data-orig-col2="jó estét!" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">good evening</div><div class="col-right">jó estét!</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="🙋 - 👋" data-orig-col1="bye x2" data-orig-col2="• &lt;b style=&quot;color: black;&quot;&gt;viszlát!&lt;/b&gt;
+• &lt;b style=&quot;color: magenta;&quot;&gt;viszont&lt;u&gt;lá&lt;/u&gt;tásra!&lt;/b&gt; /visont-latashrə/" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">bye x2</div><div class="col-right">• <b style="color: black;">viszlát!</b><br>• <b style="color: magenta;">viszont<u>lá</u>tásra!</b> /visont-latashrə/</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="🙋 - 👋" data-orig-col1="hi+bye x1" data-orig-col2="szia! /sí-ah/" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">hi+bye x1</div><div class="col-right">szia! /sí-ah/</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="🙋 - 👋" data-orig-col1="qué tal? - bien - y tú?" data-orig-col2="&lt;b style=color: magenta;&gt;hodgy vadgy?&lt;/b&gt; /hoɟ voɟ/ + &lt;b style=color: magenta;&gt;jól vagyok!&lt;/b&gt; + &lt;b style=color: magenta;&gt;és te?&lt;/b&gt;" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">qué tal? - bien - y tú?</div><div class="col-right"><b style="color:" magenta;="">hodgy vadgy?</b> /hoɟ voɟ/ + <b style="color:" magenta;="">jól vagyok!</b> + <b style="color:" magenta;="">és te?</b></div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="🙇 - 🙏" data-orig-col1="excuse-me" data-orig-col2="&lt;b style=color: magenta;&gt;elnézést&lt;/b&gt; /'eynezesht/" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">excuse-me</div><div class="col-right"><b style="color:" magenta;="">elnézést</b> /'eynezesht/</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="🙇 - 🙏" data-orig-col1="sorry" data-orig-col2="&lt;b style=color: magenta;&gt;bocsánat&lt;/b&gt; /'&lt;u&gt;bo&lt;/u&gt; &lt;u&gt;cha:&lt;/u&gt;not/ | • &lt;b&gt;bocs(i)&lt;/b&gt; (clq)" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">sorry</div><div class="col-right"><b style="color:" magenta;="">bocsánat</b> /'<u>bo</u> <u>cha:</u>not/ | • <b>bocs(i)</b> (clq)</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="🙇 - 🙏" data-orig-col1="• (muchas) gracias x2 + you're welcome" data-orig-col2="• &lt;b style=&quot;color: magenta;&quot;&gt;köszönöm&lt;/b&gt; (&lt;b&gt;szép&lt;/b&gt;en /'sepen/)
+• köszi + &lt;b style=&quot;color: magenta;&quot;&gt;szívesem&lt;/b&gt; /SÍ-veshem/" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">• (muchas) gracias x2 + you're welcome</div><div class="col-right">• <b style="color: magenta;">köszönöm</b> (<b>szép</b>en /'sepen/)<br>• köszi + <b style="color: magenta;">szívesem</b> /SÍ-veshem/</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="🙇 - 🙏" data-orig-col1="no hablo húngaro - only that!" data-orig-col2="&lt;b style=color: magenta;&gt;nem beszélek magyarul&lt;/b&gt; /beselek/ (...) &lt;b&gt;hát, csak ennyi&lt;/b&gt;" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">no hablo húngaro - only that!</div><div class="col-right"><b style="color:" magenta;="">nem beszélek magyarul</b> /beselek/ (...) <b>hát, csak ennyi</b></div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="🤷 - 👌 - ✋" data-orig-col1="okay x1, (very) good x2" data-orig-col2="&lt;b style=&quot;color: magenta;&quot;&gt;• oké | • (nagyon) jó
+• rendben&lt;/b&gt;" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">okay x1, (very) good x2</div><div class="col-right"><b style="color: magenta;">• oké | • (nagyon) jó<br>• rendben</b></div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="🤷 - 👌 - ✋" data-orig-col1="super!" data-orig-col2="• &lt;b style=color: magenta;&gt;szuper&lt;/b&gt; | • remek" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">super!</div><div class="col-right">• <b style="color:" magenta;="">szuper</b> | • remek</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="🤷 - 👌 - ✋" data-orig-col1="I'm good!" data-orig-col2="jo vagyok" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">I'm good!</div><div class="col-right">jo vagyok</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="🤷 - 👌 - ✋" data-orig-col1="sí" data-orig-col2="i&lt;u&gt;gen&lt;/u&gt; /entre IH-gen &amp; EH-gen/" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">sí</div><div class="col-right">i<u>gen</u> /entre IH-gen &amp; EH-gen/</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="🤷 - 👌 - ✋" data-orig-col1="no" data-orig-col2="nem" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">no</div><div class="col-right">nem</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="🤷 - 👌 - ✋" data-orig-col1="I don't understand" data-orig-col2="bocsánat &lt;b style=color: magenta;&gt;nem ertem&lt;b&gt; csak spanyolul beszélek (vagy angolul)" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">I don't understand</div><div class="col-right">bocsánat <b style="color:" magenta;="">nem ertem<b> csak spanyolul beszélek (vagy angolul)</b></b></div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="🤷 - 👌 - ✋" data-orig-col1="habla inglés?" data-orig-col2="&lt;b style=color: magenta;&gt;beszél angolul?&lt;/b&gt; /besel angolul/" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">habla inglés?</div><div class="col-right"><b style="color:" magenta;="">beszél angolul?</b> /besel angolul/</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="🤷 - 👌 - ✋" data-orig-col1="solo hablo español" data-orig-col2="&lt;b&gt;cs&lt;/b&gt;ak spanyolul beszélek" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">solo hablo español</div><div class="col-right"><b>cs</b>ak spanyolul beszélek</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="🤷 - 👌 - ✋" data-orig-col1="sólo sé eso" data-orig-col2="&lt;b style=color: magenta;&gt;csak ennyit tudok &lt;b&gt;" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">sólo sé eso</div><div class="col-right"><b style="color:" magenta;="">csak ennyit tudok <b></b></b></div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="🤷 - 👌 - ✋" data-orig-col1="momentito…" data-orig-col2="egy pillanat..." onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">momentito…</div><div class="col-right">egy pillanat...</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="🤷 - 👌 - ✋" data-orig-col1="this is the metro, &lt;b&gt;right?&lt;/b&gt;" data-orig-col2="ez a metró, &lt;b&gt;ugye&lt;/b&gt;?" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">this is the metro, <b>right?</b></div><div class="col-right">ez a metró, <b>ugye</b>?</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="🍜" data-orig-col1="excuse-me, donde está el WC?" data-orig-col2="elnézést, hol van a WC?" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">excuse-me, donde está el WC?</div><div class="col-right">elnézést, hol van a WC?</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="🍜" data-orig-col1="una birra por favó + grande &amp; pequeña" data-orig-col2="egy &lt;b&gt;póhar&lt;/b&gt;(0.3) / &lt;b&gt;körso&lt;/b&gt;(0.4-5) &lt;b style=color: magenta;&gt;sört&lt;/b&gt;, kérem                     OR nagy /nɒɟ/ &amp; &lt;b&gt;kis&lt;/b&gt; OR korsó + póhar" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">una birra por favó + grande &amp; pequeña</div><div class="col-right">egy <b>póhar</b>(0.3) / <b>körso</b>(0.4-5) <b style="color:" magenta;="">sört</b>, kérem                     OR nagy /nɒɟ/ &amp; <b>kis</b> OR korsó + póhar</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="🍜" data-orig-col1="two waters, please: one still and one sparkling" data-orig-col2="két &lt;b&gt;vizet&lt;/b&gt;, kérek: egy szénsav&lt;u&gt;menteset&lt;/u&gt; és egy szénsav&lt;u&gt;asat&lt;/u&gt; / &lt;u&gt;ˈseːnʃɒv&lt;/b&gt;ˈseːnʃɒv&lt;u&gt;mɛntɛʃɛt&lt;/u&gt; eːʃ ɛɟ ˈseːnʃɒv&lt;u&gt;ɒʃɒt&lt;/u&gt;/" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">two waters, please: one still and one sparkling</div><div class="col-right">két <b>vizet</b>, kérek: egy szénsav<u>menteset</u> és egy szénsav<u>asat</u> / <u>ˈseːnʃɒvˈseːnʃɒv<u>mɛntɛʃɛt</u> eːʃ ɛɟ ˈseːnʃɒv<u>ɒʃɒt</u>/</u></div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="🍜" data-orig-col1="two coffees with milk, please" data-orig-col2="két &lt;b&gt;tejes&lt;u&gt;kávét&lt;/u&gt;&lt;/b&gt;, kérek. Egy növényi / laktózmentes &lt;b&gt;tej&lt;/b&gt;jel" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">two coffees with milk, please</div><div class="col-right">két <b>tejes<u>kávét</u></b>, kérek. Egy növényi / laktózmentes <b>tej</b>jel</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="🍜" data-orig-col1="excuse-me, queremos pagar" data-orig-col2="elnézést, fizetni szeretnék" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">excuse-me, queremos pagar</div><div class="col-right">elnézést, fizetni szeretnék</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="🍜" data-orig-col1="can we pay? + the bill please - (with) card" data-orig-col2="&lt;b style=color: magenta;&gt;fizetünk?&lt;/b&gt; / fize&lt;b&gt;the&lt;/b&gt;tünk, kérem? / &lt;b&gt;a számlát&lt;/b&gt;, kérem &lt;b&gt;+&lt;/b&gt;  &lt;b&gt;kártyával&lt;/b&gt;" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">can we pay? + the bill please - (with) card</div><div class="col-right"><b style="color:" magenta;="">fizetünk?</b> / fize<b>the</b>tünk, kérem? / <b>a számlát</b>, kérem <b>+</b>  <b>kártyával</b></div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="🍜" data-orig-col1="I try in Hungarian" data-orig-col2="megpróbálom magyarul" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">I try in Hungarian</div><div class="col-right">megpróbálom magyarul</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="🍜" data-orig-col1="salud!" data-orig-col2="&lt;b&gt;egészségedre&lt;/b&gt;! /ɛ-ɡeːʃːeːɡɛdrɛ/" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">salud!</div><div class="col-right"><b>egészségedre</b>! /ɛ-ɡeːʃːeːɡɛdrɛ/</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="🍜" data-orig-col1="(very) delicious!" data-orig-col2="(&lt;b&gt;nagyon&lt;/b&gt;) /ˈnɒɟon/&lt;/b&gt; &lt;b style=color: magenta;&gt;finom&lt;/b&gt;" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">(very) delicious!</div><div class="col-right">(<b>nagyon</b>) /ˈnɒɟon/ <b style="color:" magenta;="">finom</b></div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="🍜" data-orig-col1="tiene buena pinta" data-orig-col2="nagyon jól &lt;b&gt;néz ki&lt;/b&gt;!" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">tiene buena pinta</div><div class="col-right">nagyon jól <b>néz ki</b>!</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="🍜" data-orig-col1="coffee" data-orig-col2="kávé" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">coffee</div><div class="col-right">kávé</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="🍜" data-orig-col1="milk" data-orig-col2="tej" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">milk</div><div class="col-right">tej</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="🍜" data-orig-col1="how much?" data-orig-col2="mennyibe kerül?" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">how much?</div><div class="col-right">mennyibe kerül?</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="🛍️" data-orig-col1="(sólo) this, please" data-orig-col2="(csak) &lt;b style=color: magenta;&gt;ezt&lt;/b&gt; kerem" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">(sólo) this, please</div><div class="col-right">(csak) <b style="color:" magenta;="">ezt</b> kerem</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="🛍️" data-orig-col1="one of those, please" data-orig-col2="&lt;b style=color: magenta;&gt;egyet abból&lt;/b&gt;, kérem" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">one of those, please</div><div class="col-right"><b style="color:" magenta;="">egyet abból</b>, kérem</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="🛍️" data-orig-col1="anything else? x3 no thank you" data-orig-col2="&lt;b&gt;mást&lt;/b&gt; kér? / valami &lt;b&gt;mást&lt;/b&gt;? / még valamit? + nem kös..." onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">anything else? x3 no thank you</div><div class="col-right"><b>mást</b> kér? / valami <b>mást</b>? / még valamit? + nem kös...</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="🛍️" data-orig-col1="here you go (paying)" data-orig-col2="&lt;b&gt;tessék&lt;/b&gt; /ˈtɛʃːeːk/" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">here you go (paying)</div><div class="col-right"><b>tessék</b> /ˈtɛʃːeːk/</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="🛍️" data-orig-col1="for me" data-orig-col2="&lt;b&gt;nekem&lt;/b&gt;" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">for me</div><div class="col-right"><b>nekem</b></div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="🛍️" data-orig-col1="well done" data-orig-col2="gratulalok" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">well done</div><div class="col-right">gratulalok</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="👤" data-orig-col1="me llamo J" data-orig-col2="Jose vagyok /&lt;b&gt;vɒ&lt;/b&gt;ɟok/" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">me llamo J</div><div class="col-right">Jose vagyok /<b>vɒ</b>ɟok/</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="👤" data-orig-col1="soy español / ~  de Esp." data-orig-col2="&lt;b style=color: magenta;&gt;&lt;u&gt;s&lt;/u&gt;panyol 'vagyok&lt;/b&gt; /ˈʃp&lt;b style=color: magenta;&gt;ɒ&lt;/b&gt;ɲol/ /v&lt;b style=color: magenta;&gt;ɒ&lt;/b&gt;ɟok/" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">soy español / ~  de Esp.</div><div class="col-right"><b style="color:" magenta;=""><u>s</u>panyol 'vagyok</b> /ˈʃp<b style="color:" magenta;="">ɒ</b>ɲol/ /v<b style="color:" magenta;="">ɒ</b>ɟok/</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="🧺" data-orig-col1="Hungría" data-orig-col2="Magyaror&lt;b&gt;sz&lt;/b&gt;ág &lt;b&gt;/s/&lt;/b&gt;" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">Hungría</div><div class="col-right">Magyaror<b>sz</b>ág <b>/s/</b></div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="🧺" data-orig-col1="España" data-orig-col2="&lt;b style=color: magenta;&gt;&lt;u&gt;s&lt;/u&gt;panyol-ország-ból&lt;/b&gt; jöttem" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">España</div><div class="col-right"><b style="color:" magenta;=""><u>s</u>panyol-ország-ból</b> jöttem</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="🧺" data-orig-col1="nice or beautiful" data-orig-col2="szép" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">nice or beautiful</div><div class="col-right">szép</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="🧺" data-orig-col1="sólo" data-orig-col2="&lt;b&gt;csak&lt;/b&gt; /t͡ʃɒk/" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">sólo</div><div class="col-right"><b>csak</b> /t͡ʃɒk/</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="🧺" data-orig-col1="and" data-orig-col2="és" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">and</div><div class="col-right">és</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="🧺" data-orig-col1="but" data-orig-col2="de" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">but</div><div class="col-right">de</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="🧺" data-orig-col1="or" data-orig-col2="vagy" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">or</div><div class="col-right">vagy</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="🧺" data-orig-col1="el húngaro es difícil!" data-orig-col2="a magyar nehéz!" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">el húngaro es difícil!</div><div class="col-right">a magyar nehéz!</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="🧺" data-orig-col1="un paquete de malboro gold y un mechero pequeño" data-orig-col2="egy Marlboro Goldot kérek és kis &lt;b&gt;öngyújtó&lt;/b&gt;" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">un paquete de malboro gold y un mechero pequeño</div><div class="col-right">egy Marlboro Goldot kérek és kis <b>öngyújtó</b></div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="🧺" data-orig-col1="" data-orig-col2="gyere, gyere! / gyerünk! (vamos, let's go) - Pesti Balhé" onclick="openPopoverModal(this)" style="display: none;"><div class="single-column-text">gyere, gyere! / gyerünk! (vamos, let's go) - Pesti Balhé</div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="🧺" data-orig-col1="" data-orig-col2="na?  - Pesti Balhé" onclick="openPopoverModal(this)" style="display: none;"><div class="single-column-text">na?  - Pesti Balhé</div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="🧺" data-orig-col1="" data-orig-col2="profi!  - Pesti Balhé" onclick="openPopoverModal(this)" style="display: none;"><div class="single-column-text">profi!  - Pesti Balhé</div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="🧺" data-orig-col1="" data-orig-col2="forint" onclick="openPopoverModal(this)" style="display: none;"><div class="single-column-text">forint</div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="1" data-orig-col2="egy" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">1</div><div class="col-right">egy</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="2" data-orig-col2="kettő (&lt;b&gt;ket&lt;/b&gt; when expressing quantity)" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">2</div><div class="col-right">kettő (<b>ket</b> when expressing quantity)</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="3" data-orig-col2="három" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">3</div><div class="col-right">három</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="4" data-orig-col2="né&lt;b&gt;gy&lt;/b&gt;" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">4</div><div class="col-right">né<b>gy</b></div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="5" data-orig-col2="öt" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">5</div><div class="col-right">öt</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="6" data-orig-col2="hat" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">6</div><div class="col-right">hat</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="7" data-orig-col2="hét" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">7</div><div class="col-right">hét</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="8" data-orig-col2="nyolc" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">8</div><div class="col-right">nyolc</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="9" data-orig-col2="kilenc" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">9</div><div class="col-right">kilenc</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="10" data-orig-col2="tíz" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">10</div><div class="col-right">tíz</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="100" data-orig-col2="&lt;b&gt;száz&lt;/b&gt; /saaz/" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">100</div><div class="col-right"><b>száz</b> /saaz/</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="200" data-orig-col2="kétszáz /KET-saaz/" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">200</div><div class="col-right">kétszáz /KET-saaz/</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="300" data-orig-col2="háromszáz" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">300</div><div class="col-right">háromszáz</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="400" data-orig-col2="négyszáz" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">400</div><div class="col-right">négyszáz</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="500" data-orig-col2="ötszáz" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">500</div><div class="col-right">ötszáz</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="600" data-orig-col2="hatszáz" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">600</div><div class="col-right">hatszáz</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="700" data-orig-col2="hétszáz" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">700</div><div class="col-right">hétszáz</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="800" data-orig-col2="nyolcszáz" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">800</div><div class="col-right">nyolcszáz</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="900" data-orig-col2="kilencszáz" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">900</div><div class="col-right">kilencszáz</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="1000" data-orig-col2="&lt;b&gt;ezer&lt;/b&gt;" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">1000</div><div class="col-right"><b>ezer</b></div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="2000" data-orig-col2="kétezer" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">2000</div><div class="col-right">kétezer</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="3000" data-orig-col2="háromezer" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">3000</div><div class="col-right">háromezer</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="4000" data-orig-col2="négyezer" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">4000</div><div class="col-right">négyezer</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="5000" data-orig-col2="ötezer" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">5000</div><div class="col-right">ötezer</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="6000" data-orig-col2="hatezer" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">6000</div><div class="col-right">hatezer</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="7000" data-orig-col2="hétezer" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">7000</div><div class="col-right">hétezer</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="8000" data-orig-col2="nyolcezer" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">8000</div><div class="col-right">nyolcezer</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="9000" data-orig-col2="kilencezer" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">9000</div><div class="col-right">kilencezer</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div><div class="phrase-card" data-category="💯Números" data-orig-col1="10000" data-orig-col2="tízezer" onclick="openPopoverModal(this)" style="display: none;"><div class="two-column-layout"><div class="col-left">10000</div><div class="col-right">tízezer</div></div><button class="pin-toggle" onclick="event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))">📌</button></div></div>
+        </div>
+
+        <div class="menu-container bottom-frozen" id="menuWrapperBottom">
+            <div class="menu-summary" id="menuSummaryBottom" style="display: none;">
+                <div class="menu-summary-text" id="menuSummaryTextBottom" onclick="toggleDropdown(event, 'dropdownBottom')">🛍️ ▾</div>
+                <div class="category-dropdown" id="dropdownBottom" style="display: none;"><div class="dropdown-item pinned-item" onclick="filterPinnedOnly()">📌 Pinned</div><div class="dropdown-item" onclick="filterPhrases('💹', '💹')">💹</div><div class="dropdown-item" onclick="filterPhrases('🙋 - 👋', '🙋 - 👋')">🙋 - 👋</div><div class="dropdown-item" onclick="filterPhrases('🙇 - 🙏', '🙇 - 🙏')">🙇 - 🙏</div><div class="dropdown-item" onclick="filterPhrases('🤷 - 👌 - ✋', '🤷 - 👌 - ✋')">🤷 - 👌 - ✋</div><div class="dropdown-item" onclick="filterPhrases('🍜', '🍜')">🍜</div><div class="dropdown-item" onclick="filterPhrases('🛍️', '🛍️')">🛍️</div><div class="dropdown-item" onclick="filterPhrases('👤', '👤')">👤</div><div class="dropdown-item" onclick="filterPhrases('🧺', '🧺')">🧺</div><div class="dropdown-item" onclick="filterPhrases('💯Números', '💯Números')">💯Números</div></div>
+                <div class="header-actions" style="flex: 1; justify-content: flex-end;">
+                    <button class="header-btn header-go-pinned-btn" id="headerGoPinnedBtnBottom" onclick="filterPinnedOnly()" style="display: block;">📌</button>
+                    <button class="header-btn header-unpin-btn" id="headerUnpinBtnBottom" onclick="clearAllPins()" style="display: none;">🗑️</button>
+                    <button class="header-btn header-back-btn" id="headerBackBtnBottom" onclick="resetView()">↩</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Popover Lightbox Layer Container -->
+    <div id="popoverModal" class="modal-overlay" onclick="closePopoverModal()" style="display: none;">
+        <div class="modal-popover-card" id="modalPopoverCard" onclick="event.stopPropagation()"><div class="two-column-layout"><div class="col-left">anything else? x3 no thank you</div><div class="col-right"><b>mást</b> kér? / valami <b>mást</b>? / még valamit? + nem kös...</div></div><button class="pin-toggle" onclick="toggleModalPin(event)">📌</button></div>
+    </div>
+
+    
+
+    <script>
+        let currentMode = 'category'; 
+        let currentActiveCategory = '';
+        let isSingleColumnMode = false;
+        let globalCategories = new Set();
+        let isEditingEnabled = false;
+        let savedGraphicUrl = '';
+        let baseFilename = 'phrases_clean_app';
+        let activeModalCardRef = null;
+
+        document.addEventListener('click', () => {
+            closeAllDropdowns();
+            const cogDropdown = document.getElementById('cogDropdown');
+            if (cogDropdown) cogDropdown.style.display = 'none';
+            const cogDropdownHeader = document.getElementById('cogDropdownHeader');
+            if (cogDropdownHeader) cogDropdownHeader.style.display = 'none';
+        });
+
+        function toggleCogDropdown(event, menuId = 'cogDropdown') {
+            event.stopPropagation();
+            const menu = document.getElementById(menuId);
+            const isOpen = menu.style.display === 'block';
+            closeAllDropdowns();
+            menu.style.display = isOpen ? 'none' : 'block';
+        }
+
+        function toggleMainImageVisibility() {
+            const imgBox = document.getElementById('mainScreenShowcaseGraphic');
+            if (!imgBox || !savedGraphicUrl) return;
+            
+            if (currentMode === 'category' && currentActiveCategory === '') {
+                imgBox.style.display = 'block';
+            } else {
+                imgBox.style.display = 'none';
+            }
+        }
+
+        function openPopoverModal(cardElement) {
+            if (isEditingEnabled) return;
+            activeModalCardRef = cardElement;
+            const modal = document.getElementById('popoverModal');
+            const cardContentBox = document.getElementById('modalPopoverCard');
+            
+            const layoutDiv = cardElement.querySelector('.two-column-layout');
+            const singleDiv = cardElement.querySelector('.single-column-text');
+            
+            let baseHTML = '';
+            if (layoutDiv) baseHTML = layoutDiv.outerHTML;
+            else if (singleDiv) baseHTML = singleDiv.outerHTML;
+            
+            cardContentBox.innerHTML = baseHTML;
+            
+            // Add interactive pin toggle inside the modal popover
+            const modalPin = document.createElement('button');
+            modalPin.className = 'pin-toggle';
+            modalPin.innerHTML = '📌';
+            modalPin.setAttribute('onclick', 'toggleModalPin(event)');
+            cardContentBox.appendChild(modalPin);
+            
+            if (cardElement.classList.contains('is-pinned')) {
+                cardContentBox.classList.add('modal-is-pinned');
+            } else {
+                cardContentBox.classList.remove('modal-is-pinned');
+            }
+            
+            modal.style.display = 'flex';
+        }
+
+        function toggleModalPin(event) {
+            event.stopPropagation();
+            if (!activeModalCardRef) return;
+            
+            const cardContentBox = document.getElementById('modalPopoverCard');
+            togglePinItem(activeModalCardRef);
+            
+            if (activeModalCardRef.classList.contains('is-pinned')) {
+                cardContentBox.classList.add('modal-is-pinned');
+            } else {
+                cardContentBox.classList.remove('modal-is-pinned');
+            }
+        }
+
+        function closePopoverModal() {
+            document.getElementById('popoverModal').style.display = 'none';
+            activeModalCardRef = null;
+        }
+
+        function liveSearch(query) {
+            const cleanQuery = query.toLowerCase().trim();
+            const cards = document.querySelectorAll('.phrase-card');
+            const btnContainer = document.getElementById('actualButtons');
+            
+            if (cleanQuery === '') {
+                if (btnContainer) btnContainer.classList.remove('is-searching');
+                if (currentActiveCategory && currentMode !== 'pinned') {
+                    filterPhrases(currentActiveCategory, currentActiveCategory);
+                } else if (currentMode === 'pinned') {
+                    filterPinnedOnly();
+                } else {
+                    resetView();
+                }
+                return;
+            }
+
+            currentMode = 'search';
+            if (btnContainer) btnContainer.classList.add('is-searching');
+            toggleMainImageVisibility();
+            
+            cards.forEach(card => {
+                let textContent = "";
+                if(typeof isEditingEnabled !== 'undefined' && isEditingEnabled) {
+                    const inputs = card.querySelectorAll('.edit-input');
+                    inputs.forEach(i => textContent += " " + i.value.toLowerCase());
+                } else {
+                    textContent = card.innerText.toLowerCase();
+                }
+                
+                if (textContent.includes(cleanQuery)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        function parseExcelSpreadsheetRows(text) {
+            const lines = [];
+            let row = [''];
+            let inQuotes = false;
+
+            for (let i = 0; i < text.length; i++) {
+                let c = text[i];
+                let next = text[i+1];
+
+                if (c === '"') {
+                    if (inQuotes && next === '"') { row[row.length - 1] += '"'; i++; } 
+                    else { inQuotes = !inQuotes; }
+                } else if (c === '\t' && !inQuotes) {
+                    row.push('');
+                } else if ((c === '\n' || c === '\r') && !inQuotes) {
+                    if (c === '\r' && next === '\n') { i++; }
+                    lines.push(row);
+                    row = [''];
+                } else {
+                    row[row.length - 1] += c;
+                }
+            }
+            if (row.length > 1 || row[0] !== '') lines.push(row);
+            return lines;
+        }
+
+        function buildAppFromInput() {
+            const rawText = document.getElementById('rawData').value;
+            if(!rawText.trim()) return alert("Please paste some data first!");
+
+            const filenameInput = document.getElementById('customFilename').value.trim();
+            baseFilename = filenameInput ? filenameInput : 'phrases_clean_app';
+
+            savedGraphicUrl = document.getElementById('showcaseImageUrl').value.trim();
+            const imgContainer = document.getElementById('mainScreenShowcaseGraphic');
+            if(savedGraphicUrl) {
+                imgContainer.innerHTML = `<img src="${savedGraphicUrl}" alt="Showcase Context Graphic">`;
+                imgContainer.style.display = 'block';
+            } else {
+                imgContainer.innerHTML = '';
+                imgContainer.style.display = 'none';
+            }
+
+            const parsedRows = parseExcelSpreadsheetRows(rawText);
+            globalCategories.clear();
+            const phrasesList = document.getElementById('phrasesList');
+            const actualButtons = document.getElementById('actualButtons');
+
+            phrasesList.innerHTML = '';
+            actualButtons.innerHTML = '';
+            isSingleColumnMode = false;
+            currentActiveCategory = '';
+            currentMode = 'category';
+
+            const searchRow = document.createElement('div');
+            searchRow.className = 'search-pinned-row';
+
+            const cogWrapper = document.createElement('div');
+            cogWrapper.className = 'settings-cog-wrapper';
+            cogWrapper.innerHTML = `
+                <button class="settings-cog-btn" onclick="toggleCogDropdown(event, 'cogDropdown')">⚙️</button>
+                <div class="cog-dropdown-menu" id="cogDropdown">
+                    <div class="cog-dropdown-item" title="Edit Data" onclick="enableLiveEditing()">✏️</div>
+                    <div class="cog-dropdown-item" title="To Image" onclick="downloadCurrentAsImage()">📸</div>
+                </div>
+            `;
+
+            const pinnedBtn = document.createElement('button');
+            pinnedBtn.className = 'category-btn pinned-cat-btn';
+            pinnedBtn.setAttribute('onclick', "filterPinnedOnly()");
+            pinnedBtn.innerText = '📌';
+
+            const searchInput = document.createElement('input');
+            searchInput.type = 'text';
+            searchInput.className = 'search-box';
+            searchInput.id = 'liveSearchBox';
+            searchInput.setAttribute('oninput', "liveSearch(this.value)");
+
+            searchRow.appendChild(cogWrapper);
+            searchRow.appendChild(pinnedBtn);
+            searchRow.appendChild(searchInput);
+            actualButtons.appendChild(searchRow);
+
+            parsedRows.forEach((parts) => {
+                if(parts.length === 0 || (parts.length === 1 && parts[0].trim() === "")) return;
+
+                let cat = "All_Items";
+                let col1Text = "";
+                let col2Text = "";
+
+                if (parts.length === 1) {
+                    col1Text = parts[0].trim();
+                } else if (parts.length === 2) {
+                    col1Text = parts[0].trim();
+                    col2Text = parts[1].trim();
+                } else {
+                    if (parts[0].trim() !== "") {
+                        cat = parts[0].trim();
+                        globalCategories.add(cat);
+                    }
+                    col1Text = parts[1].trim();
+                    col2Text = parts[2] || "";
+                    col2Text = col2Text.trim();
+                }
+
+                const htmlCol1 = col1Text.replace(/\n/g, "<br>");
+                const htmlCol2 = col2Text.replace(/\n/g, "<br>");
+
+                const card = document.createElement('div');
+                card.className = 'phrase-card';
+                card.setAttribute('data-category', cat);
+                card.setAttribute('data-orig-col1', col1Text);
+                card.setAttribute('data-orig-col2', col2Text);
+                card.setAttribute('onclick', "openPopoverModal(this)");
+                
+                if (col1Text !== "" && col2Text !== "") {
+                    const layoutDiv = document.createElement('div');
+                    layoutDiv.className = 'two-column-layout';
+
+                    const leftDiv = document.createElement('div');
+                    leftDiv.className = 'col-left';
+                    leftDiv.innerHTML = htmlCol1;
+                    
+                    const rightDiv = document.createElement('div');
+                    rightDiv.className = 'col-right';
+                    rightDiv.innerHTML = htmlCol2;
+
+                    layoutDiv.appendChild(leftDiv);
+                    layoutDiv.appendChild(rightDiv);
+                    card.appendChild(layoutDiv);
+                } else {
+                    const singleDiv = document.createElement('div');
+                    singleDiv.className = 'single-column-text';
+                    singleDiv.innerHTML = col1Text !== "" ? htmlCol1 : htmlCol2;
+                    card.appendChild(singleDiv);
+                }
+
+                const pinBtn = document.createElement('button');
+                pinBtn.className = 'pin-toggle';
+                pinBtn.innerHTML = '📌';
+                pinBtn.setAttribute('onclick', "event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))");
+                card.appendChild(pinBtn);
+                phrasesList.appendChild(card);
+            });
+
+            if (globalCategories.size === 0) isSingleColumnMode = true;
+
+            if (!isSingleColumnMode) {
+                globalCategories.forEach(cat => {
+                    const btn = document.createElement('button');
+                    btn.className = 'category-btn';
+                    const safeCat = cat.replace(/'/g, "\\'");
+                    btn.setAttribute('onclick', `filterPhrases('${safeCat}', '${safeCat}')`);
+                    btn.innerText = cat;
+                    actualButtons.appendChild(btn);
+                });
+                renderDropdownMenus();
+            } else {
+                const cards = document.querySelectorAll('.phrase-card');
+                cards.forEach(card => card.style.display = 'block');
+                pinnedBtn.style.flex = "1 1 auto";
+            }
+
+            document.getElementById('setupContainer').style.display = 'none';
+            document.getElementById('appContainer').style.display = 'block';
+            document.getElementById('floatingControls').style.display = 'flex'; 
+        }
+
+        function clearAllPins() {
+            const cards = document.querySelectorAll('.phrase-card');
+            cards.forEach(card => card.classList.remove('is-pinned'));
+            resetView();
+        }
+
+        function downloadCurrentHTML() {
+            const docClone = document.documentElement.cloneNode(true);
+            
+            if(docClone.querySelector('#setupContainer')) docClone.querySelector('#setupContainer').remove();
+            if(docClone.querySelector('#floatingControls')) docClone.querySelector('#floatingControls').remove();
+            if(docClone.querySelector('#popoverModal')) docClone.querySelector('#popoverModal').style.display = 'none';
+            
+            const actualBtnsWrapper = docClone.querySelector('#actualButtons');
+            if (actualBtnsWrapper) {
+                actualBtnsWrapper.style.display = 'flex';
+                actualBtnsWrapper.classList.remove('is-searching');
+                
+                const searchRow = actualBtnsWrapper.querySelector('.search-pinned-row');
+                if (searchRow) {
+                    searchRow.innerHTML = '';
+                    
+                    const cogWrapper = document.createElement('div');
+                    cogWrapper.className = 'settings-cog-wrapper';
+                    cogWrapper.innerHTML = `
+                        <button class="settings-cog-btn" onclick="toggleCogDropdown(event, 'cogDropdown')">⚙️</button>
+                        <div class="cog-dropdown-menu" id="cogDropdown">
+                            <div class="cog-dropdown-item" title="Edit Data" onclick="enableLiveEditing()">✏️</div>
+                            <div class="cog-dropdown-item" title="To Image" onclick="downloadCurrentAsImage()">📸</div>
+                        </div>
+                    `;
+                    
+                    const pinnedBtn = document.createElement('button');
+                    pinnedBtn.className = 'category-btn pinned-cat-btn';
+                    pinnedBtn.setAttribute('onclick', "filterPinnedOnly()");
+                    pinnedBtn.innerText = '📌';
+
+                    const searchInput = document.createElement('input');
+                    searchInput.type = 'text';
+                    searchInput.className = 'search-box';
+                    searchInput.id = 'liveSearchBox';
+                    searchInput.setAttribute('oninput', "liveSearch(this.value)");
+                    
+                    searchRow.appendChild(cogWrapper);
+                    searchRow.appendChild(pinnedBtn);
+                    searchRow.appendChild(searchInput);
+                }
+            }
+
+            const appBlock = docClone.querySelector('#appContainer');
+            if (appBlock) appBlock.style.display = 'block';
+            if (docClone.querySelector('#menuSummary')) docClone.querySelector('#menuSummary').style.display = 'none';
+            if (docClone.querySelector('#menuSummaryBottom')) docClone.querySelector('#menuSummaryBottom').style.display = 'none';
+            
+            const imgBoxClone = docClone.querySelector('#mainScreenShowcaseGraphic');
+            if (imgBoxClone && savedGraphicUrl) {
+                imgBoxClone.style.display = 'block';
+            }
+
+            const cleanCards = docClone.querySelectorAll('.phrase-card');
+            cleanCards.forEach(c => {
+                c.style.display = isSingleColumnMode ? 'block' : 'none';
+                c.classList.remove('is-pinned');
+            });
+
+            const cleanScript = docClone.querySelector('script');
+            if(cleanScript) {
+                let categoriesArrayStr = JSON.stringify(Array.from(globalCategories));
+                let scriptContent = cleanScript.innerHTML;
+                
+                scriptContent = scriptContent.replace(/let isSingleColumnMode = (true|false);/, `let isSingleColumnMode = ${isSingleColumnMode};`);
+                scriptContent = scriptContent.replace(/let globalCategories = new Set\(\);/, `let globalCategories = new Set(${categoriesArrayStr});`);
+                scriptContent = scriptContent.replace(/let savedGraphicUrl = '';/, `let savedGraphicUrl = '${savedGraphicUrl.replace(/'/g, "\\'")}';`);
+                scriptContent = scriptContent.replace(/let baseFilename = 'phrases_clean_app';/, `let baseFilename = '${baseFilename.replace(/'/g, "\\'")}';`);
+                
+                scriptContent += `
+                
+                function handleTextareaResize(el) {
+                    el.style.height = 'auto';
+                    el.style.height = el.scrollHeight + 'px';
+                }
+
+                function enableLiveEditing() {
+                    isEditingEnabled = true;
+                    
+                    document.getElementById('actualButtons').style.display = 'none';
+                    document.getElementById('menuWrapper').style.display = 'none';
+                    document.getElementById('menuWrapperBottom').style.display = 'none';
+                    
+                    const selectElement = document.getElementById('newCardCategory');
+                    if(selectElement) {
+                        selectElement.innerHTML = '';
+                        if(isSingleColumnMode) {
+                            selectElement.innerHTML = '<option value="All_Items">Default Category</option>';
+                        } else {
+                            globalCategories.forEach(cat => {
+                                selectElement.innerHTML += \`<option value="\${cat}">\${cat}</option>\`;
+                            });
+                        }
+                    }
+                    
+                    document.getElementById('itemAdderPanel').style.display = 'flex';
+                    
+                    const imgBox = document.getElementById('mainScreenShowcaseGraphic');
+                    if(imgBox) imgBox.style.display = 'none';
+
+                    const cards = document.querySelectorAll('.phrase-card');
+                    cards.forEach(card => {
+                        card.style.display = 'block';
+                        const colLeft = card.querySelector('.col-left');
+                        const colRight = card.querySelector('.col-right');
+                        const singleCol = card.querySelector('.single-column-text');
+
+                        const resizeTrackerAttr = 'oninput="this.closest(\\\'.phrase-card\\\').setAttribute(\\\'data-is-edited\\\', \\\'true\\\'); handleTextareaResize(this);"';
+
+                        if(colLeft && colRight) {
+                            const val1 = card.getAttribute('data-orig-col1');
+                            const val2 = card.getAttribute('data-orig-col2');
+                            colLeft.innerHTML = \`<textarea rows="1" class="edit-input inp-col1" \${resizeTrackerAttr}>\${val1}</textarea>\`;
+                            colRight.innerHTML = \`<textarea rows="1" class="edit-input inp-col2" \${resizeTrackerAttr}>\${val2}</textarea>\`;
+                        } else if(singleCol) {
+                            const val1 = card.getAttribute('data-orig-col1') || card.getAttribute('data-orig-col2');
+                            singleCol.innerHTML = \`<textarea rows="1" class="edit-input inp-single" \${resizeTrackerAttr}>\${val1}</textarea>\`;
+                        }
+                        
+                        card.querySelectorAll('.edit-input').forEach(textarea => handleTextareaResize(textarea));
+                    });
+                    document.getElementById('editActionsPanel').style.display = 'flex';
+                }
+
+                function abandonLiveEditing() {
+                    const cards = document.querySelectorAll('.phrase-card');
+                    
+                    const brandNewCards = document.querySelectorAll('.phrase-card[data-is-brand-new="true"]');
+                    brandNewCards.forEach(c => c.remove());
+
+                    cards.forEach(card => {
+                        card.removeAttribute('data-is-edited');
+                        const newCol1 = card.getAttribute('data-orig-col1');
+                        const newCol2 = card.getAttribute('data-orig-col2');
+
+                        const htmlCol1 = newCol1.replace(/\\n/g, "<br>");
+                        const htmlCol2 = newCol2.replace(/\\n/g, "<br>");
+
+                        const colLeft = card.querySelector('.col-left');
+                        const colRight = card.querySelector('.col-right');
+                        const singleCol = card.querySelector('.single-column-text');
+
+                        if(colLeft && colRight) { colLeft.innerHTML = htmlCol1; colRight.innerHTML = htmlCol2; } 
+                        else if(singleCol) { singleCol.innerHTML = newCol1 !== "" ? htmlCol1 : htmlCol2; }
+                    });
+
+                    isEditingEnabled = false;
+                    document.getElementById('itemAdderPanel').style.display = 'none';
+                    document.getElementById('editActionsPanel').style.display = 'none';
+                    
+                    document.getElementById('menuWrapper').style.display = 'block';
+                    document.getElementById('menuWrapperBottom').style.display = 'block';
+                    resetView();
+                }
+
+                function addNewItemOnTheFly() {
+                    const content = document.getElementById('newCardContent').value.trim();
+                    const category = document.getElementById('newCardCategory').value;
+                    if(!content) return alert("Please type some text into the box first!");
+                    
+                    let parts = content.split('\\t').map(p => p.trim());
+                    if(parts.length < 2) {
+                        parts = content.split(',').map(p => p.trim());
+                    }
+                    
+                    let col1Text = parts[0];
+                    let col2Text = parts[1] || "";
+                    
+                    const phrasesList = document.getElementById('phrasesList');
+                    const card = document.createElement('div');
+                    card.className = 'phrase-card is-newly-added';
+                    card.style.display = 'block';
+                    card.setAttribute('data-category', category);
+                    card.setAttribute('data-orig-col1', col1Text);
+                    card.setAttribute('data-orig-col2', col2Text);
+                    card.setAttribute('data-is-brand-new', 'true'); 
+                    card.setAttribute('onclick', 'openPopoverModal(this)');
+                    
+                    const resizeTrackerAttr = 'oninput="this.closest(\\\'.phrase-card\\\').setAttribute(\\\'data-is-edited\\\', \\\'true\\\'); handleTextareaResize(this);"';
+
+                    if(col1Text !== "" && col2Text !== "") {
+                        card.innerHTML = \`
+                            <div class="two-column-layout">
+                                <div class="col-left"><textarea rows="1" class="edit-input inp-col1" \${resizeTrackerAttr}>\${col1Text}</textarea></div>
+                                <div class="col-right"><textarea rows="1" class="edit-input inp-col2" \${resizeTrackerAttr}>\${col2Text}</textarea></div>
+                            </div>
+                        \`;
+                    } else {
+                        card.innerHTML = \`
+                            <div class="single-column-text">
+                                <textarea rows="1" class="edit-input inp-single" \${resizeTrackerAttr}>\${col1Text}</textarea>\
+                            </div>
+                        \`;
+                    }
+                    
+                    const pinBtn = document.createElement('button');
+                    pinBtn.className = 'pin-toggle';
+                    pinBtn.innerHTML = '📌';
+                    pinBtn.setAttribute('onclick', "event.stopPropagation(); togglePinItem(this.closest('.phrase-card'))");
+                    card.appendChild(pinBtn);
+                    
+                    phrasesList.insertBefore(card, phrasesList.firstChild);
+                    card.querySelectorAll('.edit-input').forEach(textarea => handleTextareaResize(textarea));
+                    
+                    document.getElementById('newCardContent').value = '';
+                    document.getElementById('newCardContent').focus();
+                }
+
+                function saveAndExportCorrectedFiles() {
+                    const cards = document.querySelectorAll('.phrase-card');
+                    let txtContent = "";
+                    let hasModifiedRows = false;
+
+                    cards.forEach(card => {
+                        const cat = card.getAttribute('data-category');
+                        const isBrandNew = card.getAttribute('data-is-brand-new') === 'true';
+                        const isEdited = card.getAttribute('data-is-edited') === 'true';
+                        
+                        let newCol1 = card.getAttribute('data-orig-col1');
+                        let newCol2 = card.getAttribute('data-orig-col2');
+
+                        const inpCol1 = card.querySelector('.inp-col1');
+                        const inpCol2 = card.querySelector('.inp-col2');
+                        const inpSingle = card.querySelector('.inp-single');
+
+                        if(inpCol1 && inpCol2) {
+                            newCol1 = inpCol1.value.trim();
+                            newCol2 = inpCol2.value.trim();
+                        } else if(inpSingle) {
+                            if(card.getAttribute('data-orig-col1') !== "") { newCol1 = inpSingle.value.trim(); } 
+                            else { newCol2 = inpSingle.value.trim(); }
+                        }
+
+                        if(isBrandNew || isEdited) {
+                            hasModifiedRows = true;
+                            if(!isSingleColumnMode) { txtContent += \`\${cat}\\t\${newCol1}\\t\${newCol2}\\n\`; } 
+                            else { txtContent += newCol2 !== "" ? \`\${newCol1}\\t\${newCol2}\\n\` : \`\${newCol1}\\n\`; }
+                        }
+
+                        card.setAttribute('data-orig-col1', newCol1);
+                        card.setAttribute('data-orig-col2', newCol2);
+                        card.removeAttribute('data-is-edited');
+
+                        const htmlCol1 = newCol1.replace(/\\n/g, "<br>");
+                        const htmlCol2 = newCol2.replace(/\\n/g, "<br>");
+
+                        const colLeft = card.querySelector('.col-left');
+                        const colRight = card.querySelector('.col-right');
+                        const singleCol = card.querySelector('.single-column-text');
+
+                        if(colLeft && colRight) { colLeft.innerHTML = htmlCol1; colRight.innerHTML = htmlCol2; } 
+                        else if(singleCol) { singleCol.innerHTML = newCol1 !== "" ? htmlCol1 : htmlCol2; }
+                    });
+
+                    if(!hasModifiedRows) {
+                        alert("No changes or additions were detected to download.");
+                        return;
+                    }
+
+                    if(txtContent !== "") {
+                        const blobTxt = new Blob([txtContent], { type: "text/plain;charset=utf-8" });
+                        const linkTxt = document.createElement("a");
+                        linkTxt.href = URL.createObjectURL(blobTxt);
+                        linkTxt.download = \`\${baseFilename}_modified.txt\`;
+                        document.body.appendChild(linkTxt);
+                        linkTxt.click();
+                        document.body.removeChild(linkTxt);
+                    }
+
+                    const docNestedClone = document.documentElement.cloneNode(true);
+                    
+                    if(docNestedClone.querySelector('#itemAdderPanel')) {
+                        docNestedClone.querySelector('#itemAdderPanel').style.display = 'none';
+                    }
+                    if(docNestedClone.querySelector('#popoverModal')) {
+                        docNestedClone.querySelector('#popoverModal').style.display = 'none';
+                    }
+
+                    const cleanNestedCards = docNestedClone.querySelectorAll('.phrase-card');
+                    cleanNestedCards.forEach(c => {
+                        c.style.display = isSingleColumnMode ? 'block' : 'none';
+                        c.classList.remove('is-pinned');
+                        c.classList.remove('is-newly-added');
+                        c.removeAttribute('data-is-brand-new'); 
+                        c.removeAttribute('data-is-edited');
+                    });
+                    
+                    const nestedBtnsWrapper = docNestedClone.querySelector('#actualButtons');
+                    if (nestedBtnsWrapper) {
+                        nestedBtnsWrapper.style.display = 'flex';
+                        nestedBtnsWrapper.classList.remove('is-searching');
+                    }
+                    if (docNestedClone.querySelector('#menuSummary')) docNestedClone.querySelector('#menuSummary').style.display = 'none';
+                    if (docNestedClone.querySelector('#menuSummaryBottom')) docNestedClone.querySelector('#menuSummaryBottom').style.display = 'none';
+                    if (docNestedClone.querySelector('#editActionsPanel')) docNestedClone.querySelector('#editActionsPanel').style.display = 'none';
+                    
+                    const imgBoxNested = docNestedClone.querySelector('#mainScreenShowcaseGraphic');
+                    if(imgBoxNested && savedGraphicUrl) imgBoxNested.style.display = 'block';
+
+                    const totalNestedSource = "<!DOCTYPE html>\\n" + docNestedClone.outerHTML;
+                    const blobHtml = new Blob([totalNestedSource], { type: "text/html;charset=utf-8" });
+                    const linkHtml = document.createElement("a");
+                    linkHtml.href = URL.createObjectURL(blobHtml);
+                    linkHtml.download = \`\${baseFilename}_modified.html\`; 
+                    document.body.appendChild(linkHtml);
+                    linkHtml.click();
+                    document.body.removeChild(linkHtml);
+
+                    isEditingEnabled = false;
+                    document.getElementById('itemAdderPanel').style.display = 'none';
+                    document.getElementById('editActionsPanel').style.display = 'none';
+                    
+                    document.getElementById('menuWrapper').style.display = 'block';
+                    document.getElementById('menuWrapperBottom').style.display = 'block';
+                    
+                    document.querySelectorAll('.phrase-card').forEach(c => {
+                        c.classList.remove('is-newly-added');
+                        c.removeAttribute('data-is-brand-new');
+                    });
+                    
+                    resetView();
+                }
+                
+                window.addEventListener('DOMContentLoaded', () => { 
+                    if(!isSingleColumnMode) { renderDropdownMenus(); } 
+                    const initialImg = document.getElementById('mainScreenShowcaseGraphic');
+                    if(initialImg && savedGraphicUrl) {
+                        initialImg.innerHTML = \`<img src="\${savedGraphicUrl}" alt="Showcase Context Graphic">\`;
+                        initialImg.style.display = 'block';
+                    }
+                });`;
+                
+                cleanScript.innerHTML = scriptContent;
+            }
+
+            const totalSource = "<!DOCTYPE html>\n" + docClone.outerHTML;
+            const blob = new Blob([totalSource], { type: "text/html;charset=utf-8" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `${baseFilename}.html`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function renderDropdownMenus() {
+            const topDropdown = document.getElementById('dropdownTop');
+            const bottomDropdown = document.getElementById('dropdownBottom');
+            let htmlContent = `<div class="dropdown-item pinned-item" onclick="filterPinnedOnly()">📌 Pinned</div>`;
+            globalCategories.forEach(cat => {
+                const safeCat = cat.replace(/'/g, "\\'");
+                htmlContent += `<div class="dropdown-item" onclick="filterPhrases('${safeCat}', '${safeCat}')">${cat}</div>`;
+            });
+            topDropdown.innerHTML = htmlContent;
+            bottomDropdown.innerHTML = htmlContent;
+        }
+
+        function toggleDropdown(event, id) {
+            event.stopPropagation();
+            const targetMenu = document.getElementById(id);
+            const isOpen = targetMenu.style.display === 'block';
+            closeAllDropdowns();
+            if (!isOpen) targetMenu.style.display = 'block';
+        }
+
+        function closeAllDropdowns() {
+            document.getElementById('dropdownTop').style.display = 'none';
+            document.getElementById('dropdownBottom').style.display = 'none';
+        }
+
+        function togglePinItem(cardElement) {
+            if(typeof isEditingEnabled !== 'undefined' && isEditingEnabled) return; 
+            cardElement.classList.toggle('is-pinned');
+            
+            if(document.activeElement) {
+                document.activeElement.blur();
+            }
+
+            if (currentMode === 'pinned' && !cardElement.classList.contains('is-pinned')) {
+                cardElement.style.display = 'none';
+                checkPinnedCountOrReset();
+            }
+        }
+
+        function filterPhrases(category, labelText) {
+            if(typeof isEditingEnabled !== 'undefined' && isEditingEnabled) return;
+            currentMode = 'category';
+            currentActiveCategory = category;
+            const cards = document.querySelectorAll('.phrase-card');
+            
+            const btnContainer = document.getElementById('actualButtons');
+            if (btnContainer) btnContainer.classList.remove('is-searching');
+            const searchBox = document.getElementById('liveSearchBox');
+            if(searchBox) searchBox.value = '';
+
+            cards.forEach(card => {
+                if (card.getAttribute('data-category') === category) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+            updateMenuUI(labelText + " ▾");
+            closeAllDropdowns();
+        }
+
+        function filterPinnedOnly() {
+            if(typeof isEditingEnabled !== 'undefined' && isEditingEnabled) return;
+            const cards = document.querySelectorAll('.phrase-card');
+            let pinnedCount = 0;
+            cards.forEach(card => {
+                if (card.classList.contains('is-pinned')) {
+                    card.style.display = 'block';
+                    pinnedCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+            if(pinnedCount === 0) {
+                alert("You don't have any items pinned yet!");
+                return;
+            }
+            currentMode = 'pinned';
+            updateMenuUI("📌 Clipboard ▾");
+            closeAllDropdowns();
+        }
+
+        function checkPinnedCountOrReset() {
+            const visibleCards = Array.from(document.querySelectorAll('.phrase-card')).filter(c => c.style.display === 'block');
+            if (visibleCards.length === 0) resetView();
+        }
+
+        function updateMenuUI(summaryText) {
+            document.getElementById('actualButtons').style.display = 'none';
+            document.getElementById('menuSummaryText').innerText = summaryText;
+            document.getElementById('menuSummaryTextBottom').innerText = summaryText;
+            document.getElementById('menuSummary').style.display = 'flex';
+            document.getElementById('menuSummaryBottom').style.display = 'flex';
+            
+            const isPinnedMode = (currentMode === 'pinned');
+            document.getElementById('headerGoPinnedBtn').style.display = isPinnedMode ? 'none' : 'block'; 
+            document.getElementById('headerGoPinnedBtnBottom').style.display = isPinnedMode ? 'none' : 'block'; 
+            
+            document.getElementById('headerUnpinBtn').style.display = isPinnedMode ? 'block' : 'none';
+            document.getElementById('headerUnpinBtnBottom').style.display = isPinnedMode ? 'block' : 'none';
+
+            toggleMainImageVisibility();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function resetView() {
+            const cards = document.querySelectorAll('.phrase-card');
+            const searchBox = document.getElementById('liveSearchBox');
+            if(searchBox) searchBox.value = ''; 
+            const btnContainer = document.getElementById('actualButtons');
+            if (btnContainer) btnContainer.classList.remove('is-searching');
+
+            currentActiveCategory = '';
+            currentMode = 'category';
+
+            if(isSingleColumnMode) {
+                cards.forEach(card => card.style.display = 'block');
+            } else {
+                cards.forEach(card => card.style.display = 'none');
+            }
+            document.getElementById('actualButtons').style.display = 'flex';
+            document.getElementById('menuSummary').style.display = 'none';
+            document.getElementById('menuSummaryBottom').style.display = 'none';
+            
+            toggleMainImageVisibility();
+            closeAllDropdowns();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function backToInputSetup() {
+            document.getElementById('appContainer').style.display = 'none';
+            document.getElementById('floatingControls').style.display = 'none';
+            document.getElementById('setupContainer').style.display = 'flex';
+            document.getElementById('rawData').value = '';
+            document.getElementById('showcaseImageUrl').value = '';
+            document.getElementById('customFilename').value = '';
+            document.getElementById('customFilename').focus();
+        }
+
+        function downloadCurrentAsImage() {
+            const target = document.getElementById('captureTarget');
+            const visibleCards = Array.from(target.querySelectorAll('.phrase-card')).filter(c => c.style.display !== 'none');
+            if (visibleCards.length === 0) return alert("There are no visible phrases to export!");
+
+            const generateCanvas = () => {
+                target.classList.add('hide-pins-snapshot');
+                
+                // Dynamically prepends header context block to target image if inside a specific view mode
+                let tempHeader = null;
+                if (currentMode === 'category' && currentActiveCategory !== '') {
+                    tempHeader = document.createElement('div');
+                    tempHeader.className = 'export-snapshot-header';
+                    tempHeader.innerText = currentActiveCategory;
+                    target.insertBefore(tempHeader, target.firstChild);
+                } else if (currentMode === 'pinned') {
+                    tempHeader = document.createElement('div');
+                    tempHeader.className = 'export-snapshot-header';
+                    tempHeader.style.backgroundColor = 'var(--pinned-color)';
+                    tempHeader.innerText = '📌 Pinned Clipboard';
+                    target.insertBefore(tempHeader, target.firstChild);
+                }
+
+                html2canvas(target, { backgroundColor: "#f8f9fa", scale: 2, useCORS: true }).then(canvas => {
+                    target.classList.remove('hide-pins-snapshot');
+                    if (tempHeader) tempHeader.remove(); // tidy up interface right after execution
+                    
+                    const imgData = canvas.toDataURL('image/png');
+                    const link = document.createElement('a');
+                    link.href = imgData;
+                    link.download = `phrases_export_${currentMode}.png`;
+                    link.click();
+                }).catch(() => {
+                    target.classList.remove('hide-pins-snapshot');
+                    if (tempHeader) tempHeader.remove();
+                });
+            };
+
+            if (typeof html2canvas === 'undefined') {
+                const script = document.createElement('script');
+                script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
+                script.onload = generateCanvas;
+                document.head.appendChild(script);
+            } else {
+                generateCanvas();
+            }
+        }
+    </script>
+
+</body></html>
