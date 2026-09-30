@@ -1,7 +1,7 @@
 <html lang="es"><head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title id="page-title">Unjumble - Texto</title>
+    <title id="page-title">Unjumble - Text</title>
     <style>
         :root {
             --primary: #3b82f6;
@@ -28,7 +28,7 @@
             background-color: var(--background);
             color: var(--text);
             min-height: 100vh;
-            padding: 10px;
+            padding: 8px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -38,20 +38,30 @@
         .container {
             width: 100%;
             max-width: 600px;
+            min-height: calc(100vh - 16px);
             background: var(--card);
             border-radius: 16px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-            padding: 15px;
-            margin-top: 10px;
+            padding: 12px 12px 10px 12px;
+            margin-top: 0;
             display: flex;
             flex-direction: column;
             position: relative;
         }
 
-        h1 { font-size: 20px; text-align: center; margin-bottom: 8px; padding-top: 5px; }
-        p.subtitle { color: var(--text-light); text-align: center; margin-bottom: 15px; font-size: 13px; }
+        h1 { font-size: 20px; text-align: center; margin-bottom: 6px; padding-top: 4px; }
+        p.subtitle { color: var(--text-light); text-align: center; margin-bottom: 12px; font-size: 13px; }
 
-        #setup-screen, #student-start-screen, #game-screen, #results-screen { display: none; }
+        /* Pantallas ocultas por defecto */
+        #setup-screen, #student-start-screen, #game-screen, #results-screen { 
+            display: none; 
+        }
+
+        #game-screen {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
 
         input[type="text"], textarea { 
             width: 100%; 
@@ -67,13 +77,18 @@
         }
 
         .view-section { display: none; }
-        .view-section.active { display: flex; flex-direction: column; gap: 15px; }
+        .view-section.active { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 8px; 
+            flex: 1;
+        }
 
         /* QR Ajustado */
         .qr-container {
             position: absolute;
-            top: 12px;
-            right: 12px;
+            top: 10px;
+            right: 10px;
             cursor: pointer;
             z-index: 50;
             background: white;
@@ -111,16 +126,20 @@
             box-shadow: 0 10px 25px rgba(0,0,0,0.3);
         }
 
-        /* Estilos del Lienzo Libre Adaptativo */
+        /* Tablero Amarillo - Solo visible al iniciar el juego dentro de #game-screen */
         .canvas-area {
             width: 100%;
-            height: auto;
+            min-height: 68vh;
+            max-height: 84vh;
+            flex: 1;
             background: #fef08a;
             border: 2px dashed #facc15;
+            border-bottom: 4px solid #ca8a04;
             border-radius: 12px;
             position: relative;
-            overflow: hidden;
-            transition: height 0.3s ease;
+            overflow-y: auto;
+            overflow-x: hidden;
+            touch-action: pan-y;
         }
 
         /* Estilos de las fichas */
@@ -183,7 +202,7 @@
         .popup-close { position: absolute; top: 8px; right: 12px; background: none; border: none; font-size: 18px; font-weight: bold; color: #94a3b8; cursor: pointer; width: auto; padding: 0; }
 
         /* Estilos del Tablero Final */
-        .word-slots-container { background: #f8fafc; border: 2px solid #cbd5e1; border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+        .word-slots-container { background: #f8fafc; border: 2px solid #cbd5e1; border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 8px; flex: 1; overflow-y: auto; }
         .slot-wrapper { display: flex; flex-direction: column; width: 100%; position: relative; }
         .slot-underline { width: 100%; height: 2px; background-color: #cbd5e1; margin-top: 4px; }
         .slot-wrapper.has-word .slot-underline { background-color: transparent; }
@@ -235,7 +254,7 @@
             pointer-events: none;
         }
 
-        .btn-container { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+        .btn-container { display: flex; gap: 8px; flex-wrap: wrap; margin-top: auto; padding-top: 4px; }
         button { flex: 1; padding: 12px; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
         .btn-primary { background-color: var(--primary); color: white; }
         .btn-success { background-color: var(--success); color: white; }
@@ -269,29 +288,32 @@
             <canvas id="qr-mini-canvas" style="width: 42px; height: 42px; display: block;"></canvas>
         </div>
 
+        <!-- Pantalla de Configuración (Profesor) -->
         <div id="setup-screen" style="display: block;">
-            <h1>Unjumble: Texto</h1>
-            <p class="subtitle">Configura el título y los elementos/líneas.</p>
-            <input type="text" id="song-title-input" placeholder="Título del texto">
-            <textarea id="sentences-input" placeholder="Línea 1 del texto
-Línea 2 del texto
-Línea 3 del texto..."></textarea>
+            <h1>Unjumble: Canción</h1>
+            <p class="subtitle">Configura el título y las estrofas/líneas.</p>
+            <input type="text" id="song-title-input" placeholder="Título de la canción (Ej: Imagine)">
+            <textarea id="sentences-input" placeholder="Línea 1 del tema
+Línea 2 del tema
+Línea 3 del tema..."></textarea>
             <div class="btn-container">
                 <button class="btn-primary" onclick="launchGame()">Probar Juego</button>
                 <button class="btn-secondary" onclick="exportToHTML()">Exportar HTML</button>
             </div>
         </div>
 
-        <div id="student-start-screen" style="text-align:center; padding-top: 25px;">
-            <h1 id="student-game-headline" style="font-size: 24px; margin-top: 20px; margin-bottom: 10px;">Unjumble - sadfsdf</h1>
+        <!-- Pantalla de Inicio del Alumno (Sin tablero amarillo todavía) -->
+        <div id="student-start-screen" style="text-align: center; padding-top: 25px; display: none;">
+            <h1 id="student-game-headline" style="font-size: 24px; margin-top: 20px; margin-bottom: 10px;">Unjumble - Canción</h1>
             <button class="btn-success" style="margin: 40px auto; min-width: 140px; font-size: 18px; letter-spacing: 1px; border-radius: 30px;" onclick="startPreloadedGame()">GO</button>
         </div>
 
+        <!-- Pantalla de Juego (Contiene el tablero amarillo) -->
         <div id="game-screen" style="display: none;">
             <div id="view-workspace" class="view-section active">
-                <div id="canvas-container" class="canvas-area" style="height: 360px;"><div class="canvas-token" style="left: 293.948px; top: 19.8278px;">Hallo, was darf's sein?</div><div class="canvas-token" style="left: 294.533px; top: 184.257px;">Ich hätte gerne eine Apfelschorle, bitte.</div><div class="canvas-token" style="left: 294.237px; top: 293.627px;">Kommt sofort! Hier bitte.</div><div class="canvas-token" style="left: 9.11642px; top: 71.882px;">Was kostet das?</div><div class="canvas-token" style="left: 297.49px; top: 235.969px;">5€</div><div class="canvas-token" style="left: 13.6456px; top: 182.305px;">Ah! Moment! Sorry, ich möchte auch eine Brezel</div><div class="canvas-token" style="left: 294.247px; top: 71.8745px;">Eine Brezel, hier bitte.</div><div class="canvas-token" style="left: 8.5852px; top: 17.3448px;">Was kosten die Schorle und die Brezel?</div><div class="canvas-token" style="left: 8.92507px; top: 239.496px;">10€</div><div class="canvas-token" style="left: 294.695px; top: 129.149px;">Hier bitte</div><div class="canvas-token" style="left: 12.2263px; top: 128.133px;">Danke!</div><div class="canvas-token" style="left: 8.01188px; top: 293.907px;">Danke, Tschüss!</div></div>
+                <div id="canvas-container" class="canvas-area"></div>
                 <div class="btn-container">
-                    <button id="btn-start-transmit" class="btn-primary" onclick="enableTransmitMode()" style="display: flex;">➡️️ CHECK</button>
+                    <button id="btn-start-transmit" class="btn-primary" onclick="enableTransmitMode()">➡️ CHECK</button>
                 </div>
             </div>
 
@@ -302,11 +324,12 @@ Línea 3 del texto..."></textarea>
                 </div>
             </div>
 
-            <div class="btn-container" id="back-button-container" style="border-top: 1px solid var(--border); padding-top: 10px; margin-top: 15px;">
+            <div class="btn-container" id="back-button-container" style="border-top: 1px solid var(--border); padding-top: 8px; margin-top: 10px;">
                 <button class="btn-secondary" style="width:100%;" onclick="returnToSetup()">← Volver Atrás</button>
             </div>
         </div>
 
+        <!-- Pantalla de Resultados -->
         <div id="results-screen" style="display: none;">
             <div id="victory-emoji" class="victory-trophy">🏆</div>
             <div id="results-full-text-box" class="full-text-result-box"></div>
@@ -330,11 +353,11 @@ Línea 3 del texto..."></textarea>
     </div>
 
     <script>
-        const PRELOADED_SENTENCES = ["Hallo, was darf's sein?","Ich hätte gerne eine Apfelschorle, bitte.","Kommt sofort! Hier bitte.","Was kostet das?","5€","Ah! Moment! Sorry, ich möchte auch eine Brezel","Eine Brezel, hier bitte.","Was kosten die Schorle und die Brezel?","10€","Hier bitte","Danke!","Danke, Tschüss!"];
-        const PRELOADED_TITLE = "sadfsdf";
+        const PRELOADED_SENTENCES = ["Hallo, was darf's sein?","Ich hätte gerne eine Mangoschorle, bitte.","Kommt sofort! Hier bitte.","Was kostet das?","5€","Ah! Moment! Sorry, ich möchte auch eine Brezel","Eine Brezel, hier bitte.","Was kosten die Schorle und die Brezel?","10€","Hier bitte","Danke!","Danke, Tschüss!"];
+        const PRELOADED_TITLE = "Rollenspiel_schwierig";
 
         let originalCleanLines = []; 
-        let currentSongTitle = "Texto";
+        let currentSongTitle = "Canción";
         let currentTab = 'workspace';
         
         let tokensData = []; 
@@ -345,14 +368,14 @@ Línea 3 del texto..."></textarea>
         let transmitSequence = []; 
 
         window.addEventListener('DOMContentLoaded', () => {
+            hideAllScreens();
             if (Array.isArray(PRELOADED_SENTENCES) && PRELOADED_SENTENCES.length > 0) {
                 originalCleanLines = [...PRELOADED_SENTENCES];
-                currentSongTitle = PRELOADED_TITLE || "Texto";
+                currentSongTitle = PRELOADED_TITLE || "Canción";
                 
                 document.getElementById('page-title').textContent = "Unjumble - " + currentSongTitle;
                 document.getElementById('student-game-headline').textContent = "Unjumble - " + currentSongTitle;
 
-                document.getElementById('setup-screen').style.display = 'none';
                 document.getElementById('creation-reset-btn').style.display = 'none'; 
                 document.getElementById('back-button-container').style.display = 'none';
                 document.getElementById('student-start-screen').style.display = 'block';
@@ -363,6 +386,13 @@ Línea 3 del texto..."></textarea>
                 document.getElementById('setup-screen').style.display = 'block';
             }
         });
+
+        function hideAllScreens() {
+            document.getElementById('setup-screen').style.display = 'none';
+            document.getElementById('student-start-screen').style.display = 'none';
+            document.getElementById('game-screen').style.display = 'none';
+            document.getElementById('results-screen').style.display = 'none';
+        }
 
         function generateQR() {
             const currentUrl = window.location.href;
@@ -380,7 +410,7 @@ Línea 3 del texto..."></textarea>
         function closeQrLightbox() { document.getElementById('qr-lightbox-overlay').style.display = 'none'; }
 
         function startPreloadedGame() {
-            document.getElementById('student-start-screen').style.display = 'none';
+            hideAllScreens();
             document.getElementById('qr-widget').style.display = 'none'; 
             document.getElementById('main-container').classList.remove('has-qr');
             setupGameSession();
@@ -392,17 +422,17 @@ Línea 3 del texto..."></textarea>
             if (!inputText) return alert('Texto vacío.');
             
             originalCleanLines = inputText.split('\n').map(s => s.trim()).filter(s => s.length > 0);
-            currentSongTitle = inputTitle || "Texto";
+            currentSongTitle = inputTitle || "Canción";
 
             document.getElementById('page-title').textContent = "Unjumble - " + currentSongTitle;
             document.getElementById('student-game-headline').textContent = "Unjumble - " + currentSongTitle;
 
-            document.getElementById('setup-screen').style.display = 'none';
+            hideAllScreens();
             setupGameSession();
         }
 
         function setupGameSession() {
-            document.getElementById('game-screen').style.display = 'block';
+            document.getElementById('game-screen').style.display = 'flex';
             document.getElementById('results-screen').style.display = 'none';
             
             const total = originalCleanLines.length;
@@ -413,22 +443,19 @@ Línea 3 del texto..."></textarea>
             const canvasContainer = document.getElementById('canvas-container');
             const availableWidth = canvasContainer.clientWidth || 340;
             
-            // Si son más de 6 elementos, los organizamos en 2 columnas para no hacer el tablón excesivamente largo
             let cols = total > 6 ? 2 : 1;
             let rows = Math.ceil(total / cols);
             let rowHeight = 55; 
-            let calculatedHeight = (rows * rowHeight) + 30;
-
-            // La altura del tablón se adapta exactamente al número de fichas
-            canvasContainer.style.height = calculatedHeight + 'px';
+            
+            canvasContainer.style.minHeight = Math.max(360, rows * rowHeight + 40) + 'px';
 
             tokensData = originalCleanLines.map((text, i) => {
                 let visualPos = indicesOrder.indexOf(i);
                 let col = visualPos % cols;
                 let row = Math.floor(visualPos / cols);
 
-                let posX = (col * (availableWidth / cols)) + 8 + (Math.random() * 6);
-                let posY = 15 + (row * rowHeight) + (Math.random() * 5);
+                let posX = (col * (availableWidth / cols)) + 8 + (Math.random() * 8);
+                let posY = 15 + (row * rowHeight) + (Math.random() * 6);
 
                 return {
                     id: i,
@@ -537,8 +564,8 @@ Línea 3 del texto..."></textarea>
                         let newLeft = initialLeft + deltaX;
                         let newTop = initialTop + deltaY;
 
-                        let maxLeft = canvas.clientWidth - token.clientWidth - 5;
-                        let maxTop = canvas.clientHeight - token.clientHeight - 5;
+                        let maxLeft = canvas.scrollWidth - token.clientWidth - 5;
+                        let maxTop = canvas.scrollHeight - token.clientHeight - 5;
 
                         if (newLeft < 5) newLeft = 5;
                         if (newTop < 5) newTop = 5;
@@ -752,7 +779,7 @@ Línea 3 del texto..."></textarea>
         }
 
         function stopAndScore(isVictory) {
-            document.getElementById('game-screen').style.display = 'none';
+            hideAllScreens();
             document.getElementById('results-screen').style.display = 'block';
             
             const fullTextLines = [];
@@ -776,19 +803,18 @@ Línea 3 del texto..."></textarea>
         }
 
         function returnToSetup() {
-            document.getElementById('game-screen').style.display = 'none';
-            document.getElementById('results-screen').style.display = 'none';
+            hideAllScreens();
             document.getElementById('setup-screen').style.display = 'block';
             document.getElementById('qr-widget').style.display = 'none';
             document.getElementById('main-container').classList.remove('has-qr');
-            document.getElementById('page-title').textContent = "Unjumble - Texto";
+            document.getElementById('page-title').textContent = "Unjumble - Canción";
         }
 
         function restartSameGame() { setupGameSession(); }
 
         function exportToHTML() {
             const inputText = document.getElementById('sentences-input').value.trim();
-            const inputTitle = document.getElementById('song-title-input').value.trim() || "texto";
+            const inputTitle = document.getElementById('song-title-input').value.trim() || "cancion";
             if (!inputText) return alert('Escribe texto primero.');
             
             const linesArray = inputText.split('\n').map(s => s.trim()).filter(s => s.length > 0);
