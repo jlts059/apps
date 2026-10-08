@@ -5,6 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Apps</title>
 
+<!-- ACCESO -->
+    <script>
+        // Cambia "profe2026" por la clave que prefieras usar en tu URL
+        const CLAVE_SECRETA = "468"; 
+
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('acceso') !== CLAVE_SECRETA) {
+            window.stop(); // Detiene la carga del resto del documento
+            document.documentElement.innerHTML = `
+                <head><title>404 Not Found</title></head>
+                <body style="font-family: sans-serif; padding: 40px; background: #fff; color: #000;">
+                    <h1>404</h1>
+                    <p>File not found</p>
+                </body>
+            `;
+        }
+
     <!-- Favicon link tags -->
     <link rel="icon" type="image/png" href="favicon.png">
     <link rel="apple-touch-icon" href="favicon.png">
