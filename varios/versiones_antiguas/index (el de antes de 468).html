@@ -5,31 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Apps</title>
 
-<!-- CONTROL DE ACCESO / BLOQUEO -->
-<style id="lock-style">
-    /* Oculta absolutamente todo el contenido de la página por defecto */
-    html { display: none !important; }
-</style>
-
-<script>
-    (function() {
-        const CLAVE_SECRETA = "468"; 
-        const params = new URLSearchParams(window.location.search);
-
-        if (params.get('acceso') === CLAVE_SECRETA) {
-            // Si la clave es correcta, muestra la página eliminando la regla de CSS
-            document.addEventListener("DOMContentLoaded", function() {
-                const style = document.getElementById('lock-style');
-                if (style) style.remove();
-            });
-        } else {
-            // Si la clave no es correcta, detiene la ejecución y redirige
-            window.stop();
-            window.location.replace("https://jlts059.github.io/apps/404");
-        }
-    })();
-</script>
-
     <!-- Favicon link tags -->
     <link rel="icon" type="image/png" href="favicon.png">
     <link rel="apple-touch-icon" href="favicon.png">
