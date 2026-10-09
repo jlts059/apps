@@ -47,17 +47,38 @@
         h1 { border-bottom: 2px solid #333; padding-bottom: 10px; text-align: center; color: #2c3e50; }
         
         /* Contenedor único para todas las pestañas */
-        .tabs-container { margin-bottom: 20px; border-bottom: 2px solid #ddd; padding-bottom: 15px; }
+        .tabs-container { margin-bottom: 20px; border-bottom: 2px solid #ddd; padding-bottom: 15px; position: relative; }
         
         /* Pestañas compactas forzadas en una sola fila horizontal */
-        .tabs { display: flex; flex-wrap: nowrap; gap: 6px; overflow-x: auto; padding-bottom: 5px; }
+        .tabs { display: flex; flex-wrap: nowrap; gap: 6px; overflow-x: auto; padding-bottom: 5px; align-items: center; }
         .tab-button {
             padding: 10px 12px; cursor: pointer; border: none; background: #eee;
             border-radius: 8px; font-weight: bold; transition: 0.3s; font-size: 0.9em;
-            white-space: nowrap;
+            white-space: nowrap; flex-shrink: 0;
         }
         .tab-button.active { background: #0366d6; color: white; }
         .tab-button:hover:not(.active) { background: #ddd; }
+
+        /* Contenedor de la barra de búsqueda rápida */
+        .search-container { position: relative; flex-shrink: 0; }
+        .search-input {
+            padding: 10px 12px; border: 1px solid #ccc; background: #fff;
+            border-radius: 8px; font-weight: 500; font-size: 0.9em; outline: none;
+            width: 130px; transition: 0.3s; box-sizing: border-box;
+        }
+        .search-input:focus { border-color: #0366d6; box-shadow: 0 0 0 2px rgba(3,102,214,0.2); }
+        .search-results {
+            position: absolute; top: 100%; left: 0; right: 0; min-width: 260px;
+            background: white; border: 1px solid #cbd5e1; border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15); margin-top: 5px; z-index: 1000;
+            max-height: 300px; overflow-y: auto; display: none;
+        }
+        .search-results a {
+            display: flex; align-items: center; padding: 10px 12px; text-decoration: none;
+            color: #333; font-size: 0.9em; border-bottom: 1px solid #f1f5f9; transition: 0.2s;
+        }
+        .search-results a:last-child { border-bottom: none; }
+        .search-results a:hover { background: #f1f5f9; color: #0366d6; }
 
         .tab-content { display: none; animation: fadeIn 0.5s; }
         .tab-content.active { display: block; }
@@ -133,7 +154,12 @@
     <div id="loading">Conectando con tu repositorio...</div>
     
     <div class="tabs-container" id="menu-wrapper" style="display: none;">
-        <div id="main-tabs" class="tabs"></div>
+        <div id="main-tabs" class="tabs">
+            <div class="search-container">
+                <input type="text" id="file-search" class="search-input" placeholder="🔍 Buscar..." autocomplete="off">
+                <div id="search-results" class="search-results"></div>
+            </div>
+        </div>
     </div>
 
     <div id="contents-container"></div>
@@ -141,6 +167,7 @@
     <script>
         const repoOwner = 'jlts059';
         const repoName = 'apps';
+        let allHtmlFiles = [];
 
         const tabEmojis = {
             'aleman': '🍺',
@@ -188,16 +215,16 @@
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('menu-wrapper').style.display = 'block';
 
-                const htmlFiles = items.filter(item => 
+                allHtmlFiles = items.filter(item => 
                     item.type === 'blob' && 
                     item.path.endsWith('.html') && 
                     !item.path.toLowerCase().endsWith('index.html')
                 );
 
-                htmlFiles.sort((a, b) => a.path.localeCompare(b.path));
+                allHtmlFiles.sort((a, b) => a.path.localeCompare(b.path));
 
                 const listasCreadas = new Set();
-                htmlFiles.forEach(item => {
+                allHtmlFiles.forEach(item => {
                     const info = analizarRuta(item.path);
                     if (!listasCreadas.has(info.nombreTab)) {
                         createTab(info.nombreTab);
@@ -208,7 +235,7 @@
                 // Crear la pestaña fija "in-out" a la derecha del todo
                 createTab('in-out', true); 
 
-                htmlFiles.forEach(item => {
+                allHtmlFiles.forEach(item => {
                     const info = analizarRuta(item.path);
                     renderFile(item, info.nombreTab, info.subGrupo);
                 });
@@ -218,10 +245,59 @@
                     openTab(primeraTab);
                 }
 
+                setupLiveSearch();
+
             } catch (error) {
                 console.error(error);
                 document.getElementById('loading').innerText = "Cargando tus aplicaciones...";
             }
+        }
+
+        function setupLiveSearch() {
+            const searchInput = document.getElementById('file-search');
+            const searchResults = document.getElementById('search-results');
+
+            searchInput.addEventListener('input', function() {
+                const query = this.value.trim().toLowerCase();
+                searchResults.innerHTML = '';
+
+                if (!query) {
+                    searchResults.style.display = 'none';
+                    return;
+                }
+
+                const matches = allHtmlFiles.filter(file => {
+                    const fileName = file.path.split('/').pop().toLowerCase();
+                    return fileName.includes(query);
+                });
+
+                if (matches.length === 0) {
+                    searchResults.innerHTML = '<div style="padding:10px; color:#888; font-size:0.85em; text-align:center;">Sin resultados</div>';
+                } else {
+                    matches.forEach(file => {
+                        const link = document.createElement('a');
+                        link.href = `https://${repoOwner}.github.io/${repoName}/${file.path}`;
+                        const fileName = file.path.split('/').pop();
+                        const cleanName = fileName.replace('.html', '').replace(/-/g, ' ');
+
+                        let fileIcon = '📄';
+                        const n = fileName.toLowerCase();
+                        if (n.includes('ruleta') || n.includes('wheel')) fileIcon = '🎲';
+                        if (n.includes('quiz')) fileIcon = '📝';
+                        if (n.includes('qr') || n.includes('drive')) fileIcon = '🔳';
+
+                        link.innerHTML = `<span class="icon" style="margin-right:8px;">${fileIcon}</span> ${cleanName}`;
+                        searchResults.appendChild(link);
+                    });
+                }
+                searchResults.style.display = 'block';
+            });
+
+            document.addEventListener('click', function(e) {
+                if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+                    searchResults.style.display = 'none';
+                }
+            });
         }
 
         function createTab(name, sinEmoji = false) {
@@ -231,19 +307,19 @@
             if (document.getElementById(`btn-${name}`)) return;
 
             const cleanKey = name.toLowerCase();
-const emoji = sinEmoji ? '' : (tabEmojis[cleanKey] || '📁 ');
+            const emoji = sinEmoji ? '' : (tabEmojis[cleanKey] || '📁 ');
 
-// Determine the display name, but force it to be blank for 'me' or 'varios'
-let displayName = (name === 'in-out') ? name : (name.charAt(0).toUpperCase() + name.slice(1).replace(/_/g, ' '));
-if (cleanKey === 'me' || cleanKey === 'varios') {
-    displayName = '';
-}
+            // Determine the display name, but force it to be blank for 'me' or 'varios'
+            let displayName = (name === 'in-out') ? name : (name.charAt(0).toUpperCase() + name.slice(1).replace(/_/g, ' '));
+            if (cleanKey === 'me' || cleanKey === 'varios') {
+                displayName = '';
+            }
 
-const btn = document.createElement('button');
-btn.className = 'tab-button';
-btn.id = `btn-${name}`;
-// If displayName is empty, it will just render the emoji safely
-btn.innerHTML = `${emoji}${displayName}`.trim();
+            const btn = document.createElement('button');
+            btn.className = 'tab-button';
+            btn.id = `btn-${name}`;
+            // If displayName is empty, it will just render the emoji safely
+            btn.innerHTML = `${emoji}${displayName}`.trim();
             btn.onclick = () => openTab(name);
             tabsContainer.appendChild(btn);
 
