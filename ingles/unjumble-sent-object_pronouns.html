@@ -3,50 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ingr_Object Pronouns</title>
+    <title>Object Pronouns</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
         :root {
             --color-go: #16a34a; --color-shuffle: #7c3aed; --color-stop: #dc2626;
-            --color-pass: #d97706; --color-next: #2563eb; --color-orange-active: #ea580c; --color-lila-drag: #9333ea;
+            --color-pass: #d97706; --color-ok: #16a34a; --color-orange-active: #ea580c; --color-lila-drag: #9333ea;
         }
         body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background-color: #f8fafc; color: #1e293b; }
         .tabular-nums { font-variant-numeric: tabular-nums; }
         .word-token { user-select: none; -webkit-user-select: none; touch-action: none; transition: all 0.15s ease; cursor: pointer; }
-        .token-pool { background-color: #ffffff; border: 2px solid #cbd5e1; color: #1e293b; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .token-placed { background-color: #ffffff; border: 2px solid #64748b; color: #0f172a; font-weight: 600; }
+        .token-pool { background-color: #ffffff; border: 2px solid #cbd5e1; color: #0f172a; font-weight: 700; }
+        .token-placed { background-color: #ffffff; border: 2px solid #3b82f6; color: #0f172a; font-weight: 700; }
         .token-orange { background-color: #fff7ed !important; border-color: var(--color-orange-active) !important; color: #c2410c !important; box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.2); }
         .token-lila { background-color: #faf5ff !important; border-color: var(--color-lila-drag) !important; color: #7e22ce !important; opacity: 0.85; transform: scale(1.05); z-index: 20; }
         .token-preview-shift { opacity: 0.4; transform: scale(0.95); }
         .token-correct { background-color: #f0fdf4 !important; border-color: #16a34a !important; color: #15803d !important; }
         .token-incorrect { background-color: #fef2f2 !important; border-color: #dc2626 !important; color: #b91c1c !important; }
-        .empty-slot { background-color: #f1f5f9; border: 2px dashed #cbd5e1; color: transparent; }
+        .empty-slot { background-color: #f8fafc; border: 2px dashed #cbd5e1; color: transparent; }
         body.dragging-active { user-select: none; -webkit-user-select: none; }
     </style>
 </head>
-<body class="min-h-screen flex flex-col justify-between p-4 sm:p-6">
+<body class="min-h-screen flex flex-col justify-between p-3 sm:p-6">
     <div class="max-w-2xl mx-auto w-full my-auto">
         <div id="game-mount"></div>
     </div>
 
+    <!-- INSTRUCTIONS MODAL (SPANISH WITH "ELEMENTO") -->
     <div id="modal-info" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl relative">
-            <button onclick="closeModals()" class="absolute top-4 right-4 text-slate-400 font-bold text-lg">✕</button>
-            <h3 class="text-lg font-bold text-slate-800 mb-3 flex items-center gap-2"><span>ℹ️</span> How to Play</h3>
-            <div class="text-xs sm:text-sm text-slate-600 space-y-2 leading-relaxed">
-                <p><strong>1. Tap to Move:</strong> Tap any word in the pool to send it to the next empty slot.</p>
-                <p><strong>2. Select & Swap:</strong> Tap a placed word (<span class="text-orange-600 font-bold">orange</span>) and then tap another word or empty slot to swap.</p>
-                <p><strong>3. Long-Press & Drag:</strong> Hold down on a placed word (<span class="text-purple-600 font-bold">purple</span>) and drag to insert and shift words.</p>
-                <p><strong>4. Auto-Validation:</strong> Sentence checks automatically when filled!</p>
+            <button onclick="closeModals()" class="absolute top-4 right-4 text-slate-400 font-bold text-xl leading-none">✕</button>
+            <h3 class="text-base sm:text-lg font-bold text-slate-900 mb-4 pr-6">Maneras de mover los elementos:</h3>
+            <div class="text-xs sm:text-sm text-slate-700 space-y-3.5 leading-relaxed">
+                <p><strong>1)</strong> Toca un elemento para que salte al siguiente hueco libre.</p>
+                <p><strong>2)</strong> Pica en un elemento <strong>ya colocado</strong> (cambiará a <span class="text-orange-600 font-bold">naranja</span>) y:</p>
+                <ul class="pl-5 space-y-1 list-disc text-slate-600">
+                    <li>vuelve a picar para de-seleccionar</li>
+                    <li>toca otro destino válido (otro elemento, un hueco o el cajón de sastre) para moverlo o intercambiarlo.</li>
+                </ul>
+                <p><strong>3)</strong> Pulsa primero un <strong>hueco vacío</strong> y luego un elemento para enviarlo allí.</p>
+                <p><strong>4)</strong> <strong>Mantén pulsado</strong> un elemento ya colocado (cambiará a <span class="text-purple-600 font-bold">lila</span>) y arrástralo para insertarlo y desplazar los otros elementos a la derecha.</p>
             </div>
         </div>
     </div>
 
     <div id="modal-qr" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl text-center relative">
-            <button onclick="closeModals()" class="absolute top-4 right-4 text-slate-400 font-bold text-lg">✕</button>
+            <button onclick="closeModals()" class="absolute top-4 right-4 text-slate-400 font-bold text-xl leading-none">✕</button>
             <h3 class="text-base font-bold text-slate-800 mb-4">Scan QR Code to Share</h3>
             <div id="qr-modal-canvas" class="flex justify-center mb-5 p-3 bg-white border border-slate-200 rounded-xl"></div>
             <button onclick="downloadQRImage()" class="w-full bg-slate-800 text-white font-bold py-2.5 px-4 rounded-xl text-sm">
@@ -57,25 +62,23 @@
 
     <script>
         const GAME_CONFIG = {
-            title: "ingr_Object Pronouns",
-            language: "English",
+            title: "Object Pronouns",
             safeTitle: "object_pronouns",
-            items: [{"clue":"","sentence":"They sent it to me"},{"clue":"","sentence":"I gave them to my mum"},{"clue":"","sentence":"She found them for me"},{"clue":"","sentence":"My grandmother wrote them to me"},{"clue":"","sentence":"Will you lend it to him"},{"clue":"","sentence":"My son made it for me"},{"clue":"","sentence":"My parents offered it to us"},{"clue":"","sentence":"We didn’t buy it for our daughter"},{"clue":"","sentence":"I read it to the children"},{"clue":"","sentence":"A friend sold them to me"},{"clue":"","sentence":"He bought me a rose."},{"clue":"","sentence":"I'm going to lend her my camera."},{"clue":"","sentence":"They showed us their new flat."},{"clue":"","sentence":"I'll send you the document."},{"clue":"","sentence":"We brought him some books."},{"clue":"","sentence":"He bought it for me."},{"clue":"","sentence":"I'm going to lend it to her."},{"clue":"","sentence":"They showed it to us."},{"clue":"","sentence":"I'll send it to you."},{"clue":"","sentence":"We brought them for him."}]
+            items: [{"clue":"","sentence":"They sent it to me"},{"clue":"","sentence":"I gave them to my mum"},{"clue":"","sentence":"She found them for me"},{"clue":"","sentence":"My grandmother wrote them to me"},{"clue":"","sentence":"Will you lend it to him?"},{"clue":"","sentence":"My son made it for me"},{"clue":"","sentence":"My parents offered it to us"},{"clue":"","sentence":"We didn’t buy it for our daughter"},{"clue":"","sentence":"I read it to the children"},{"clue":"","sentence":"A friend sold them to me"},{"clue":"","sentence":"He bought me a rose"},{"clue":"","sentence":"I'm going to lend her my camera"},{"clue":"","sentence":"They showed us their new flat"},{"clue":"","sentence":"I'll send you the document"},{"clue":"","sentence":"We brought him some books"},{"clue":"","sentence":"He bought it for me"},{"clue":"","sentence":"I'm going to lend it to her"},{"clue":"","sentence":"They showed it to us"},{"clue":"","sentence":"I'll send it to you"},{"clue":"","sentence":"We brought them for him"}]
         };
 
         class UnjumbleGameEngine {
             constructor(containerId, config) {
                 this.container = document.getElementById(containerId);
                 this.title = config.title;
-                this.language = config.language;
-                this.items = JSON.parse(JSON.stringify(config.items)); // Deep clone
+                this.items = JSON.parse(JSON.stringify(config.items));
                 this.isPreview = config.isPreview || false;
 
                 this.currentIndex = 0;
                 this.secondsElapsed = 0;
                 this.timerInterval = null;
+                this.isGameComplete = false;
                 
-                // Interaction State variables
                 this.wordsData = [];
                 this.activeOrangeIndex = null;
 
@@ -92,56 +95,50 @@
             initHomeScreen() {
                 clearInterval(this.timerInterval);
                 this.container.innerHTML = `
-                    <div class="relative min-h-[360px] flex flex-col justify-between p-4 sm:p-6 bg-slate-50 rounded-2xl border border-slate-200">
-                        <!-- Top-Right Fixed Badge, QR & Info Bar -->
+                    <div class="relative min-h-[360px] flex flex-col justify-between p-4 sm:p-6 bg-white rounded-2xl">
+                        <!-- Top-Right Order: Badge (light grey text, no button background) -> Info -> QR -->
                         <div class="flex justify-between items-start mb-6">
-                            <div>
-                                <span class="bg-slate-200 text-slate-700 text-xs font-extrabold px-3 py-1 rounded-full uppercase tracking-wider">
-                                    ${this.language}
-                                </span>
-                            </div>
+                            <div></div>
                             <div class="flex items-center gap-2">
-                                <span class="bg-blue-100 text-blue-800 text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider">
-                                    UNJUMBLE / WORD ORDER
+                                <span class="text-xs font-bold text-slate-400 tracking-wider uppercase select-none px-1">
+                                    UNJUMBLE
                                 </span>
-                                <button onclick="showInfoModal()" class="text-xl p-1 hover:opacity-80 transition" title="Instructions">ℹ️</button>
-                                <div onclick="showQRModal()" class="w-9 h-9 bg-white border border-slate-300 rounded-lg p-1 cursor-pointer hover:scale-105 transition shadow-sm flex items-center justify-center" id="home-qr-box">
+                                <button onclick="showInfoModal()" class="w-7 h-7 bg-blue-500 text-white rounded-md flex items-center justify-center font-bold text-xs shadow-sm hover:bg-blue-600 transition" title="Instructions">i</button>
+                                <div onclick="showQRModal()" class="w-7 h-7 bg-white border border-slate-300 rounded-md p-0.5 cursor-pointer hover:scale-105 transition shadow-sm flex items-center justify-center" id="home-qr-box">
                                 </div>
                             </div>
                         </div>
 
                         <!-- Home Screen Content -->
-                        <div class="text-center my-auto py-6">
-                            <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mb-2">${this.title}</h2>
-                            <p class="text-sm text-slate-500 mb-8 font-medium">Rebuild sentences in the correct word order</p>
+                        <div class="text-center my-auto py-4">
+                            <h2 class="text-2xl sm:text-3xl font-black text-slate-900 mb-6">${this.title}</h2>
                             
-                            <div class="flex flex-wrap justify-center gap-4 max-w-xs mx-auto">
+                            <div class="flex flex-wrap justify-center gap-3 max-w-xs mx-auto">
                                 <button onclick="activeGameInstance.startGame(false)" 
                                     style="background-color: var(--color-go);"
-                                    class="w-full sm:w-auto flex-1 text-white font-extrabold py-3.5 px-6 rounded-xl shadow-md hover:brightness-110 transition text-base">
+                                    class="w-full sm:w-auto flex-1 text-white font-extrabold py-3 px-6 rounded-xl shadow hover:brightness-110 transition text-sm">
                                     GO
                                 </button>
                                 <button onclick="activeGameInstance.startGame(true)" 
                                     style="background-color: var(--color-shuffle);"
-                                    class="w-full sm:w-auto flex-1 text-white font-extrabold py-3.5 px-6 rounded-xl shadow-md hover:brightness-110 transition text-base">
+                                    class="w-full sm:w-auto flex-1 text-white font-extrabold py-3 px-6 rounded-xl shadow hover:brightness-110 transition text-sm">
                                     SHUFFLE
                                 </button>
                             </div>
                         </div>
 
                         <div class="text-xs text-center text-slate-400 font-medium pt-4">
-                            Total Sentences: ${this.items.length}
+                            Total: ${this.items.length}
                         </div>
                     </div>
                 `;
 
-                // Render Mini QR Code
                 const homeQr = this.container.querySelector("#home-qr-box");
                 if (homeQr) {
                     new QRCode(homeQr, {
                         text: window.location.href,
-                        width: 28,
-                        height: 28,
+                        width: 22,
+                        height: 22,
                         colorDark : "#0f172a",
                         colorLight : "#ffffff"
                     });
@@ -155,6 +152,7 @@
 
                 this.currentIndex = 0;
                 this.secondsElapsed = 0;
+                this.isGameComplete = false;
                 this.items.forEach(item => item.status = null);
 
                 this.startTimer();
@@ -175,61 +173,62 @@
 
             renderGameplayScreen() {
                 this.container.innerHTML = `
-                    <div class="bg-slate-50 rounded-2xl border border-slate-200 p-4 sm:p-6 relative min-h-[420px] flex flex-col justify-between">
+                    <div class="bg-white rounded-2xl p-3 sm:p-5 relative min-h-[380px] flex flex-col justify-between">
                         <!-- Gameplay Header -->
-                        <div class="flex items-start justify-between border-b border-slate-200 pb-4 mb-4 gap-2">
-                            <!-- Top Left: Counter & Timer -->
-                            <div class="flex flex-col">
-                                <span id="counter-display" class="text-base font-extrabold text-slate-800">1 / ${this.items.length}</span>
-                                <span id="game-timer-display" class="text-xs font-semibold text-slate-500 tabular-nums">00:00</span>
+                        <div class="flex items-start justify-between mb-4">
+                            <!-- Left: Counter above Timer -->
+                            <div class="flex flex-col leading-tight">
+                                <span id="counter-display" class="text-lg font-black text-slate-800">1 / ${this.items.length}</span>
+                                <span id="game-timer-display" class="text-xs font-semibold text-slate-400 tabular-nums">00:00</span>
                             </div>
 
-                            <!-- Header Center Badge -->
-                            <div class="text-center px-2">
-                                <span class="bg-blue-50 text-blue-700 text-[10px] sm:text-xs font-extrabold px-3 py-1 rounded-full uppercase tracking-wider border border-blue-200 inline-block">
-                                    UNJUMBLE / WORD ORDER
-                                </span>
+                            <!-- Center Prompt Clue -->
+                            <div class="text-center px-2 self-center flex-grow">
+                                <h3 id="clue-display" class="text-lg sm:text-xl font-black text-slate-900"></h3>
                             </div>
 
-                            <!-- Header Right: Info & QR -->
+                            <!-- Right Header Sequence: BADGE (light grey text) -> INFO -> QR -->
                             <div class="flex items-center gap-2">
-                                <button onclick="showInfoModal()" class="text-xl p-1 hover:opacity-80 transition">ℹ️</button>
-                                <div onclick="showQRModal()" class="w-8 h-8 bg-white border border-slate-300 rounded-lg p-0.5 cursor-pointer hover:scale-105 transition shadow-sm flex items-center justify-center" id="game-qr-box">
+                                <span class="text-xs font-bold text-slate-400 tracking-wider uppercase select-none px-1">
+                                    UNJUMBLE
+                                </span>
+                                <button onclick="showInfoModal()" class="w-7 h-7 bg-blue-500 text-white rounded-md flex items-center justify-center font-bold text-xs shadow-sm hover:bg-blue-600 transition" title="Instructions">i</button>
+                                <div onclick="showQRModal()" class="w-7 h-7 bg-white border border-slate-300 rounded-md p-0.5 cursor-pointer hover:scale-105 transition shadow-sm flex items-center justify-center" id="game-qr-box">
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Sentence Clue Display -->
-                        <div class="text-center mb-6">
-                            <h3 id="clue-display" class="text-base sm:text-lg font-bold text-slate-700 italic min-h-[28px]"></h3>
+                        <!-- Clean Word Board Area (Target Slot Container TOP, Word Pool BOTTOM) -->
+                        <div class="flex-grow flex flex-col justify-center my-4 space-y-4">
+                            <!-- Target Board Container (TOP Drop Zone / Gaps to fill in) -->
+                            <div id="target-board" 
+                                class="flex flex-wrap justify-center gap-2 min-h-[58px] p-3.5 bg-white rounded-2xl border-2 border-slate-200 items-center"></div>
+
+                            <!-- Pool Board Container (BOTTOM Drawer / Word Pool) -->
+                            <div id="pool-board" onclick="activeGameInstance.handlePoolAreaClick()" 
+                                class="flex flex-wrap justify-center gap-2 min-h-[58px] p-3.5 bg-slate-50/80 rounded-2xl border border-blue-200 items-center transition cursor-pointer"></div>
                         </div>
 
-                        <!-- Dynamic Word Board Area -->
-                        <div class="flex-grow flex flex-col justify-center mb-6">
-                            <!-- Target Slot Container -->
-                            <div class="mb-6">
-                                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-widest text-center mb-2">Reconstructed Sentence</label>
-                                <div id="target-board" class="flex flex-wrap justify-center gap-2 min-h-[58px] p-3 bg-white rounded-xl border-2 border-slate-200 items-center"></div>
-                            </div>
-
-                            <!-- Pool Tokens Container -->
-                            <div>
-                                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-widest text-center mb-2">Word Pool</label>
-                                <div id="pool-board" class="flex flex-wrap justify-center gap-2 min-h-[58px] p-3 bg-slate-100 rounded-xl border border-dashed border-slate-300 items-center"></div>
-                            </div>
-                        </div>
-
-                        <!-- Bottom Gameplay Control Buttons -->
-                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-4 border-t border-slate-200">
+                        <!-- Bottom Action Buttons Toolbar -->
+                        <div class="grid grid-cols-4 gap-2 pt-2 border-t border-slate-100">
+                            <button onclick="activeGameInstance.initHomeScreen()" 
+                                class="bg-slate-700 hover:bg-slate-800 text-white font-extrabold py-3 px-2 rounded-xl transition text-base flex items-center justify-center shadow-sm">
+                                ↩
+                            </button>
+                            <button onclick="activeGameInstance.checkManualValidation()" 
+                                style="background-color: var(--color-ok);"
+                                class="text-white font-black py-3 px-2 rounded-xl transition text-xs sm:text-sm flex items-center justify-center shadow-sm">
+                                OK?
+                            </button>
                             <button onclick="activeGameInstance.passCurrentSentence()" 
                                 style="background-color: var(--color-pass);"
-                                class="text-white font-bold py-2.5 px-4 rounded-xl shadow hover:brightness-110 transition text-sm flex items-center justify-center gap-1">
-                                <span>⏭️</span> PASS
+                                class="text-white font-black py-3 px-2 rounded-xl transition text-xs sm:text-sm flex items-center justify-center shadow-sm">
+                                PASS
                             </button>
                             <button onclick="activeGameInstance.stopAndScore()" 
                                 style="background-color: var(--color-stop);"
-                                class="text-white font-bold py-2.5 px-4 rounded-xl shadow hover:brightness-110 transition text-sm flex items-center justify-center gap-1 col-span-1 sm:col-span-2">
-                                <span>🛑</span> STOP & SCORE
+                                class="text-white font-black py-3 px-2 rounded-xl transition text-xs sm:text-xs md:text-sm flex items-center justify-center shadow-sm uppercase tracking-tight">
+                                STOP
                             </button>
                         </div>
                     </div>
@@ -239,8 +238,8 @@
                 if (gameQr) {
                     new QRCode(gameQr, {
                         text: window.location.href,
-                        width: 24,
-                        height: 24,
+                        width: 22,
+                        height: 22,
                         colorDark : "#0f172a",
                         colorLight : "#ffffff"
                     });
@@ -250,18 +249,17 @@
             loadCurrentSentence() {
                 this.activeOrangeIndex = null;
                 if (this.currentIndex >= this.items.length) {
+                    this.isGameComplete = true;
                     this.stopAndScore();
                     return;
                 }
 
                 const currentItem = this.items[this.currentIndex];
                 document.getElementById("counter-display").innerText = `${this.currentIndex + 1} / ${this.items.length}`;
-                document.getElementById("clue-display").innerText = currentItem.clue ? `"${currentItem.clue}"` : "";
+                document.getElementById("clue-display").innerText = currentItem.clue || "";
 
-                // Tokenize words from target sentence
                 const words = currentItem.sentence.split(/\s+/).filter(w => w.length > 0);
                 
-                // Shuffle pool words ensuring it doesn't match original if more than 1 word
                 let shuffled = [...words].sort(() => Math.random() - 0.5);
                 if (shuffled.join(" ") === words.join(" ") && words.length > 1) {
                     shuffled.reverse();
@@ -284,18 +282,18 @@
                 targetBoard.innerHTML = "";
                 poolBoard.innerHTML = "";
 
-                // Render Pool Tokens
+                // Render Pool Tokens (Drawer)
                 this.wordsData.pool.forEach(item => {
                     if (item.active) {
                         const token = document.createElement("div");
-                        token.className = "word-token token-pool px-3 py-2 rounded-lg text-sm font-semibold";
+                        token.className = "word-token token-pool px-3.5 py-2.5 rounded-xl text-base font-bold";
                         token.innerText = item.word;
                         token.onclick = (e) => this.handlePoolTokenClick(item, e);
                         poolBoard.appendChild(token);
                     }
                 });
 
-                // Render Target Slots
+                // Render Target Slots (Gaps)
                 const activeTarget = previewShiftData ? previewShiftData : this.wordsData.target;
 
                 activeTarget.forEach((item, lIdx) => {
@@ -303,13 +301,13 @@
                     token.setAttribute("data-lidx", lIdx);
 
                     if (item === null) {
-                        token.className = "word-token empty-slot px-4 py-2 rounded-lg text-sm font-semibold min-w-[50px] text-center";
-                        token.innerText = "___";
+                        token.className = "word-token empty-slot px-4 py-2.5 rounded-xl text-base font-bold min-w-[50px] text-center";
+                        token.innerText = "";
                         if (this.activeOrangeIndex === lIdx) {
                             token.classList.add("token-orange");
                         }
                     } else {
-                        token.className = "word-token token-placed px-3.5 py-2 rounded-lg text-sm";
+                        token.className = "word-token token-placed px-3.5 py-2.5 rounded-xl text-base";
                         token.innerText = item.word;
 
                         if (this.isDragging && this.dragStartIdx === lIdx) {
@@ -321,7 +319,6 @@
                         }
                     }
 
-                    // Pointer Events for Touch & Mouse Drag/Tap
                     token.addEventListener('pointerdown', (e) => this.onTargetPointerDown(e, lIdx));
                     token.addEventListener('pointermove', (e) => this.onTargetPointerMove(e));
                     token.addEventListener('pointerup', (e) => this.onTargetPointerUp(e, lIdx));
@@ -331,7 +328,6 @@
                 });
             }
 
-            // Pointer Event Handlers for Drag & Drop
             onTargetPointerDown(e, lIdx) {
                 if (this.wordsData.target[lIdx] !== null) {
                     e.target.setPointerCapture(e.pointerId);
@@ -431,7 +427,18 @@
                 return workingArr;
             }
 
-            // Click Interactions Logic
+            handlePoolAreaClick() {
+                // If an orange token is active in target, return it to pool area
+                if (this.activeOrangeIndex !== null && this.wordsData.target[this.activeOrangeIndex] !== null) {
+                    const targetItem = this.wordsData.target[this.activeOrangeIndex];
+                    const foundPool = this.wordsData.pool.find(p => p.id === targetItem.id);
+                    if (foundPool) foundPool.active = true;
+                    this.wordsData.target[this.activeOrangeIndex] = null;
+                    this.activeOrangeIndex = null;
+                    this.renderBoards();
+                }
+            }
+
             handlePoolTokenClick(poolItem, event) {
                 if (event) event.stopPropagation();
 
@@ -450,7 +457,6 @@
                     this.activeOrangeIndex = null;
                     this.renderBoards();
                 } else {
-                    // Find first open slot
                     const emptyIdx = this.wordsData.target.indexOf(null);
                     if (emptyIdx !== -1) {
                         this.wordsData.target[emptyIdx] = { id: poolItem.id, word: poolItem.word };
@@ -479,6 +485,11 @@
 
             handleFilledSlotClick(lIdx) {
                 if (this.activeOrangeIndex === lIdx) {
+                    // Tapping an active orange token sends it directly back to the pool
+                    const targetItem = this.wordsData.target[lIdx];
+                    const foundPool = this.wordsData.pool.find(p => p.id === targetItem.id);
+                    if (foundPool) foundPool.active = true;
+                    this.wordsData.target[lIdx] = null;
                     this.activeOrangeIndex = null;
                     this.renderBoards();
                 } else if (this.activeOrangeIndex !== null && this.wordsData.target[this.activeOrangeIndex] === null) {
@@ -488,7 +499,7 @@
                     this.renderBoards();
                     this.checkAutoValidation();
                 } else if (this.activeOrangeIndex !== null && this.wordsData.target[this.activeOrangeIndex] !== null) {
-                    // Swap two placed words
+                    // Swap placed tokens
                     const temp = this.wordsData.target[lIdx];
                     this.wordsData.target[lIdx] = this.wordsData.target[this.activeOrangeIndex];
                     this.wordsData.target[this.activeOrangeIndex] = temp;
@@ -496,40 +507,50 @@
                     this.renderBoards();
                     this.checkAutoValidation();
                 } else {
-                    this.activeOrangeIndex = lIdx;
+                    // Clicking any placed word returns it directly to pool or selects it
+                    // Sending directly back to pool on tap when not already orange
+                    const targetItem = this.wordsData.target[lIdx];
+                    const foundPool = this.wordsData.pool.find(p => p.id === targetItem.id);
+                    if (foundPool) foundPool.active = true;
+                    this.wordsData.target[lIdx] = null;
                     this.renderBoards();
                 }
             }
 
-            // Sentence Validation Logic
-            checkAutoValidation() {
-                if (this.wordsData.target.includes(null)) return; // All slots must be filled
+            checkManualValidation() {
+                this.checkAutoValidation(true);
+            }
 
-                const currentPlaced = this.wordsData.target.map(item => item.word).join(" ");
+            checkAutoValidation(isManual = false) {
+                if (this.wordsData.target.includes(null) && !isManual) return;
+
+                const currentPlaced = this.wordsData.target.filter(item => item !== null).map(item => item.word).join(" ");
                 const expected = this.wordsData.originalWords.join(" ");
                 const targetBoard = document.getElementById("target-board");
 
                 if (currentPlaced === expected) {
                     this.items[this.currentIndex].status = true;
 
-                    // Display Correct Green Visual Feedback
-                    Array.from(targetBoard.children).forEach(child => {
-                        child.className = "word-token token-correct px-3.5 py-2 rounded-lg text-sm font-bold";
-                    });
+                    if (targetBoard) {
+                        Array.from(targetBoard.children).forEach(child => {
+                            child.className = "word-token token-correct px-3.5 py-2.5 rounded-xl text-base font-bold";
+                        });
+                    }
 
                     setTimeout(() => {
                         this.currentIndex++;
                         this.loadCurrentSentence();
-                    }, 800);
-                } else {
-                    // Display Incorrect Red Visual Feedback
-                    Array.from(targetBoard.children).forEach((child, idx) => {
-                        if (this.wordsData.target[idx].word === this.wordsData.originalWords[idx]) {
-                            child.className = "word-token token-correct px-3.5 py-2 rounded-lg text-sm font-bold";
-                        } else {
-                            child.className = "word-token token-incorrect px-3.5 py-2 rounded-lg text-sm font-bold";
-                        }
-                    });
+                    }, 700);
+                } else if (isManual || !this.wordsData.target.includes(null)) {
+                    if (targetBoard) {
+                        Array.from(targetBoard.children).forEach((child, idx) => {
+                            if (this.wordsData.target[idx] && this.wordsData.target[idx].word === this.wordsData.originalWords[idx]) {
+                                child.className = "word-token token-correct px-3.5 py-2.5 rounded-xl text-base font-bold";
+                            } else if (this.wordsData.target[idx]) {
+                                child.className = "word-token token-incorrect px-3.5 py-2.5 rounded-xl text-base font-bold";
+                            }
+                        });
+                    }
                 }
             }
 
@@ -545,44 +566,40 @@
                 const sec = String(this.secondsElapsed % 60).padStart(2, '0');
                 const correctCount = this.items.filter(i => i.status === true).length;
 
+                // Minimalist Score Screen (Requirement 4 & 5 & 6)
                 this.container.innerHTML = `
-                    <div class="bg-white rounded-2xl border border-slate-200 p-6 text-center modal-fade">
-                        <div class="mb-4">
-                            <span class="text-5xl">🏆</span>
-                        </div>
-                        <h2 class="text-2xl font-extrabold text-slate-800 mb-1">Game Completed!</h2>
-                        <p class="text-sm text-slate-500 mb-6">Here is your sentence builder summary</p>
-
-                        <div class="flex justify-center gap-6 mb-8 bg-slate-50 p-4 rounded-xl border border-slate-100 max-w-xs mx-auto">
-                            <div>
-                                <div class="text-3xl font-black text-slate-800">${correctCount} / ${this.items.length}</div>
-                                <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mt-1">Score Ratio</div>
-                            </div>
-                            <div class="border-r border-slate-200"></div>
-                            <div>
-                                <div class="text-3xl font-black text-slate-800 tabular-nums">${min}:${sec}</div>
-                                <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mt-1">Time Elapsed</div>
-                            </div>
+                    <div class="bg-white rounded-2xl p-6 text-center modal-fade">
+                        <!-- MINIMALIST SCORE DISPLAY: 0/10🏆 \n 00:16 -->
+                        <div class="mb-6">
+                            <div class="text-4xl font-black text-slate-900 tracking-tight">${correctCount}/${this.items.length}🏆</div>
+                            <div class="text-base font-semibold text-slate-500 tabular-nums mt-1">${min}:${sec}</div>
                         </div>
 
-                        <!-- Results List Summary -->
-                        <div class="text-left max-h-60 overflow-y-auto mb-6 pr-1 space-y-2">
-                            ${this.items.map((item, idx) => `
-                                <div class="p-3 rounded-xl border ${item.status === true ? 'bg-emerald-50/50 border-emerald-200' : 'bg-slate-50 border-slate-200'} text-xs sm:text-sm flex items-start gap-2.5">
-                                    <span class="font-bold text-base ${item.status === true ? 'text-emerald-600' : 'text-slate-400'}">
-                                        ${item.status === true ? '✓' : '✕'}
-                                    </span>
-                                    <div class="flex-grow">
-                                        ${item.clue ? `<div class="font-semibold text-slate-500 mb-0.5">${item.clue}</div>` : ''}
-                                        <div class="font-bold text-slate-800">${item.sentence}</div>
+                        <!-- NUMBERED RESULTS LIST (Matches total tasks, light grey ✕ for unrevealed) -->
+                        <div class="text-left max-h-64 overflow-y-auto mb-6 space-y-2 pr-1">
+                            ${this.items.map((item, idx) => {
+                                const isAttemptedSucceeded = item.status === true;
+
+                                return `
+                                    <div class="p-3 rounded-xl border ${isAttemptedSucceeded ? 'bg-emerald-50/60 border-emerald-200' : 'bg-slate-50 border-slate-200'} text-xs sm:text-sm flex items-start gap-2.5">
+                                        <span class="font-bold text-slate-400 text-sm leading-relaxed">${idx + 1}.</span>
+                                        ${isAttemptedSucceeded ? `
+                                            <span class="font-bold text-base text-emerald-600 leading-none mt-0.5">✓</span>
+                                            <div class="flex-grow">
+                                                ${item.clue ? `<div class="font-semibold text-slate-500 text-xs mb-0.5">${item.clue}</div>` : ''}
+                                                <div class="font-bold text-slate-800">${item.sentence}</div>
+                                            </div>
+                                        ` : `
+                                            <span class="font-bold text-base text-slate-300 leading-none mt-0.5">✕</span>
+                                        `}
                                     </div>
-                                </div>
-                            `).join('')}
+                                `;
+                            }).join('')}
                         </div>
 
                         <button onclick="activeGameInstance.initHomeScreen()" 
-                            class="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 text-white font-extrabold py-3 px-8 rounded-xl transition shadow">
-                            Restart Game
+                            class="bg-slate-900 hover:bg-slate-800 text-white font-extrabold py-3 px-8 rounded-xl transition shadow text-sm">
+                            Restart
                         </button>
                     </div>
                 `;
