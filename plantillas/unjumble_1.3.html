@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentence Unjumble Game Generator</title>
+    <!-- Tailwind CSS for modern responsive utility styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- QRCode.js Library for generating inline dynamic QR codes -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        
+        :root {
+            --color-go: #16a34a;
+            --color-shuffle: #7c3aed;
+            --color-stop: #dc2626;
+            --color-pass: #d97706;
+            --color-ok: #16a34a;
+            --color-orange-active: #ea580c;
+            --color-lila-drag: #9333ea;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: #ffffff;
+            color: #1e293b;
+        }
+
+        .tabular-nums {
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Interactive Word Token Block Styling */
+        .word-token {
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+            transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        /* Word Pool Styling */
+        .token-pool {
+            background-color: #ffffff;
+            border: 2px solid #cbd5e1;
+            color: #0f172a;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+            font-weight: 700;
+        }
+
+        .token-pool:hover {
+            border-color: #3b82f6;
+            transform: translateY(-1px);
+        }
+
+        /* Target Placed Slot Styling */
+        .token-placed {
+            background-color: #ffffff;
+            border: 2px solid #3b82f6;
+            color: #0f172a;
+            font-weight: 700;
+        }
+
+        .token-orange {
+            background-color: #fff7ed !important;
+            border-color: var(--color-orange-active) !important;
+            color: #c2410c !important;
+            box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.2);
+        }
+
+        .token-lila {
+            background-color: #faf5ff !important;
+            border-color: var(--color-lila-drag) !important;
+            color: #7e22ce !important;
+            opacity: 0.85;
+            transform: scale(1.05);
+            z-index: 20;
+        }
+
+        .token-preview-shift {
+            opacity: 0.4;
+            transform: scale(0.95);
+        }
+
+        .token-correct {
+            background-color: #f0fdf4 !important;
+            border-color: #16a34a !important;
+            color: #15803d !important;
+        }
+
+        .token-incorrect {
+            background-color: #fef2f2 !important;
+            border-color: #dc2626 !important;
+            color: #b91c1c !important;
+        }
+
+        .empty-slot {
+            background-color: #f8fafc;
+            border: 2px dashed #cbd5e1;
+            color: transparent;
+        }
+
+        .empty-slot.token-orange {
+            border-color: var(--color-orange-active) !important;
+            background-color: #fff7ed !important;
+        }
+
+        body.dragging-active {
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .modal-fade {
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.97); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* Very Light Grey Input Placeholder */
+        textarea::placeholder, input::placeholder {
+            color: #cbd5e1 !important;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between p-3 sm:p-6 bg-slate-50">
+
+    <!-- MAIN GENERATOR CONTAINER -->
+    <div class="max-w-4xl mx-auto w-full flex-grow flex flex-col justify-center">
+
+        <!-- EDITOR & CONFIGURATION SCREEN -->
+        <div id="generator-screen" class="bg-white rounded-2xl p-5 sm:p-8 shadow-sm border border-slate-200">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-6">
+                <div>
+                    <h1 class="text-2xl font-extrabold text-slate-800 tracking-tight">Unjumble Generator</h1>
+                </div>
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    UNJUMBLE
+                </span>
+            </div>
+
+            <!-- Title Input Row -->
+            <div class="mb-5">
+                <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Game Title</label>
+                <input type="text" id="input-title" placeholder="English_Sentence Unjumble" value="English_Sentence Unjumble" 
+                    class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm">
+            </div>
+
+            <!-- Sentence & Clue Data Textarea Input -->
+            <div class="mb-6">
+                <div class="flex justify-between items-center mb-2">
+                    <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider">
+                        Sentences Data
+                    </label>
+                </div>
+                <textarea id="input-data" rows="7" placeholder="One per line: Clue [optional] TAB/Comma Correct Sentence" 
+                    class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none font-mono text-sm transition resize-y"></textarea>
+            </div>
+
+            <!-- Action Toolbar Buttons -->
+            <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100">
+                <button onclick="renderLivePreview()" 
+                    class="flex-1 min-w-[140px] bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 px-5 rounded-xl transition shadow-sm flex items-center justify-center gap-2 text-sm">
+                    <span>👁️</span> Preview Game
+                </button>
+                <button onclick="exportHTMLFile()" 
+                    class="flex-1 min-w-[140px] bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-5 rounded-xl transition shadow-sm flex items-center justify-center gap-2 text-sm">
+                    <span>💾</span> Save to HTML
+                </button>
+            </div>
+        </div>
+
+        <!-- LIVE PREVIEW CONTAINER -->
+        <div id="preview-wrapper" class="mt-8 hidden">
+            <div class="flex items-center justify-between mb-3 px-1">
+                <span class="text-xs font-extrabold uppercase tracking-widest text-slate-400">Interactive Preview</span>
+                <button onclick="closePreview()" class="text-xs text-slate-500 hover:text-slate-800 font-semibold underline">Close Preview</button>
+            </div>
+            
+            <div id="preview-stage" class="bg-white rounded-2xl p-4 sm:p-6 shadow-md border border-slate-200 relative">
+                <!-- Live Game Root Mounting Point -->
+                <div id="game-root"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- FOOTER WATERMARK -->
+    <footer class="mt-8 text-center text-xs text-slate-400 font-medium">
+        Sentence Unjumble Engine &bull; Minimalist & Touch Optimized
+    </footer>
+
+    <!-- INSTRUCTIONS MODAL (SPANISH FORMAT WITH "ELEMENTO") -->
+    <div id="modal-info" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl relative modal-fade">
+            <button onclick="closeModals()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 font-bold text-xl leading-none">✕</button>
+            
+            <h3 class="text-base sm:text-lg font-bold text-slate-900 mb-4 pr-6">Maneras de mover los elementos:</h3>
+            
+            <div class="text-xs sm:text-sm text-slate-700 space-y-3.5 leading-relaxed">
+                <p><strong>1)</strong> Toca un elemento para que salte al siguiente hueco libre.</p>
+
+                <p><strong>2)</strong> Pica en un elemento <strong>ya colocado</strong> (cambiará a <span class="text-orange-600 font-bold">naranja</span>) y:</p>
+                <ul class="pl-5 space-y-1 list-disc text-slate-600">
+                    <li>vuelve a picar para de-seleccionar</li>
+                    <li>toca otro destino válido (otro elemento, un hueco o el cajón de sastre) para moverlo o intercambiarlo.</li>
+                </ul>
+
+                <p><strong>3)</strong> Pulsa primero un <strong>hueco vacío</strong> y luego un elemento para enviarlo allí.</p>
+
+                <p><strong>4)</strong> <strong>Mantén pulsado</strong> un elemento ya colocado (cambiará a <span class="text-purple-600 font-bold">lila</span>) y arrástralo para insertarlo y desplazar los otros elementos a la derecha.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- QR CODE LIGHTBOX MODAL -->
+    <div id="modal-qr" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl text-center relative modal-fade">
+            <button onclick="closeModals()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 font-bold text-xl leading-none">✕</button>
+            <h3 class="text-base font-bold text-slate-800 mb-4">Scan QR Code to Share</h3>
+            <div id="qr-modal-canvas" class="flex justify-center mb-5 p-3 bg-white border border-slate-200 rounded-xl"></div>
+            <button id="btn-qr-download" onclick="downloadQRImage()" 
+                class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-2.5 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2">
+                <span>📥</span> Download QR Code Image
+            </button>
+        </div>
+    </div>
+
+    <!-- MAIN GAME GENERATOR SCRIPT -->
+    <script>
+        let activeGameInstance = null;
+
+        // Filename Cleaner Utility
+        function getTitleAfterUnderscore(rawTitle) {
+            if (!rawTitle) return "unjumble_game";
+            let processed = rawTitle;
+            if (processed.includes("_")) {
+                processed = processed.split("_").pop();
+            }
+            return processed
+                .toLowerCase()
+                .trim()
+                .replace(/\s+/g, "_")
+                .replace(/[^a-z0-9_]/g, "");
+        }
+
+        function getSafeTitle() {
+            const rawTitle = document.getElementById("input-title").value.trim();
+            const cleaned = getTitleAfterUnderscore(rawTitle);
+            return cleaned || "unjumble_game";
+        }
+
+        // Multi-column Data Parsing Engine
+        function parseInputData(rawText) {
+            if (!rawText || !rawText.trim()) return [];
+            const lines = rawText.trim().split("\n");
+            const parsed = [];
+
+            lines.forEach((line) => {
+                if (!line.trim()) return;
+                let parts = line.includes("\t") ? line.split("\t") : line.split(",");
+                parts = parts.map(p => p.trim()).filter(p => p.length > 0);
+
+                if (parts.length === 1) {
+                    parsed.push({ clue: "", sentence: parts[0] });
+                } else if (parts.length >= 2) {
+                    parsed.push({ clue: parts[0], sentence: parts.slice(1).join(" ") });
+                }
+            });
+
+            return parsed;
+        }
+
+        // Live Preview Renderer
+        function renderLivePreview() {
+            const rawData = document.getElementById("input-data").value;
+            const parsedItems = parseInputData(rawData);
+            if (parsedItems.length === 0) {
+                alert("Please enter at least one valid sentence.");
+                return;
+            }
+
+            const title = document.getElementById("input-title").value.trim() || "Sentence Unjumble";
+
+            document.getElementById("preview-wrapper").classList.remove("hidden");
+            
+            activeGameInstance = new UnjumbleGameEngine("game-root", {
+                title: title,
+                items: parsedItems,
+                isPreview: true
+            });
+
+            document.getElementById("preview-wrapper").scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function closePreview() {
+            document.getElementById("preview-wrapper").classList.add("hidden");
+            document.getElementById("game-root").innerHTML = "";
+            activeGameInstance = null;
+        }
+
+        function showInfoModal() { document.getElementById("modal-info").classList.remove("hidden"); }
+        function showQRModal() {
+            const qrCanvas = document.getElementById("qr-modal-canvas");
+            qrCanvas.innerHTML = "";
+            new QRCode(qrCanvas, {
+                text: window.location.href,
+                width: 180,
+                height: 180,
+                colorDark : "#0f172a",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
+            });
+            document.getElementById("modal-qr").classList.remove("hidden");
+        }
+        function closeModals() {
+            document.getElementById("modal-info").classList.add("hidden");
+            document.getElementById("modal-qr").classList.add("hidden");
+        }
+
+        function downloadQRImage() {
+            const qrCanvas = document.querySelector("#qr-modal-canvas canvas");
+            const safeTitle = getSafeTitle();
+            if (qrCanvas) {
+                const imageURI = qrCanvas.toDataURL("image/png");
+                const link = document.createElement("a");
+                link.href = imageURI;
+                link.download = `qr-${safeTitle}.png`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+
+        // --- CORE GAME ENGINE CLASS ---
+        class UnjumbleGameEngine {
+            constructor(containerId, config) {
+                this.container = document.getElementById(containerId);
+                this.title = config.title;
+                this.items = JSON.parse(JSON.stringify(config.items));
+                this.isPreview = config.isPreview || false;
+
+                this.currentIndex = 0;
+                this.secondsElapsed = 0;
+                this.timerInterval = null;
+                this.isGameComplete = false;
+                
+                this.wordsData = [];
+                this.activeOrangeIndex = null;
+
+                this.dragTimer = null;
+                this.isDragging = false;
+                this.dragStartIdx = null;
+                this.dragCurrentTargetIdx = null;
+                this.startX = 0;
+                this.startY = 0;
+
+                this.initHomeScreen();
+            }
+
+            initHomeScreen() {
+                clearInterval(this.timerInterval);
+                this.container.innerHTML = `
+                    <div class="relative min-h-[360px] flex flex-col justify-between p-4 sm:p-6 bg-white rounded-2xl">
+                        <!-- Top-Right Order: Badge (light grey text, no button background) -> Info -> QR -->
+                        <div class="flex justify-between items-start mb-6">
+                            <div></div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-bold text-slate-400 tracking-wider uppercase select-none px-1">
+                                    UNJUMBLE
+                                </span>
+                                <button onclick="showInfoModal()" class="w-7 h-7 bg-blue-500 text-white rounded-md flex items-center justify-center font-bold text-xs shadow-sm hover:bg-blue-600 transition" title="Instructions">i</button>
+                                <div onclick="showQRModal()" class="w-7 h-7 bg-white border border-slate-300 rounded-md p-0.5 cursor-pointer hover:scale-105 transition shadow-sm flex items-center justify-center" id="home-qr-box">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Home Screen Content -->
+                        <div class="text-center my-auto py-4">
+                            <h2 class="text-2xl sm:text-3xl font-black text-slate-900 mb-6">${this.title}</h2>
+                            
+                            <div class="flex flex-wrap justify-center gap-3 max-w-xs mx-auto">
+                                <button onclick="activeGameInstance.startGame(false)" 
+                                    style="background-color: var(--color-go);"
+                                    class="w-full sm:w-auto flex-1 text-white font-extrabold py-3 px-6 rounded-xl shadow hover:brightness-110 transition text-sm">
+                                    GO
+                                </button>
+                                <button onclick="activeGameInstance.startGame(true)" 
+                                    style="background-color: var(--color-shuffle);"
+                                    class="w-full sm:w-auto flex-1 text-white font-extrabold py-3 px-6 rounded-xl shadow hover:brightness-110 transition text-sm">
+                                    SHUFFLE
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="text-xs text-center text-slate-400 font-medium pt-4">
+                            Total: ${this.items.length}
+                        </div>
+                    </div>
+                `;
+
+                const homeQr = this.container.querySelector("#home-qr-box");
+                if (homeQr) {
+                    new QRCode(homeQr, {
+                        text: window.location.href,
+                        width: 22,
+                        height: 22,
+                        colorDark : "#0f172a",
+                        colorLight : "#ffffff"
+                    });
+                }
+            }
+
+            startGame(shuffleMode) {
+                if (shuffleMode) {
+                    this.items.sort(() => Math.random() - 0.5);
+                }
+
+                this.currentIndex = 0;
+                this.secondsElapsed = 0;
+                this.isGameComplete = false;
+                this.items.forEach(item => item.status = null);
+
+                this.startTimer();
+                this.renderGameplayScreen();
+                this.loadCurrentSentence();
+            }
+
+            startTimer() {
+                clearInterval(this.timerInterval);
+                this.timerInterval = setInterval(() => {
+                    this.secondsElapsed++;
+                    const min = String(Math.floor(this.secondsElapsed / 60)).padStart(2, '0');
+                    const sec = String(this.secondsElapsed % 60).padStart(2, '0');
+                    const timerEl = document.getElementById("game-timer-display");
+                    if (timerEl) timerEl.innerText = `${min}:${sec}`;
+                }, 1000);
+            }
+
+            renderGameplayScreen() {
+                this.container.innerHTML = `
+                    <div class="bg-white rounded-2xl p-3 sm:p-5 relative min-h-[380px] flex flex-col justify-between">
+                        <!-- Gameplay Header -->
+                        <div class="flex items-start justify-between mb-4">
+                            <!-- Left: Counter above Timer -->
+                            <div class="flex flex-col leading-tight">
+                                <span id="counter-display" class="text-lg font-black text-slate-800">1 / ${this.items.length}</span>
+                                <span id="game-timer-display" class="text-xs font-semibold text-slate-400 tabular-nums">00:00</span>
+                            </div>
+
+                            <!-- Center Prompt Clue -->
+                            <div class="text-center px-2 self-center flex-grow">
+                                <h3 id="clue-display" class="text-lg sm:text-xl font-black text-slate-900"></h3>
+                            </div>
+
+                            <!-- Right Header Sequence: BADGE (light grey text) -> INFO -> QR -->
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-bold text-slate-400 tracking-wider uppercase select-none px-1">
+                                    UNJUMBLE
+                                </span>
+                                <button onclick="showInfoModal()" class="w-7 h-7 bg-blue-500 text-white rounded-md flex items-center justify-center font-bold text-xs shadow-sm hover:bg-blue-600 transition" title="Instructions">i</button>
+                                <div onclick="showQRModal()" class="w-7 h-7 bg-white border border-slate-300 rounded-md p-0.5 cursor-pointer hover:scale-105 transition shadow-sm flex items-center justify-center" id="game-qr-box">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Clean Word Board Area (Target Slot Container TOP, Word Pool BOTTOM) -->
+                        <div class="flex-grow flex flex-col justify-center my-4 space-y-4">
+                            <!-- Target Board Container (TOP Drop Zone / Gaps to fill in) -->
+                            <div id="target-board" 
+                                class="flex flex-wrap justify-center gap-2 min-h-[58px] p-3.5 bg-white rounded-2xl border-2 border-slate-200 items-center"></div>
+
+                            <!-- Pool Board Container (BOTTOM Drawer / Word Pool) -->
+                            <div id="pool-board" onclick="activeGameInstance.handlePoolAreaClick()" 
+                                class="flex flex-wrap justify-center gap-2 min-h-[58px] p-3.5 bg-slate-50/80 rounded-2xl border border-blue-200 items-center transition cursor-pointer"></div>
+                        </div>
+
+                        <!-- Bottom Action Buttons Toolbar -->
+                        <div class="grid grid-cols-4 gap-2 pt-2 border-t border-slate-100">
+                            <button onclick="activeGameInstance.initHomeScreen()" 
+                                class="bg-slate-700 hover:bg-slate-800 text-white font-extrabold py-3 px-2 rounded-xl transition text-base flex items-center justify-center shadow-sm">
+                                ↩
+                            </button>
+                            <button onclick="activeGameInstance.checkManualValidation()" 
+                                style="background-color: var(--color-ok);"
+                                class="text-white font-black py-3 px-2 rounded-xl transition text-xs sm:text-sm flex items-center justify-center shadow-sm">
+                                OK?
+                            </button>
+                            <button onclick="activeGameInstance.passCurrentSentence()" 
+                                style="background-color: var(--color-pass);"
+                                class="text-white font-black py-3 px-2 rounded-xl transition text-xs sm:text-sm flex items-center justify-center shadow-sm">
+                                PASS
+                            </button>
+                            <button onclick="activeGameInstance.stopAndScore()" 
+                                style="background-color: var(--color-stop);"
+                                class="text-white font-black py-3 px-2 rounded-xl transition text-xs sm:text-xs md:text-sm flex items-center justify-center shadow-sm uppercase tracking-tight">
+                                STOP
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                const gameQr = this.container.querySelector("#game-qr-box");
+                if (gameQr) {
+                    new QRCode(gameQr, {
+                        text: window.location.href,
+                        width: 22,
+                        height: 22,
+                        colorDark : "#0f172a",
+                        colorLight : "#ffffff"
+                    });
+                }
+            }
+
+            loadCurrentSentence() {
+                this.activeOrangeIndex = null;
+                if (this.currentIndex >= this.items.length) {
+                    this.isGameComplete = true;
+                    this.stopAndScore();
+                    return;
+                }
+
+                const currentItem = this.items[this.currentIndex];
+                document.getElementById("counter-display").innerText = `${this.currentIndex + 1} / ${this.items.length}`;
+                document.getElementById("clue-display").innerText = currentItem.clue || "";
+
+                const words = currentItem.sentence.split(/\s+/).filter(w => w.length > 0);
+                
+                let shuffled = [...words].sort(() => Math.random() - 0.5);
+                if (shuffled.join(" ") === words.join(" ") && words.length > 1) {
+                    shuffled.reverse();
+                }
+
+                this.wordsData = {
+                    originalWords: words,
+                    pool: shuffled.map((w, idx) => ({ id: idx, word: w, active: true })),
+                    target: Array(words.length).fill(null)
+                };
+
+                this.renderBoards();
+            }
+
+            renderBoards(previewShiftData = null) {
+                const targetBoard = document.getElementById("target-board");
+                const poolBoard = document.getElementById("pool-board");
+                if (!targetBoard || !poolBoard) return;
+
+                targetBoard.innerHTML = "";
+                poolBoard.innerHTML = "";
+
+                // Render Pool Tokens (Drawer)
+                this.wordsData.pool.forEach(item => {
+                    if (item.active) {
+                        const token = document.createElement("div");
+                        token.className = "word-token token-pool px-3.5 py-2.5 rounded-xl text-base font-bold";
+                        token.innerText = item.word;
+                        token.onclick = (e) => this.handlePoolTokenClick(item, e);
+                        poolBoard.appendChild(token);
+                    }
+                });
+
+                // Render Target Slots (Gaps)
+                const activeTarget = previewShiftData ? previewShiftData : this.wordsData.target;
+
+                activeTarget.forEach((item, lIdx) => {
+                    const token = document.createElement("div");
+                    token.setAttribute("data-lidx", lIdx);
+
+                    if (item === null) {
+                        token.className = "word-token empty-slot px-4 py-2.5 rounded-xl text-base font-bold min-w-[50px] text-center";
+                        token.innerText = "";
+                        if (this.activeOrangeIndex === lIdx) {
+                            token.classList.add("token-orange");
+                        }
+                    } else {
+                        token.className = "word-token token-placed px-3.5 py-2.5 rounded-xl text-base";
+                        token.innerText = item.word;
+
+                        if (this.isDragging && this.dragStartIdx === lIdx) {
+                            token.classList.add("token-lila");
+                        } else if (this.activeOrangeIndex === lIdx) {
+                            token.classList.add("token-orange");
+                        } else if (item.isShifted) {
+                            token.classList.add("token-preview-shift");
+                        }
+                    }
+
+                    token.addEventListener('pointerdown', (e) => this.onTargetPointerDown(e, lIdx));
+                    token.addEventListener('pointermove', (e) => this.onTargetPointerMove(e));
+                    token.addEventListener('pointerup', (e) => this.onTargetPointerUp(e, lIdx));
+                    token.addEventListener('pointercancel', (e) => this.cancelDragState(e));
+
+                    targetBoard.appendChild(token);
+                });
+            }
+
+            onTargetPointerDown(e, lIdx) {
+                if (this.wordsData.target[lIdx] !== null) {
+                    e.target.setPointerCapture(e.pointerId);
+                    this.startX = e.clientX;
+                    this.startY = e.clientY;
+                    this.dragStartIdx = lIdx;
+                    this.isDragging = false;
+                    this.dragCurrentTargetIdx = lIdx;
+
+                    this.dragTimer = setTimeout(() => {
+                        this.isDragging = true;
+                        document.body.classList.add('dragging-active');
+                        this.renderBoards();
+                    }, 400);
+                }
+            }
+
+            onTargetPointerMove(e) {
+                if (this.dragTimer && !this.isDragging) {
+                    const dist = Math.hypot(e.clientX - this.startX, e.clientY - this.startY);
+                    if (dist > 8) {
+                        clearTimeout(this.dragTimer);
+                        this.dragTimer = null;
+                    }
+                }
+
+                if (this.isDragging && this.dragStartIdx !== null) {
+                    e.preventDefault();
+                    const el = document.elementFromPoint(e.clientX, e.clientY);
+                    if (!el) return;
+                    const targetToken = el.closest('.word-token');
+                    if (targetToken && targetToken.hasAttribute('data-lidx')) {
+                        const targetIdx = parseInt(targetToken.getAttribute('data-lidx'));
+                        if (targetIdx !== this.dragCurrentTargetIdx) {
+                            this.dragCurrentTargetIdx = targetIdx;
+                            const shiftedPreview = this.computeShiftedArray(this.dragStartIdx, targetIdx);
+                            this.renderBoards(shiftedPreview);
+                        }
+                    }
+                }
+            }
+
+            onTargetPointerUp(e, lIdx) {
+                e.stopPropagation();
+                const wasDragging = this.isDragging;
+                if (this.dragTimer) clearTimeout(this.dragTimer);
+                this.dragTimer = null;
+
+                if (wasDragging) {
+                    e.preventDefault();
+                    if (this.dragCurrentTargetIdx !== null && this.dragCurrentTargetIdx !== this.dragStartIdx) {
+                        const finalArray = this.computeShiftedArray(this.dragStartIdx, this.dragCurrentTargetIdx);
+                        this.wordsData.target = finalArray.map(item => item ? { id: item.id, word: item.word } : null);
+                    }
+                    this.cancelDragState(e);
+                    this.checkAutoValidation();
+                } else {
+                    this.cancelDragState(e);
+                    if (this.wordsData.target[lIdx] === null) {
+                        this.handleEmptySlotClick(lIdx);
+                    } else {
+                        this.handleFilledSlotClick(lIdx);
+                    }
+                }
+            }
+
+            cancelDragState(e = null) {
+                if (this.dragTimer) clearTimeout(this.dragTimer);
+                this.dragTimer = null;
+                this.isDragging = false;
+                this.dragStartIdx = null;
+                this.dragCurrentTargetIdx = null;
+
+                if (e && e.target && typeof e.target.releasePointerCapture === 'function') {
+                    try { e.target.releasePointerCapture(e.pointerId); } catch(err) {}
+                }
+
+                document.body.classList.remove('dragging-active');
+                this.renderBoards();
+            }
+
+            computeShiftedArray(fromIdx, toIdx) {
+                const originalArr = [...this.wordsData.target];
+                const itemToMove = originalArr[fromIdx];
+                const workingArr = originalArr.map(item => item ? { ...item, isShifted: false } : null);
+
+                workingArr.splice(fromIdx, 1);
+                workingArr.splice(toIdx, 0, itemToMove);
+
+                const min = Math.min(fromIdx, toIdx);
+                const max = Math.max(fromIdx, toIdx);
+                for (let i = min; i <= max; i++) {
+                    if (workingArr[i] && i !== toIdx) {
+                        workingArr[i].isShifted = true;
+                    }
+                }
+                return workingArr;
+            }
+
+            handlePoolAreaClick() {
+                // If an orange token is active in target, return it to pool area
+                if (this.activeOrangeIndex !== null && this.wordsData.target[this.activeOrangeIndex] !== null) {
+                    const targetItem = this.wordsData.target[this.activeOrangeIndex];
+                    const foundPool = this.wordsData.pool.find(p => p.id === targetItem.id);
+                    if (foundPool) foundPool.active = true;
+                    this.wordsData.target[this.activeOrangeIndex] = null;
+                    this.activeOrangeIndex = null;
+                    this.renderBoards();
+                }
+            }
+
+            handlePoolTokenClick(poolItem, event) {
+                if (event) event.stopPropagation();
+
+                if (this.activeOrangeIndex !== null && this.wordsData.target[this.activeOrangeIndex] === null) {
+                    this.wordsData.target[this.activeOrangeIndex] = { id: poolItem.id, word: poolItem.word };
+                    poolItem.active = false;
+                    this.activeOrangeIndex = null;
+                    this.renderBoards();
+                    this.checkAutoValidation();
+                } else if (this.activeOrangeIndex !== null && this.wordsData.target[this.activeOrangeIndex] !== null) {
+                    // Send orange placed word back to pool
+                    const targetItem = this.wordsData.target[this.activeOrangeIndex];
+                    const foundPool = this.wordsData.pool.find(p => p.id === targetItem.id);
+                    if (foundPool) foundPool.active = true;
+                    this.wordsData.target[this.activeOrangeIndex] = null;
+                    this.activeOrangeIndex = null;
+                    this.renderBoards();
+                } else {
+                    const emptyIdx = this.wordsData.target.indexOf(null);
+                    if (emptyIdx !== -1) {
+                        this.wordsData.target[emptyIdx] = { id: poolItem.id, word: poolItem.word };
+                        poolItem.active = false;
+                        this.renderBoards();
+                        this.checkAutoValidation();
+                    }
+                }
+            }
+
+            handleEmptySlotClick(lIdx) {
+                if (this.activeOrangeIndex === lIdx) {
+                    this.activeOrangeIndex = null;
+                    this.renderBoards();
+                } else if (this.activeOrangeIndex !== null && this.wordsData.target[this.activeOrangeIndex] !== null) {
+                    this.wordsData.target[lIdx] = this.wordsData.target[this.activeOrangeIndex];
+                    this.wordsData.target[this.activeOrangeIndex] = null;
+                    this.activeOrangeIndex = null;
+                    this.renderBoards();
+                    this.checkAutoValidation();
+                } else {
+                    this.activeOrangeIndex = lIdx;
+                    this.renderBoards();
+                }
+            }
+
+            handleFilledSlotClick(lIdx) {
+                if (this.activeOrangeIndex === lIdx) {
+                    // Tapping an active orange token sends it directly back to the pool
+                    const targetItem = this.wordsData.target[lIdx];
+                    const foundPool = this.wordsData.pool.find(p => p.id === targetItem.id);
+                    if (foundPool) foundPool.active = true;
+                    this.wordsData.target[lIdx] = null;
+                    this.activeOrangeIndex = null;
+                    this.renderBoards();
+                } else if (this.activeOrangeIndex !== null && this.wordsData.target[this.activeOrangeIndex] === null) {
+                    this.wordsData.target[this.activeOrangeIndex] = this.wordsData.target[lIdx];
+                    this.wordsData.target[lIdx] = null;
+                    this.activeOrangeIndex = null;
+                    this.renderBoards();
+                    this.checkAutoValidation();
+                } else if (this.activeOrangeIndex !== null && this.wordsData.target[this.activeOrangeIndex] !== null) {
+                    // Swap placed tokens
+                    const temp = this.wordsData.target[lIdx];
+                    this.wordsData.target[lIdx] = this.wordsData.target[this.activeOrangeIndex];
+                    this.wordsData.target[this.activeOrangeIndex] = temp;
+                    this.activeOrangeIndex = null;
+                    this.renderBoards();
+                    this.checkAutoValidation();
+                } else {
+                    // Clicking any placed word returns it directly to pool or selects it
+                    // Sending directly back to pool on tap when not already orange
+                    const targetItem = this.wordsData.target[lIdx];
+                    const foundPool = this.wordsData.pool.find(p => p.id === targetItem.id);
+                    if (foundPool) foundPool.active = true;
+                    this.wordsData.target[lIdx] = null;
+                    this.renderBoards();
+                }
+            }
+
+            checkManualValidation() {
+                this.checkAutoValidation(true);
+            }
+
+            checkAutoValidation(isManual = false) {
+                if (this.wordsData.target.includes(null) && !isManual) return;
+
+                const currentPlaced = this.wordsData.target.filter(item => item !== null).map(item => item.word).join(" ");
+                const expected = this.wordsData.originalWords.join(" ");
+                const targetBoard = document.getElementById("target-board");
+
+                if (currentPlaced === expected) {
+                    this.items[this.currentIndex].status = true;
+
+                    if (targetBoard) {
+                        Array.from(targetBoard.children).forEach(child => {
+                            child.className = "word-token token-correct px-3.5 py-2.5 rounded-xl text-base font-bold";
+                        });
+                    }
+
+                    setTimeout(() => {
+                        this.currentIndex++;
+                        this.loadCurrentSentence();
+                    }, 700);
+                } else if (isManual || !this.wordsData.target.includes(null)) {
+                    if (targetBoard) {
+                        Array.from(targetBoard.children).forEach((child, idx) => {
+                            if (this.wordsData.target[idx] && this.wordsData.target[idx].word === this.wordsData.originalWords[idx]) {
+                                child.className = "word-token token-correct px-3.5 py-2.5 rounded-xl text-base font-bold";
+                            } else if (this.wordsData.target[idx]) {
+                                child.className = "word-token token-incorrect px-3.5 py-2.5 rounded-xl text-base font-bold";
+                            }
+                        });
+                    }
+                }
+            }
+
+            passCurrentSentence() {
+                const skipped = this.items.splice(this.currentIndex, 1)[0];
+                this.items.push(skipped);
+                this.loadCurrentSentence();
+            }
+
+            stopAndScore() {
+                clearInterval(this.timerInterval);
+                const min = String(Math.floor(this.secondsElapsed / 60)).padStart(2, '0');
+                const sec = String(this.secondsElapsed % 60).padStart(2, '0');
+                const correctCount = this.items.filter(i => i.status === true).length;
+
+                // Minimalist Score Screen (Requirement 4 & 5 & 6)
+                this.container.innerHTML = `
+                    <div class="bg-white rounded-2xl p-6 text-center modal-fade">
+                        <!-- MINIMALIST SCORE DISPLAY: 0/10🏆 \n 00:16 -->
+                        <div class="mb-6">
+                            <div class="text-4xl font-black text-slate-900 tracking-tight">${correctCount}/${this.items.length}🏆</div>
+                            <div class="text-base font-semibold text-slate-500 tabular-nums mt-1">${min}:${sec}</div>
+                        </div>
+
+                        <!-- NUMBERED RESULTS LIST (Matches total tasks, light grey ✕ for unrevealed) -->
+                        <div class="text-left max-h-64 overflow-y-auto mb-6 space-y-2 pr-1">
+                            ${this.items.map((item, idx) => {
+                                const isAttemptedSucceeded = item.status === true;
+
+                                return `
+                                    <div class="p-3 rounded-xl border ${isAttemptedSucceeded ? 'bg-emerald-50/60 border-emerald-200' : 'bg-slate-50 border-slate-200'} text-xs sm:text-sm flex items-start gap-2.5">
+                                        <span class="font-bold text-slate-400 text-sm leading-relaxed">${idx + 1}.</span>
+                                        ${isAttemptedSucceeded ? `
+                                            <span class="font-bold text-base text-emerald-600 leading-none mt-0.5">✓</span>
+                                            <div class="flex-grow">
+                                                ${item.clue ? `<div class="font-semibold text-slate-500 text-xs mb-0.5">${item.clue}</div>` : ''}
+                                                <div class="font-bold text-slate-800">${item.sentence}</div>
+                                            </div>
+                                        ` : `
+                                            <span class="font-bold text-base text-slate-300 leading-none mt-0.5">✕</span>
+                                        `}
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+
+                        <button onclick="activeGameInstance.initHomeScreen()" 
+                            class="bg-slate-900 hover:bg-slate-800 text-white font-extrabold py-3 px-8 rounded-xl transition shadow text-sm">
+                            Restart
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        // Standalone Exported HTML Generator
+        function exportHTMLFile() {
+            const rawData = document.getElementById("input-data").value;
+            const parsedItems = parseInputData(rawData);
+            if (parsedItems.length === 0) {
+                alert("Please enter valid sentence items before exporting.");
+                return;
+            }
+
+            const title = document.getElementById("input-title").value.trim() || "Unjumble Game";
+            const safeTitle = getSafeTitle();
+
+            const exportedHTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${title}</title>
+    <script src="https://cdn.tailwindcss.com"><` + `/script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><` + `/script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        :root {
+            --color-go: #16a34a; --color-shuffle: #7c3aed; --color-stop: #dc2626;
+            --color-pass: #d97706; --color-ok: #16a34a; --color-orange-active: #ea580c; --color-lila-drag: #9333ea;
+        }
+        body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background-color: #f8fafc; color: #1e293b; }
+        .tabular-nums { font-variant-numeric: tabular-nums; }
+        .word-token { user-select: none; -webkit-user-select: none; touch-action: none; transition: all 0.15s ease; cursor: pointer; }
+        .token-pool { background-color: #ffffff; border: 2px solid #cbd5e1; color: #0f172a; font-weight: 700; }
+        .token-placed { background-color: #ffffff; border: 2px solid #3b82f6; color: #0f172a; font-weight: 700; }
+        .token-orange { background-color: #fff7ed !important; border-color: var(--color-orange-active) !important; color: #c2410c !important; box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.2); }
+        .token-lila { background-color: #faf5ff !important; border-color: var(--color-lila-drag) !important; color: #7e22ce !important; opacity: 0.85; transform: scale(1.05); z-index: 20; }
+        .token-preview-shift { opacity: 0.4; transform: scale(0.95); }
+        .token-correct { background-color: #f0fdf4 !important; border-color: #16a34a !important; color: #15803d !important; }
+        .token-incorrect { background-color: #fef2f2 !important; border-color: #dc2626 !important; color: #b91c1c !important; }
+        .empty-slot { background-color: #f8fafc; border: 2px dashed #cbd5e1; color: transparent; }
+        body.dragging-active { user-select: none; -webkit-user-select: none; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between p-3 sm:p-6">
+    <div class="max-w-2xl mx-auto w-full my-auto">
+        <div id="game-mount"></div>
+    </div>
+
+    <!-- INSTRUCTIONS MODAL (SPANISH WITH "ELEMENTO") -->
+    <div id="modal-info" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl relative">
+            <button onclick="closeModals()" class="absolute top-4 right-4 text-slate-400 font-bold text-xl leading-none">✕</button>
+            <h3 class="text-base sm:text-lg font-bold text-slate-900 mb-4 pr-6">Maneras de mover los elementos:</h3>
+            <div class="text-xs sm:text-sm text-slate-700 space-y-3.5 leading-relaxed">
+                <p><strong>1)</strong> Toca un elemento para que salte al siguiente hueco libre.</p>
+                <p><strong>2)</strong> Pica en un elemento <strong>ya colocado</strong> (cambiará a <span class="text-orange-600 font-bold">naranja</span>) y:</p>
+                <ul class="pl-5 space-y-1 list-disc text-slate-600">
+                    <li>vuelve a picar para de-seleccionar</li>
+                    <li>toca otro destino válido (otro elemento, un hueco o el cajón de sastre) para moverlo o intercambiarlo.</li>
+                </ul>
+                <p><strong>3)</strong> Pulsa primero un <strong>hueco vacío</strong> y luego un elemento para enviarlo allí.</p>
+                <p><strong>4)</strong> <strong>Mantén pulsado</strong> un elemento ya colocado (cambiará a <span class="text-purple-600 font-bold">lila</span>) y arrástralo para insertarlo y desplazar los otros elementos a la derecha.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-qr" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl text-center relative">
+            <button onclick="closeModals()" class="absolute top-4 right-4 text-slate-400 font-bold text-xl leading-none">✕</button>
+            <h3 class="text-base font-bold text-slate-800 mb-4">Scan QR Code to Share</h3>
+            <div id="qr-modal-canvas" class="flex justify-center mb-5 p-3 bg-white border border-slate-200 rounded-xl"></div>
+            <button onclick="downloadQRImage()" class="w-full bg-slate-800 text-white font-bold py-2.5 px-4 rounded-xl text-sm">
+                <span>📥</span> Download QR Code Image
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const GAME_CONFIG = {
+            title: ${JSON.stringify(title)},
+            safeTitle: ${JSON.stringify(safeTitle)},
+            items: ${JSON.stringify(parsedItems)}
+        };
+
+        ${UnjumbleGameEngine.toString()}
+
+        let activeGameInstance = null;
+        window.onload = function() {
+            activeGameInstance = new UnjumbleGameEngine("game-mount", GAME_CONFIG);
+        };
+
+        function showInfoModal() { document.getElementById("modal-info").classList.remove("hidden"); }
+        function showQRModal() {
+            const qrCanvas = document.getElementById("qr-modal-canvas");
+            qrCanvas.innerHTML = "";
+            new QRCode(qrCanvas, { text: window.location.href, width: 180, height: 180, colorDark : "#0f172a", colorLight : "#ffffff" });
+            document.getElementById("modal-qr").classList.remove("hidden");
+        }
+        function closeModals() {
+            document.getElementById("modal-info").classList.add("hidden");
+            document.getElementById("modal-qr").classList.add("hidden");
+        }
+        function downloadQRImage() {
+            const qrCanvas = document.querySelector("#qr-modal-canvas canvas");
+            if (qrCanvas) {
+                const link = document.createElement("a");
+                link.href = qrCanvas.toDataURL("image/png");
+                link.download = "qr-" + GAME_CONFIG.safeTitle + ".png";
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+    <` + `/script>
+</body>
+</html>`;
+
+            const blob = new Blob([exportedHTML], { type: "text/html;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `unjumble-${safeTitle}.html`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
