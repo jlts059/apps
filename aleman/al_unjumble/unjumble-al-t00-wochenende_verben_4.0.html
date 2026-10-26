@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wochenende Verben</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f1f5f9;
+            color: #1e293b;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+        :root {
+            --color-go: #10b981;
+            --color-shuffle: #8b5cf6;
+            --color-ok: #10b981;
+            --color-pass: #d97706;
+            --color-stop: #dc2626;
+        }
+        .target-gaps-container {
+            background-color: #edf2f7;
+            border: 1px solid #e2e8f0;
+            border-radius: 1rem;
+        }
+        .target-slot {
+            min-width: 3.25rem;
+            width: auto;
+            height: 3.25rem;
+            border-radius: 0.75rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1rem;
+            user-select: none;
+            cursor: pointer;
+            transition: all 0.15s ease-in-out;
+            padding: 0 0.75rem;
+            white-space: nowrap;
+        }
+        .target-slot-empty {
+            background-color: transparent;
+            border: 2px dashed #cbd5e1;
+            color: transparent;
+        }
+        .target-slot-filled {
+            background-color: #ffffff;
+            border: 2px solid #cbd5e1;
+            color: #0f172a;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        .target-slot-selected-orange {
+            background-color: #fff7ed !important;
+            border: 2.5px solid #f97316 !important;
+            color: #9a3412 !important;
+            transform: scale(1.04);
+            box-shadow: 0 4px 10px rgba(249, 115, 22, 0.25);
+        }
+        .target-slot-selected-purple {
+            background-color: #faf5ff !important;
+            border: 2.5px solid #a855f7 !important;
+            color: #6b21a8 !important;
+            transform: scale(1.04);
+            box-shadow: 0 4px 10px rgba(168, 85, 247, 0.25);
+        }
+        .target-slot-correct {
+            background-color: #d1fae5 !important;
+            border: 2.5px solid #10b981 !important;
+            color: #065f46 !important;
+        }
+        .target-slot-wrong {
+            background-color: #fee2e2 !important;
+            border: 2.5px solid #ef4444 !important;
+            color: #991b1b !important;
+        }
+        .pool-tile {
+            min-width: 3.25rem;
+            width: auto;
+            height: 3.25rem;
+            background-color: #ffffff;
+            border: 2px solid #cbd5e1;
+            border-radius: 0.75rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1rem;
+            color: #0f172a;
+            user-select: none;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            transition: all 0.15s ease-in-out;
+            padding: 0 0.75rem;
+            white-space: nowrap;
+        }
+        .pool-tile:hover {
+            border-color: #94a3b8;
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body class="min-h-screen p-3 sm:p-6 flex flex-col items-center justify-center">
+
+    <div class="w-full max-w-lg bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
+        <div id="game-mount"></div>
+    </div>
+
+    <!-- INSTRUCTIONS MODAL -->
+    <div id="modal-info" onclick="handleBackdropClick(event, 'modal-info')" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl relative" onclick="event.stopPropagation()">
+            <button onclick="closeModals()" class="absolute top-4 right-4 text-slate-400 font-bold text-xl leading-none">✕</button>
+            <h3 class="text-base sm:text-lg font-bold text-slate-900 mb-4 pr-6">Maneras de mover los elementos:</h3>
+            <div class="text-xs sm:text-sm text-slate-700 space-y-3.5 leading-relaxed">
+                <p><strong>1)</strong> Toca un elemento para que salte al siguiente hueco libre.</p>
+                <p><strong>2)</strong> Pica en un elemento <strong>ya colocado</strong> (cambiará a <span class="text-orange-600 font-bold">naranja</span>) y:</p>
+                <ul class="pl-5 space-y-1 list-disc text-slate-600">
+                    <li>vuelve a picar para de-seleccionar</li>
+                    <li>toca otro destino válido (otro elemento, un hueco o el cajón de sastre) para moverlo o intercambiarlo.</li>
+                </ul>
+                <p><strong>3)</strong> Pulsa primero un <strong>hueco vacío</strong> y luego un elemento para enviarlo allí.</p>
+                <p><strong>4)</strong> <strong>Mantén pulsado</strong> un elemento ya colocado (cambiará a <span class="text-purple-600 font-bold">lila</span>) y arrástralo para insertarlo y desplazar los otros elementos a la derecha.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- QR MODAL -->
+    <div id="modal-qr" onclick="handleBackdropClick(event, 'modal-qr')" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl p-5 shadow-xl text-center relative flex flex-col items-center" onclick="event.stopPropagation()">
+            <button onclick="closeModals()" class="absolute top-3 right-3 text-slate-400 font-bold text-lg leading-none">✕</button>
+            <div id="qr-modal-canvas" class="p-2 bg-white border border-slate-200 rounded-xl mb-3"></div>
+            <button onclick="downloadQRImage()" class="w-10 h-10 bg-slate-800 text-white rounded-xl text-lg flex items-center justify-center">
+                📥
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const GAME_CONFIG = {
+            title: "Wochenende Verben",
+            compositeName: "unjumble-al-t00-wochenendeverben",
+            items: [{"clue":"","sentence":"Ich schaue Serien","words":["Ich","schaue","Serien"]},{"clue":"","sentence":"Am Wochenende mache ich Sport","words":["Am","Wochenende","mache","ich","Sport"]},{"clue":"","sentence":"Ich esse mit meiner Familie","words":["Ich","esse","mit","meiner","Familie"]},{"clue":"","sentence":"Ich spiele Videospiele","words":["Ich","spiele","Videospiele"]},{"clue":"","sentence":"Er schläft viel","words":["Er","schläft","viel"]},{"clue":"","sentence":"Am Wochenende treffe ich meine Freunde","words":["Am","Wochenende","treffe","ich","meine","Freunde"]},{"clue":"","sentence":"Sie arbeitet im Büro","words":["Sie","arbeitet","im","Büro"]},{"clue":"","sentence":"Ich lerne Deutsch","words":["Ich","lerne","Deutsch"]},{"clue":"","sentence":"Ich gehe einkaufen","words":["Ich","gehe","einkaufen"]},{"clue":"","sentence":"Ich fahre nach Madrid","words":["Ich","fahre","nach","Madrid"]},{"clue":"","sentence":"Ich muss Hausaufgaben machen","words":["Ich","muss","Hausaufgaben","machen"]},{"clue":"","sentence":"Ich weiß noch nicht!","words":["Ich","weiß","noch","nicht!"]},{"clue":"","sentence":"Keine Ahnung!","words":["Keine","Ahnung!"]},{"clue":"","sentence":"Am Wochenende gehe ich einkaufen","words":["Am","Wochenende","gehe","ich","einkaufen"]}],
+            rawInput: "Ich schaue Serien \nAm Wochenende mache ich Sport \nIch esse mit meiner Familie \nIch spiele Videospiele \nEr schläft viel \nAm Wochenende treffe ich meine Freunde \nSie arbeitet im Büro \nIch lerne Deutsch \nIch gehe einkaufen \nIch fahre nach Madrid \nIch muss Hausaufgaben machen \nIch weiß noch nicht! \nKeine Ahnung! \nAm Wochenende gehe ich einkaufen"
+        };
+
+        class UnjumbleGameEngine {
+            constructor(containerId, config) {
+                this.container = typeof containerId === 'string' ? document.getElementById(containerId) : containerId;
+                this.config = config;
+                this.rawInput = config.rawInput || "";
+                this.items = config.items || [];
+                this.currentIndex = 0;
+                this.isManualMode = false;
+                
+                // Game session state
+                this.targetSlots = [];
+                this.poolWords = [];
+                this.selectedTargetIndex = null;
+                this.draggedSlotIndex = null;
+                this.userAttempts = []; 
+                this.isCorrectAnswerState = false;
+                this.isTransitioning = false;
+                
+                // Timer
+                this.secondsElapsed = 0;
+                this.timerInterval = null;
+
+                this.initHomeScreen();
+            }
+
+            initHomeScreen() {
+                this.stopTimer();
+                this.container.innerHTML = `
+                    <div class="p-6 space-y-6 relative">
+                        <!-- Restored In-Game Style Header Bar -->
+                        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                            <span class="text-xs font-black tracking-widest text-slate-400 uppercase select-none">
+                                UNJUMBLE
+                            </span>
+
+                            <div class="flex items-center gap-2">
+                                <!-- Styled Blue Info Button Matching Screenshot -->
+                                <button id="btn-info" onclick="showInfoModal()" 
+                                    class="w-8 h-8 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-bold flex items-center justify-center text-base shadow-sm transition" title="Instructions">
+                                    i
+                                </button>
+                                <div onclick="showQRModal()" class="w-8 h-8 bg-white border border-slate-300 rounded-lg p-0.5 cursor-pointer hover:scale-105 transition shadow-sm flex items-center justify-center" id="start-qr-box">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-center space-y-2">
+                            <h2 class="text-2xl font-black text-slate-800 tracking-tight">${this.config.title || "Sentence Unjumble"}</h2>
+                            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">${this.items.length} Sentences</p>
+                        </div>
+
+                        <div class="space-y-4">
+                            <!-- Side-by-Side GO and SHUFFLE buttons -->
+                            <div class="grid grid-cols-2 gap-3">
+                                <button onclick="(window.activeGameInstance || liveGameInstance).startGame(false)" 
+                                    style="background-color: var(--color-go);"
+                                    class="text-white font-black py-4 px-4 rounded-2xl text-base shadow-md hover:brightness-105 transition flex items-center justify-center">
+                                    GO
+                                </button>
+                                <button onclick="(window.activeGameInstance || liveGameInstance).startGame(true)" 
+                                    style="background-color: var(--color-shuffle);"
+                                    class="text-white font-black py-4 px-4 rounded-2xl text-base shadow-md hover:brightness-105 transition flex items-center justify-center">
+                                    SHUFFLE
+                                </button>
+                            </div>
+
+                            <!-- Centered Avance manual option -->
+                            <div class="flex items-center justify-center gap-2 pt-1">
+                                <input type="checkbox" id="chk-manual-mode" ${this.isManualMode ? 'checked' : ''} 
+                                    onchange="(window.activeGameInstance || liveGameInstance).isManualMode = this.checked"
+                                    class="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500 cursor-pointer">
+                                <label for="chk-manual-mode" class="text-xs font-bold text-slate-600 cursor-pointer select-none">
+                                    Avance manual
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Restored Secret Notepad Emoji -->
+                        <div class="flex justify-end pt-4">
+                            <button onclick="(window.activeGameInstance || liveGameInstance).triggerSecretDownload()" class="text-slate-300 hover:text-slate-600 text-xs transition p-1" title="Backup">📝</button>
+                        </div>
+                    </div>
+                `;
+
+                setTimeout(() => {
+                    const qrBox = document.getElementById("start-qr-box");
+                    if (qrBox) {
+                        qrBox.innerHTML = "";
+                        new QRCode(qrBox, { text: window.location.href, width: 24, height: 24, colorDark: "#0f172a", colorLight: "#ffffff" });
+                    }
+                }, 50);
+            }
+
+            startGame(shouldShuffle = false) {
+                if (shouldShuffle) {
+                    this.items = [...this.items].sort(() => Math.random() - 0.5);
+                }
+                this.currentIndex = 0;
+                this.userAttempts = this.items.map(() => ({ attempted: false, correct: false }));
+                this.secondsElapsed = 0;
+                this.startTimer();
+                this.renderGameplayScreen();
+                this.loadCurrentQuestion();
+            }
+
+            startTimer() {
+                this.stopTimer();
+                this.timerInterval = setInterval(() => {
+                    this.secondsElapsed++;
+                    const timerEl = document.getElementById("game-timer-display");
+                    if (timerEl) {
+                        const min = String(Math.floor(this.secondsElapsed / 60)).padStart(2, '0');
+                        const sec = String(this.secondsElapsed % 60).padStart(2, '0');
+                        timerEl.textContent = `${min}:${sec}`;
+                    }
+                }, 1000);
+            }
+
+            stopTimer() {
+                if (this.timerInterval) {
+                    clearInterval(this.timerInterval);
+                    this.timerInterval = null;
+                }
+            }
+
+            renderGameplayScreen() {
+                const min = String(Math.floor(this.secondsElapsed / 60)).padStart(2, '0');
+                const sec = String(this.secondsElapsed % 60).padStart(2, '0');
+
+                this.container.innerHTML = `
+                    <div class="bg-white rounded-2xl p-3 sm:p-4 relative min-h-[320px] flex flex-col justify-between">
+                        <!-- Top Header Row -->
+                        <div class="flex items-center justify-between mb-1">
+                            <div class="flex items-center gap-3">
+                                <span id="counter-display" class="text-base sm:text-lg font-black text-slate-800">${this.currentIndex + 1} / ${this.items.length}</span>
+                                <span id="game-timer-display" class="text-xs sm:text-sm font-bold text-slate-400 tabular-nums">${min}:${sec}</span>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-bold text-slate-400 tracking-wider uppercase select-none px-1">
+                                    UNJUMBLE
+                                </span>
+                                <!-- Styled Blue Info Button Matching Screenshot -->
+                                <button id="btn-info" onclick="showInfoModal()" 
+                                    class="w-8 h-8 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-bold flex items-center justify-center text-base shadow-sm transition" title="Instructions">
+                                    i
+                                </button>
+                                <div onclick="showQRModal()" class="w-8 h-8 bg-white border border-slate-300 rounded-lg p-0.5 cursor-pointer hover:scale-105 transition shadow-sm flex items-center justify-center" id="game-qr-box">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Center Clue Display -->
+                        <div class="text-center px-2 my-0.5 min-h-[24px]">
+                            <h3 id="clue-display" class="text-base sm:text-lg font-black text-slate-900"></h3>
+                        </div>
+
+                        <!-- Word Board Container -->
+                        <div class="flex-grow flex flex-col justify-center my-1 space-y-2.5">
+                            <!-- Target Board Gaps Container (Top) -->
+                            <div id="target-board" 
+                                class="target-gaps-container flex flex-wrap justify-center gap-2 min-h-[56px] p-2.5 items-center"></div>
+
+                            <!-- Pool Board Container (Bottom) -->
+                            <div id="pool-board" onclick="(window.activeGameInstance || liveGameInstance).handlePoolAreaClick()" 
+                                class="flex flex-wrap justify-center gap-2 min-h-[52px] p-2.5 bg-slate-50/80 rounded-2xl border border-slate-200 items-center transition cursor-pointer"></div>
+                        </div>
+
+                        <!-- Bottom Action Buttons Toolbar -->
+                        <div class="grid grid-cols-4 gap-2 pt-1 pb-4 border-t border-slate-100">
+                            <button onclick="(window.activeGameInstance || liveGameInstance).initHomeScreen()" 
+                                class="bg-slate-700 hover:bg-slate-800 text-white font-extrabold py-2.5 px-2 rounded-xl transition text-base flex items-center justify-center shadow-sm">
+                                ↩
+                            </button>
+                            <button onclick="(window.activeGameInstance || liveGameInstance).checkManualValidation()" 
+                                style="background-color: var(--color-ok);"
+                                class="text-white font-black py-2.5 px-2 rounded-xl transition text-xs sm:text-sm flex items-center justify-center shadow-sm">
+                                OK?
+                            </button>
+                            <button onclick="(window.activeGameInstance || liveGameInstance).passCurrentSentence()" 
+                                style="background-color: var(--color-pass);"
+                                class="text-white font-black py-2.5 px-2 rounded-xl transition text-xs sm:text-sm flex items-center justify-center shadow-sm">
+                                PASS
+                            </button>
+                            <button onclick="(window.activeGameInstance || liveGameInstance).stopAndScore()" 
+                                style="background-color: var(--color-stop);"
+                                class="text-white font-black py-2.5 px-2 rounded-xl transition text-xs sm:text-xs md:text-sm flex items-center justify-center shadow-sm uppercase tracking-tight">
+                                STOP & SCORE
+                            </button>
+                        </div>
+
+                        <!-- Secret Download Emoji -->
+                        <div class="absolute -bottom-1 right-2">
+                            <button onclick="(window.activeGameInstance || liveGameInstance).triggerSecretDownload()" class="text-slate-300 hover:text-slate-600 text-xs transition p-1.5" title="Backup">📝</button>
+                        </div>
+                    </div>
+                `;
+
+                setTimeout(() => {
+                    const qrBox = document.getElementById("game-qr-box");
+                    if (qrBox) {
+                        qrBox.innerHTML = "";
+                        new QRCode(qrBox, { text: window.location.href, width: 24, height: 24, colorDark: "#0f172a", colorLight: "#ffffff" });
+                    }
+                }, 50);
+            }
+
+            loadCurrentQuestion() {
+                if (this.currentIndex >= this.items.length) {
+                    this.finishGame();
+                    return;
+                }
+
+                const current = this.items[this.currentIndex];
+                this.isCorrectAnswerState = false;
+                this.isTransitioning = false;
+                this.selectedTargetIndex = null;
+                this.draggedSlotIndex = null;
+
+                // Set clue text
+                const clueEl = document.getElementById("clue-display");
+                if (clueEl) clueEl.textContent = current.clue || "";
+
+                // Update counter
+                const counterEl = document.getElementById("counter-display");
+                if (counterEl) counterEl.textContent = `${this.currentIndex + 1} / ${this.items.length}`;
+
+                // Setup target slots array
+                this.targetSlots = new Array(current.words.length).fill(null);
+
+                // Setup randomized pool
+                this.poolWords = current.words.map((w, index) => ({ id: `${index}-${w}`, text: w }))
+                    .sort(() => Math.random() - 0.5);
+
+                this.renderBoards();
+            }
+
+            renderBoards(isCorrectStateOverride = false) {
+                const targetBoard = document.getElementById("target-board");
+                const poolBoard = document.getElementById("pool-board");
+
+                if (!targetBoard || !poolBoard) return;
+
+                targetBoard.innerHTML = "";
+                poolBoard.innerHTML = "";
+
+                const showGreen = isCorrectStateOverride || this.isCorrectAnswerState;
+
+                // Render Target Slots
+                this.targetSlots.forEach((slot, index) => {
+                    const slotDiv = document.createElement("div");
+                    
+                    let slotClasses = "target-slot ";
+                    if (showGreen) {
+                        slotClasses += "target-slot-correct";
+                    } else if (slot) {
+                        slotClasses += "target-slot-filled ";
+                        if (this.selectedTargetIndex === index) {
+                            slotClasses += "target-slot-selected-orange";
+                        }
+                    } else {
+                        slotClasses += "target-slot-empty";
+                    }
+
+                    slotDiv.className = slotClasses;
+                    slotDiv.textContent = slot ? slot.text : "";
+                    slotDiv.setAttribute("draggable", (slot && !showGreen && !this.isTransitioning) ? "true" : "false");
+
+                    // Slot click handler
+                    slotDiv.onclick = (e) => {
+                        e.stopPropagation();
+                        if (this.isTransitioning) return;
+                        this.handleTargetSlotClick(index);
+                    };
+
+                    // Drag & Drop handlers for Purple Reordering
+                    if (slot && !showGreen && !this.isTransitioning) {
+                        slotDiv.ondragstart = (e) => {
+                            this.draggedSlotIndex = index;
+                            slotDiv.classList.add("target-slot-selected-purple");
+                            e.dataTransfer.setData("text/plain", index);
+                        };
+
+                        slotDiv.ondragover = (e) => {
+                            e.preventDefault();
+                        };
+
+                        slotDiv.ondrop = (e) => {
+                            e.preventDefault();
+                            if (this.draggedSlotIndex !== null && this.draggedSlotIndex !== index) {
+                                this.reorderSlots(this.draggedSlotIndex, index);
+                            }
+                        };
+
+                        slotDiv.ondragend = () => {
+                            this.draggedSlotIndex = null;
+                            this.renderBoards();
+                        };
+                    }
+
+                    targetBoard.appendChild(slotDiv);
+                });
+
+                // Render Pool Area Words
+                this.poolWords.forEach((wordObj) => {
+                    const tileDiv = document.createElement("div");
+                    tileDiv.className = "pool-tile";
+                    tileDiv.textContent = wordObj.text;
+                    tileDiv.onclick = (e) => {
+                        e.stopPropagation();
+                        if (this.isTransitioning) return;
+                        this.handlePoolTileClick(wordObj);
+                    };
+                    poolBoard.appendChild(tileDiv);
+                });
+            }
+
+            handlePoolTileClick(wordObj) {
+                if (this.selectedTargetIndex !== null) {
+                    // Replace item at selected orange slot
+                    const oldWord = this.targetSlots[this.selectedTargetIndex];
+                    this.targetSlots[this.selectedTargetIndex] = wordObj;
+                    this.poolWords = this.poolWords.filter(w => w.id !== wordObj.id);
+                    if (oldWord) this.poolWords.push(oldWord);
+                    this.selectedTargetIndex = null;
+                } else {
+                    // Find first empty target slot
+                    const firstEmpty = this.targetSlots.findIndex(s => s === null);
+                    if (firstEmpty !== -1) {
+                        this.targetSlots[firstEmpty] = wordObj;
+                        this.poolWords = this.poolWords.filter(w => w.id !== wordObj.id);
+                    }
+                }
+
+                this.renderBoards();
+                this.checkAutoValidation();
+            }
+
+            handleTargetSlotClick(index) {
+                const clickedSlot = this.targetSlots[index];
+
+                if (this.selectedTargetIndex !== null) {
+                    if (this.selectedTargetIndex === index) {
+                        // De-select
+                        this.selectedTargetIndex = null;
+                    } else {
+                        // Swap slots
+                        const temp = this.targetSlots[this.selectedTargetIndex];
+                        this.targetSlots[this.selectedTargetIndex] = this.targetSlots[index];
+                        this.targetSlots[index] = temp;
+                        this.selectedTargetIndex = null;
+                    }
+                } else if (clickedSlot) {
+                    // Select orange
+                    this.selectedTargetIndex = index;
+                }
+
+                this.renderBoards();
+                this.checkAutoValidation();
+            }
+
+            handlePoolAreaClick() {
+                if (this.selectedTargetIndex !== null) {
+                    // Send selected orange item back to pool
+                    const wordToReturn = this.targetSlots[this.selectedTargetIndex];
+                    if (wordToReturn) {
+                        this.poolWords.push(wordToReturn);
+                        this.targetSlots[this.selectedTargetIndex] = null;
+                    }
+                    this.selectedTargetIndex = null;
+                    this.renderBoards();
+                    this.checkAutoValidation();
+                }
+            }
+
+            reorderSlots(fromIndex, toIndex) {
+                const item = this.targetSlots.splice(fromIndex, 1)[0];
+                this.targetSlots.splice(toIndex, 0, item);
+                this.renderBoards();
+                this.checkAutoValidation();
+            }
+
+            checkAutoValidation() {
+                // If all slots filled
+                if (!this.targetSlots.includes(null)) {
+                    const currentString = this.targetSlots.map(s => s.text).join(" ");
+                    const expectedString = this.items[this.currentIndex].sentence;
+
+                    if (currentString === expectedString) {
+                        this.handleSuccess();
+                    }
+                }
+            }
+
+            checkManualValidation() {
+                if (this.isTransitioning) return;
+                const currentString = this.targetSlots.filter(Boolean).map(s => s.text).join(" ");
+                const expectedString = this.items[this.currentIndex].sentence;
+
+                if (currentString === expectedString) {
+                    this.handleSuccess();
+                } else {
+                    // Show wrong red feedback briefly
+                    const targetBoard = document.getElementById("target-board");
+                    if (targetBoard) {
+                        Array.from(targetBoard.children).forEach(child => {
+                            if (child.classList.contains("target-slot-filled")) {
+                                child.classList.add("target-slot-wrong");
+                            }
+                        });
+                    }
+                }
+            }
+
+            handleSuccess() {
+                this.isCorrectAnswerState = true;
+                this.isTransitioning = true;
+                this.userAttempts[this.currentIndex] = { attempted: true, correct: true };
+                
+                this.renderBoards(true);
+
+                setTimeout(() => {
+                    this.currentIndex++;
+                    this.loadCurrentQuestion();
+                }, 2000);
+            }
+
+            passCurrentSentence() {
+                if (this.isTransitioning) return;
+                this.userAttempts[this.currentIndex] = { attempted: true, correct: false };
+                this.currentIndex++;
+                this.loadCurrentQuestion();
+            }
+
+            stopAndScore() {
+                this.renderSummaryScreen(false);
+            }
+
+            finishGame() {
+                this.renderSummaryScreen(true);
+            }
+
+            renderSummaryScreen(isFinalFinish = false) {
+                this.stopTimer();
+                const min = String(Math.floor(this.secondsElapsed / 60)).padStart(2, '0');
+                const sec = String(this.secondsElapsed % 60).padStart(2, '0');
+
+                let listHTML = "";
+                this.items.forEach((item, idx) => {
+                    const status = this.userAttempts[idx] || { attempted: false, correct: false };
+                    
+                    let markIcon = "";
+                    let displayText = "";
+
+                    if (status.attempted && status.correct) {
+                        markIcon = `<span class="text-emerald-500 font-bold text-lg">✓</span>`;
+                        displayText = item.sentence;
+                    } else if (status.attempted && !status.correct) {
+                        markIcon = `<span class="text-amber-500 font-bold text-lg">✕</span>`;
+                        displayText = isFinalFinish ? item.sentence : "";
+                    } else {
+                        markIcon = `<span class="text-slate-400 font-bold text-lg">✕</span>`;
+                        displayText = isFinalFinish ? item.sentence : "";
+                    }
+
+                    listHTML += `
+                        <div class="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                            <div class="flex items-center gap-3">
+                                <span class="font-bold text-slate-400 text-xs w-6">${idx + 1}.</span>
+                                <span class="font-bold text-slate-800 text-sm">${displayText}</span>
+                            </div>
+                            <div>${markIcon}</div>
+                        </div>
+                    `;
+                });
+
+                this.container.innerHTML = `
+                    <div class="p-5 sm:p-6 space-y-5">
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                            <h2 class="text-xl font-black text-slate-800">Resumen</h2>
+                            <span class="text-sm font-bold text-slate-400 tabular-nums">${min}:${sec}</span>
+                        </div>
+
+                        <div class="space-y-2 max-h-[280px] overflow-y-auto pr-1">
+                            ${listHTML}
+                        </div>
+
+                        ${isFinalFinish ? `
+                            <button onclick="(window.activeGameInstance || liveGameInstance).initHomeScreen()" 
+                                style="background-color: var(--color-go);"
+                                class="w-full text-white font-black py-3.5 px-4 rounded-xl text-sm shadow-md transition">
+                                RESTART
+                            </button>
+                        ` : `
+                            <div class="grid grid-cols-2 gap-3 pt-2">
+                                <button onclick="(window.activeGameInstance || liveGameInstance).resumeGame()" 
+                                    class="bg-blue-600 hover:bg-blue-700 text-white font-black py-3 px-4 rounded-xl text-sm transition shadow-sm">
+                                    CONTINUE
+                                </button>
+                                <button onclick="(window.activeGameInstance || liveGameInstance).finishGame()" 
+                                    style="background-color: var(--color-stop);"
+                                    class="text-white font-black py-3 px-4 rounded-xl text-sm transition shadow-sm">
+                                    FINISH
+                                </button>
+                            </div>
+                        `}
+                    </div>
+                `;
+            }
+
+            resumeGame() {
+                this.startTimer();
+                this.renderGameplayScreen();
+                this.renderBoards();
+            }
+
+            triggerSecretDownload() {
+                const pass = prompt("Password:");
+                if (pass === "468") {
+                    const blob = new Blob([this.rawInput], { type: "text/plain;charset=utf-8" });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = "input_backup.txt";
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                } else if (pass !== null) {
+                    alert("Incorrect password.");
+                }
+            }
+        }
+
+        let activeGameInstance = null;
+        window.onload = function() {
+            activeGameInstance = new UnjumbleGameEngine("game-mount", GAME_CONFIG);
+        };
+
+        function handleBackdropClick(event, modalId) {
+            if (event.target === document.getElementById(modalId)) {
+                closeModals();
+            }
+        }
+        function showInfoModal() { document.getElementById("modal-info").classList.remove("hidden"); }
+        function showQRModal() {
+            const qrCanvas = document.getElementById("qr-modal-canvas");
+            qrCanvas.innerHTML = "";
+            new QRCode(qrCanvas, { text: window.location.href, width: 170, height: 170, colorDark : "#0f172a", colorLight : "#ffffff" });
+            document.getElementById("modal-qr").classList.remove("hidden");
+        }
+        function closeModals() {
+            document.getElementById("modal-info").classList.add("hidden");
+            document.getElementById("modal-qr").classList.add("hidden");
+        }
+        function downloadQRImage() {
+            const qrCanvas = document.querySelector("#qr-modal-canvas canvas");
+            if (qrCanvas) {
+                const link = document.createElement("a");
+                link.href = qrCanvas.toDataURL("image/png");
+                link.download = "qr-" + GAME_CONFIG.compositeName + ".png";
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+    </script>
+</body>
+</html>

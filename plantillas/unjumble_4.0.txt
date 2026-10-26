@@ -1,0 +1,3 @@
+creo que no reconoce los espacios del título para ponerlos como "_"
+
+el "unjumble" de la esquina parece que está en bold type
