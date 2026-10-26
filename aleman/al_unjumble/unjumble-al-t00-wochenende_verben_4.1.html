@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wochenende Verben</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #1e293b; margin: 0; padding: 0; }
+        :root { --color-ok: #16a34a; --color-shuffle: #7c3aed; --color-pass: #d97706; --color-stop: #dc2626; }
+        .word-tile { user-select: none; -webkit-user-select: none; touch-action: manipulation; white-space: nowrap; }
+        .target-gaps-container { background-color: #edf2f7; border: 1px solid #e2e8f0; border-radius: 1rem; }
+        .target-slot { min-width: 3.25rem; width: auto; height: 3.25rem; padding: 0 0.75rem; border-radius: 0.75rem; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.125rem; transition: all 0.15s ease; }
+        .target-slot-empty { border: 2px dashed #cbd5e1; background-color: rgba(255, 255, 255, 0.6); }
+        .target-slot-filled { border: 2px solid #cbd5e1; background-color: #ffffff; color: #0f172a; box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: pointer; }
+        .target-slot-selected-orange { border: 2.5px solid #ea580c !important; background-color: #ffedd5 !important; color: #c2410c !important; }
+        .target-slot-selected-purple { border: 2.5px solid #7c3aed !important; background-color: #f3e8ff !important; color: #6b21a8 !important; }
+        .target-slot-correct { border: 2.5px solid #16a34a !important; background-color: #dcfce7 !important; color: #15803d !important; }
+        .pool-tile { min-width: 3.25rem; width: auto; height: 3.25rem; padding: 0 0.85rem; border-radius: 0.75rem; border: 2px solid #e2e8f0; background-color: #ffffff; color: #0f172a; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.125rem; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); cursor: pointer; transition: all 0.15s ease; }
+        .modal-fade { animation: fadeIn 0.2s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-3 sm:p-6">
+
+    <div id="game-mount" class="w-full max-w-2xl"></div>
+
+    <div id="modal-info" onclick="handleBackdropClick(event, 'modal-info')" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl relative" onclick="event.stopPropagation()">
+            <button onclick="closeModals()" class="absolute top-4 right-4 text-slate-400 font-bold text-xl leading-none">✕</button>
+            <h3 class="text-base sm:text-lg font-bold text-slate-900 mb-4 pr-6">Maneras de mover los elementos:</h3>
+            <div class="text-xs sm:text-sm text-slate-700 space-y-3.5 leading-relaxed">
+                <p><strong>1)</strong> Toca un elemento para que salte al siguiente hueco libre.</p>
+                <p><strong>2)</strong> Pica en un elemento <strong>ya colocado</strong> (cambiará a <span class="text-orange-600 font-bold">naranja</span>) y:</p>
+                <ul class="pl-5 space-y-1 list-disc text-slate-600">
+                    <li>vuelve a picar para de-seleccionar</li>
+                    <li>toca otro destino válido (otro elemento, un hueco o el cajón de sastre) para moverlo o intercambiarlo.</li>
+                </ul>
+                <p><strong>3)</strong> Pulsa primero un <strong>hueco vacío</strong> y luego un elemento para enviarlo allí.</p>
+                <p><strong>4)</strong> <strong>Mantén pulsado</strong> un elemento ya colocado (cambiará a <span class="text-purple-600 font-bold">lila</span>) y arrástralo para insertarlo y desplazar los otros elementos a la derecha.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-qr" onclick="handleBackdropClick(event, 'modal-qr')" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl p-5 shadow-xl text-center relative flex flex-col items-center" onclick="event.stopPropagation()">
+            <button onclick="closeModals()" class="absolute top-3 right-3 text-slate-400 font-bold text-lg leading-none">✕</button>
+            <div id="qr-modal-canvas" class="p-2 bg-white border border-slate-200 rounded-xl mb-3"></div>
+            <button onclick="downloadQRImage()" class="w-10 h-10 bg-slate-800 text-white rounded-xl text-lg flex items-center justify-center">
+                📥
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const GAME_CONFIG = {
+            title: "Wochenende Verben",
+            compositeName: "unjumble-al-t00-wochenende_verben",
+            items: [{"clue":"","sentence":"Ich schaue Serien","words":["Ich","schaue","Serien"]},{"clue":"","sentence":"Am Wochenende mache ich Sport","words":["Am","Wochenende","mache","ich","Sport"]},{"clue":"","sentence":"Ich esse mit meiner Familie","words":["Ich","esse","mit","meiner","Familie"]},{"clue":"","sentence":"Ich spiele Videospiele","words":["Ich","spiele","Videospiele"]},{"clue":"","sentence":"Er schläft viel","words":["Er","schläft","viel"]},{"clue":"","sentence":"Am Wochenende treffe ich meine Freunde","words":["Am","Wochenende","treffe","ich","meine","Freunde"]},{"clue":"","sentence":"Sie arbeitet im Büro","words":["Sie","arbeitet","im","Büro"]},{"clue":"","sentence":"Ich lerne Deutsch","words":["Ich","lerne","Deutsch"]},{"clue":"","sentence":"Ich gehe einkaufen","words":["Ich","gehe","einkaufen"]},{"clue":"","sentence":"Ich fahre nach Madrid","words":["Ich","fahre","nach","Madrid"]},{"clue":"","sentence":"Ich muss Hausaufgaben machen","words":["Ich","muss","Hausaufgaben","machen"]},{"clue":"","sentence":"Ich weiß noch nicht!","words":["Ich","weiß","noch","nicht!"]},{"clue":"","sentence":"Ach, keine Ahnung!","words":["Ach,","keine","Ahnung!"]},{"clue":"","sentence":"Am Wochenende gehe ich einkaufen","words":["Am","Wochenende","gehe","ich","einkaufen"]}],
+            rawInput: "Ich schaue Serien \nAm Wochenende mache ich Sport \nIch esse mit meiner Familie \nIch spiele Videospiele \nEr schläft viel \nAm Wochenende treffe ich meine Freunde \nSie arbeitet im Büro \nIch lerne Deutsch \nIch gehe einkaufen \nIch fahre nach Madrid \nIch muss Hausaufgaben machen \nIch weiß noch nicht! \nAch, keine Ahnung! \nAm Wochenende gehe ich einkaufen"
+        };
+
+        class UnjumbleGameEngine {
+            constructor(containerId, config) {
+                this.container = document.getElementById(containerId);
+                this.config = config;
+                this.items = [...config.items];
+                
+                this.currentIndex = 0;
+                this.secondsElapsed = 0;
+                this.timerInterval = null;
+                
+                this.poolWords = []; // { id, text }
+                this.placedSlots = []; // array of { id, text } or null
+                this.selectedIndex = null; // Orange highlight selection index in target board
+                this.isTransitioning = false; // Lock interactions during correct answer delay
+                this.isCorrectAnswerState = false; // Track correct highlight state
+                
+                this.manualMode = false;
+                this.attemptedCount = 0;
+                this.correctCount = 0;
+                this.resultsHistory = []; // { index, prompt, sentence, isCorrect, attempted }
+
+                this.initHomeScreen();
+            }
+
+            initHomeScreen() {
+                this.stopTimer();
+                this.container.innerHTML = `
+                    <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-xl border border-slate-200 text-center modal-fade max-w-md mx-auto relative">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-16"></div>
+                            <span class="bg-slate-100 text-slate-500 font-bold text-xs px-3 py-1 rounded-full uppercase tracking-wider">UNJUMBLE</span>
+                            <div class="flex items-center gap-2">
+                                <button onclick="showInfoModal()" class="w-7 h-7 bg-blue-500 text-white rounded-md flex items-center justify-center font-bold text-xs shadow-sm hover:bg-blue-600 transition" title="Instructions">i</button>
+                                <div onclick="showQRModal()" class="w-7 h-7 bg-white border border-slate-300 rounded-md p-0.5 cursor-pointer hover:scale-105 transition shadow-sm flex items-center justify-center" id="home-qr-box">
+                                </div>
+                            </div>
+                        </div>
+
+                        <h2 class="text-2xl sm:text-3xl font-black text-slate-900 mb-6">${this.escapeHTML(this.config.title || "Unjumble Game")}</h2>
+                        
+                        <div class="grid grid-cols-2 gap-3 mb-6">
+                            <button onclick="activeGameInstance.startGame()" 
+                                style="background-color: var(--color-ok);"
+                                class="w-full text-white font-black py-4 px-4 rounded-2xl text-lg shadow-md hover:brightness-105 transition">
+                                GO
+                            </button>
+                            <button onclick="activeGameInstance.shuffleItemsAndStart()" 
+                                style="background-color: var(--color-shuffle);"
+                                class="w-full text-white font-black py-4 px-4 rounded-2xl text-base shadow-md hover:brightness-105 transition flex items-center justify-center">
+                                SHUFFLE
+                            </button>
+                        </div>
+
+                        <div class="flex items-center justify-center gap-2">
+                            <input type="checkbox" id="chk-manual-advance" class="w-5 h-5 text-blue-600 rounded border-slate-300 focus:ring-blue-500">
+                            <label for="chk-manual-advance" class="text-sm font-bold text-slate-700 select-none cursor-pointer">Avance manual</label>
+                        </div>
+                    </div>
+                `;
+                this.renderHomeQR();
+            }
+
+            renderHomeQR() {
+                const qrBox = document.getElementById("home-qr-box");
+                if (qrBox) {
+                    qrBox.innerHTML = "";
+                    new QRCode(qrBox, {
+                        text: window.location.href,
+                        width: 24,
+                        height: 24,
+                        colorDark : "#0f172a",
+                        colorLight : "#ffffff"
+                    });
+                }
+            }
+
+            shuffleItemsAndStart() {
+                for (let i = this.items.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [this.items[i], this.items[j]] = [this.items[j], this.items[i]];
+                }
+                this.startGame();
+            }
+
+            startGame() {
+                const chk = document.getElementById("chk-manual-advance");
+                this.manualMode = chk ? chk.checked : false;
+                
+                this.currentIndex = 0;
+                this.secondsElapsed = 0;
+                this.attemptedCount = 0;
+                this.correctCount = 0;
+                this.resultsHistory = this.items.map((item, idx) => ({
+                    index: idx,
+                    clue: item.clue,
+                    sentence: item.sentence,
+                    isCorrect: false,
+                    attempted: false
+                }));
+
+                this.renderGameplayScreen();
+                this.startTimer();
+                this.loadCurrentQuestion();
+            }
+
+            startTimer() {
+                this.stopTimer();
+                this.timerInterval = setInterval(() => {
+                    this.secondsElapsed++;
+                    const timerEl = document.getElementById("game-timer-display");
+                    if (timerEl) {
+                        const min = String(Math.floor(this.secondsElapsed / 60)).padStart(2, '0');
+                        const sec = String(this.secondsElapsed % 60).padStart(2, '0');
+                        timerEl.textContent = `${min}:${sec}`;
+                    }
+                }, 1000);
+            }
+
+            stopTimer() {
+                if (this.timerInterval) clearInterval(this.timerInterval);
+            }
+
+            renderGameplayScreen() {
+                const min = String(Math.floor(this.secondsElapsed / 60)).padStart(2, '0');
+                const sec = String(this.secondsElapsed % 60).padStart(2, '0');
+
+                this.container.innerHTML = `
+                    <div class="bg-white rounded-2xl p-3 sm:p-4 relative min-h-[320px] flex flex-col justify-between">
+                        <!-- Top Header Row -->
+                        <div class="flex items-center justify-between mb-1">
+                            <div class="flex items-center gap-3">
+                                <span id="counter-display" class="text-base sm:text-lg font-black text-slate-800">${this.currentIndex + 1} / ${this.items.length}</span>
+                                <span id="game-timer-display" class="text-xs sm:text-sm font-bold text-slate-400 tabular-nums">${min}:${sec}</span>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-bold text-slate-400 tracking-wider uppercase select-none px-1">
+                                    UNJUMBLE
+                                </span>
+                                <button onclick="showInfoModal()" class="w-7 h-7 bg-blue-500 text-white rounded-md flex items-center justify-center font-bold text-xs shadow-sm hover:bg-blue-600 transition" title="Instructions">i</button>
+                                <div onclick="showQRModal()" class="w-7 h-7 bg-white border border-slate-300 rounded-md p-0.5 cursor-pointer hover:scale-105 transition shadow-sm flex items-center justify-center" id="game-qr-box">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Center Clue Display -->
+                        <div class="text-center px-2 my-0.5 min-h-[24px]">
+                            <h3 id="clue-display" class="text-base sm:text-lg font-black text-slate-900"></h3>
+                        </div>
+
+                        <!-- Word Board Container -->
+                        <div class="flex-grow flex flex-col justify-center my-1 space-y-2.5">
+                            <!-- Target Board Gaps Container (Top) -->
+                            <div id="target-board" 
+                                class="target-gaps-container flex flex-wrap justify-center gap-2 min-h-[56px] p-2.5 items-center"></div>
+
+                            <!-- Pool Board Container (Bottom) -->
+                            <div id="pool-board" onclick="activeGameInstance.handlePoolAreaClick()" 
+                                class="flex flex-wrap justify-center gap-2 min-h-[52px] p-2.5 bg-slate-50/80 rounded-2xl border border-slate-200 items-center transition cursor-pointer"></div>
+                        </div>
+
+                        <!-- Bottom Action Buttons Toolbar -->
+                        <div class="grid grid-cols-4 gap-2 pt-1 pb-4 border-t border-slate-100">
+                            <button onclick="activeGameInstance.initHomeScreen()" 
+                                class="bg-slate-700 hover:bg-slate-800 text-white font-extrabold py-2.5 px-2 rounded-xl transition text-base flex items-center justify-center shadow-sm">
+                                ↩
+                            </button>
+                            <button onclick="activeGameInstance.checkManualValidation()" 
+                                style="background-color: var(--color-ok);"
+                                class="text-white font-black py-2.5 px-2 rounded-xl transition text-xs sm:text-sm flex items-center justify-center shadow-sm">
+                                OK?
+                            </button>
+                            <button onclick="activeGameInstance.passCurrentSentence()" 
+                                style="background-color: var(--color-pass);"
+                                class="text-white font-black py-2.5 px-2 rounded-xl transition text-xs sm:text-sm flex items-center justify-center shadow-sm">
+                                PASS
+                            </button>
+                            <button onclick="activeGameInstance.stopAndScore()" 
+                                style="background-color: var(--color-stop);"
+                                class="text-white font-black py-2.5 px-2 rounded-xl transition text-xs sm:text-xs md:text-sm flex items-center justify-center shadow-sm uppercase tracking-tight">
+                                STOP & SCORE
+                            </button>
+                        </div>
+
+                        <!-- Secret Download Emoji -->
+                        <div class="absolute -bottom-1 right-2">
+                            <button onclick="activeGameInstance.triggerSecretDownload()" class="text-slate-300 hover:text-slate-600 text-xs transition p-1.5" title="Backup">📝</button>
+                        </div>
+                    </div>
+                `;
+
+                this.renderMiniQR();
+            }
+
+            renderMiniQR() {
+                const qrBox = document.getElementById("game-qr-box");
+                if (qrBox) {
+                    qrBox.innerHTML = "";
+                    new QRCode(qrBox, {
+                        text: window.location.href,
+                        width: 24,
+                        height: 24,
+                        colorDark : "#0f172a",
+                        colorLight : "#ffffff"
+                    });
+                }
+            }
+
+            loadCurrentQuestion() {
+                this.selectedIndex = null;
+                this.isTransitioning = false;
+                this.isCorrectAnswerState = false;
+                const item = this.items[this.currentIndex];
+                
+                document.getElementById("counter-display").textContent = `${this.currentIndex + 1} / ${this.items.length}`;
+                document.getElementById("clue-display").textContent = item.clue || "";
+
+                // Initialize target slots array with nulls
+                this.placedSlots = new Array(item.words.length).fill(null);
+
+                // Prepare pool words shuffled
+                const wordsShuffled = item.words.map((w, idx) => ({ id: `w_${idx}_${Date.now()}_${Math.random()}`, text: w }));
+                for (let i = wordsShuffled.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [wordsShuffled[i], wordsShuffled[j]] = [wordsShuffled[j], wordsShuffled[i]];
+                }
+                this.poolWords = wordsShuffled;
+
+                this.renderBoards();
+            }
+
+            renderBoards(isCorrectState = false) {
+                if (isCorrectState) {
+                    this.isCorrectAnswerState = true;
+                }
+                const isCorrect = isCorrectState || this.isCorrectAnswerState;
+
+                const targetBoard = document.getElementById("target-board");
+                const poolBoard = document.getElementById("pool-board");
+                if (!targetBoard || !poolBoard) return;
+
+                // Render Target Board Gaps
+                targetBoard.innerHTML = "";
+                this.placedSlots.forEach((slot, index) => {
+                    const slotDiv = document.createElement("div");
+                    slotDiv.className = "target-slot word-tile";
+                    
+                    if (slot === null) {
+                        slotDiv.classList.add("target-slot-empty");
+                        if (!this.isTransitioning) {
+                            slotDiv.onclick = (e) => { e.stopPropagation(); this.handleTargetSlotClick(index); };
+                            this.attachDragAndDropHandlers(slotDiv, index);
+                        }
+                    } else {
+                        slotDiv.classList.add("target-slot-filled");
+                        slotDiv.textContent = slot.text;
+
+                        if (isCorrect) {
+                            slotDiv.classList.add("target-slot-correct");
+                        } else if (this.selectedIndex === index) {
+                            slotDiv.classList.add("target-slot-selected-orange");
+                        }
+
+                        if (!this.isTransitioning) {
+                            slotDiv.setAttribute("draggable", "true");
+                            slotDiv.onclick = (e) => { e.stopPropagation(); this.handleTargetSlotClick(index); };
+                            this.attachDragAndDropHandlers(slotDiv, index);
+                        }
+                    }
+
+                    targetBoard.appendChild(slotDiv);
+                });
+
+                // Render Pool Board
+                poolBoard.innerHTML = "";
+                this.poolWords.forEach((wordObj) => {
+                    const btn = document.createElement("button");
+                    btn.className = "pool-tile word-tile";
+                    btn.textContent = wordObj.text;
+                    if (!this.isTransitioning) {
+                        btn.onclick = (e) => {
+                            e.stopPropagation();
+                            this.handlePoolWordClick(wordObj);
+                        };
+                    }
+                    poolBoard.appendChild(btn);
+                });
+            }
+
+            attachDragAndDropHandlers(element, index) {
+                element.addEventListener("dragstart", (e) => {
+                    if (this.isTransitioning) return;
+                    this.draggedIndex = index;
+                    element.classList.add("target-slot-selected-purple");
+                    e.dataTransfer.setData("text/plain", index);
+                });
+
+                element.addEventListener("dragover", (e) => {
+                    e.preventDefault();
+                });
+
+                element.addEventListener("dragenter", (e) => {
+                    e.preventDefault();
+                    if (this.draggedIndex !== null && this.draggedIndex !== index) {
+                        element.classList.add("border-purple-400");
+                    }
+                });
+
+                element.addEventListener("dragleave", () => {
+                    element.classList.remove("border-purple-400");
+                });
+
+                element.addEventListener("drop", (e) => {
+                    e.preventDefault();
+                    element.classList.remove("border-purple-400");
+                    if (this.draggedIndex !== null && this.draggedIndex !== index) {
+                        this.reorderSlots(this.draggedIndex, index);
+                    }
+                });
+
+                element.addEventListener("dragend", () => {
+                    this.draggedIndex = null;
+                    this.renderBoards();
+                });
+
+                // Touch support for drag and insert on mobile
+                let touchTimer = null;
+                let isTouchDragging = false;
+
+                element.addEventListener("touchstart", (e) => {
+                    if (this.isTransitioning || this.placedSlots[index] === null) return;
+                    touchTimer = setTimeout(() => {
+                        isTouchDragging = true;
+                        this.draggedIndex = index;
+                        element.classList.add("target-slot-selected-purple");
+                    }, 250);
+                }, { passive: true });
+
+                element.addEventListener("touchmove", (e) => {
+                    if (isTouchDragging) {
+                        e.preventDefault();
+                    } else if (touchTimer) {
+                        clearTimeout(touchTimer);
+                    }
+                }, { passive: false });
+
+                element.addEventListener("touchend", (e) => {
+                    if (touchTimer) clearTimeout(touchTimer);
+                    if (isTouchDragging) {
+                        isTouchDragging = false;
+                        const touch = e.changedTouches[0];
+                        const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
+                        if (targetEl) {
+                            const targetSlotEl = targetEl.closest(".target-slot");
+                            if (targetSlotEl && targetSlotEl.parentNode === element.parentNode) {
+                                const targetIndex = Array.from(element.parentNode.children).indexOf(targetSlotEl);
+                                if (targetIndex !== -1 && targetIndex !== this.draggedIndex) {
+                                    this.reorderSlots(this.draggedIndex, targetIndex);
+                                    return;
+                                }
+                            }
+                        }
+                        this.draggedIndex = null;
+                        this.renderBoards();
+                    }
+                });
+            }
+
+            reorderSlots(fromIndex, toIndex) {
+                const item = this.placedSlots[fromIndex];
+                if (!item) return;
+                
+                // Remove item from original position
+                this.placedSlots.splice(fromIndex, 1);
+                // Insert item into new position (shifting others to the right)
+                this.placedSlots.splice(toIndex, 0, item);
+                
+                this.draggedIndex = null;
+                this.selectedIndex = null;
+                this.renderBoards();
+                this.checkAutoValidation();
+            }
+
+            handlePoolWordClick(wordObj) {
+                if (this.isTransitioning) return;
+
+                // If orange element selected in target board, move word back to pool & put pool item in target slot
+                if (this.selectedIndex !== null) {
+                    const oldPlaced = this.placedSlots[this.selectedIndex];
+                    this.placedSlots[this.selectedIndex] = wordObj;
+                    this.poolWords = this.poolWords.filter(w => w.id !== wordObj.id);
+                    if (oldPlaced) this.poolWords.push(oldPlaced);
+                    this.selectedIndex = null;
+                    this.renderBoards();
+                    this.checkAutoValidation();
+                    return;
+                }
+
+                // Normal behavior: Find first empty target slot
+                const firstEmptyIndex = this.placedSlots.findIndex(s => s === null);
+                if (firstEmptyIndex !== -1) {
+                    this.placedSlots[firstEmptyIndex] = wordObj;
+                    this.poolWords = this.poolWords.filter(w => w.id !== wordObj.id);
+                    this.renderBoards();
+                    this.checkAutoValidation();
+                }
+            }
+
+            handleTargetSlotClick(index) {
+                if (this.isTransitioning) return;
+
+                const currentSlot = this.placedSlots[index];
+
+                // Case 1: An element is already orange-selected
+                if (this.selectedIndex !== null) {
+                    if (this.selectedIndex === index) {
+                        // Tapped same tile again -> de-select
+                        this.selectedIndex = null;
+                    } else {
+                        // Swap or move to another target slot
+                        const temp = this.placedSlots[this.selectedIndex];
+                        this.placedSlots[this.selectedIndex] = this.placedSlots[index];
+                        this.placedSlots[index] = temp;
+                        this.selectedIndex = null;
+                    }
+                    this.renderBoards();
+                    this.checkAutoValidation();
+                    return;
+                }
+
+                // Case 2: No element selected yet
+                if (currentSlot !== null) {
+                    // Tap placed item -> Select orange
+                    this.selectedIndex = index;
+                    this.renderBoards();
+                }
+            }
+
+            handlePoolAreaClick() {
+                if (this.isTransitioning) return;
+
+                // Tapping on empty pool area with an orange item selected returns it to pool
+                if (this.selectedIndex !== null) {
+                    const itemToReturn = this.placedSlots[this.selectedIndex];
+                    if (itemToReturn) {
+                        this.placedSlots[this.selectedIndex] = null;
+                        this.poolWords.push(itemToReturn);
+                        this.selectedIndex = null;
+                        this.renderBoards();
+                    }
+                }
+            }
+
+            checkAutoValidation() {
+                if (this.isTransitioning) return;
+                const allFilled = this.placedSlots.every(s => s !== null);
+                if (allFilled && !this.manualMode) {
+                    const currentItem = this.items[this.currentIndex];
+                    const constructedSentence = this.placedSlots.map(s => s ? s.text : '').join(' ');
+                    // Only evaluate automatically if the sentence is correct
+                    if (constructedSentence === currentItem.sentence) {
+                        this.evaluateCurrentSubmission();
+                    }
+                }
+            }
+
+            checkManualValidation() {
+                if (this.isTransitioning) return;
+                const allFilled = this.placedSlots.every(s => s !== null);
+                if (!allFilled) return;
+                this.evaluateCurrentSubmission();
+            }
+
+            evaluateCurrentSubmission() {
+                if (this.isTransitioning) return;
+
+                const currentItem = this.items[this.currentIndex];
+                const constructedSentence = this.placedSlots.map(s => s ? s.text : '').join(' ');
+                const isCorrect = constructedSentence === currentItem.sentence;
+
+                this.attemptedCount++;
+                if (isCorrect) this.correctCount++;
+
+                // Record history
+                this.resultsHistory[this.currentIndex] = {
+                    index: this.currentIndex,
+                    clue: currentItem.clue,
+                    sentence: currentItem.sentence,
+                    isCorrect: isCorrect,
+                    attempted: true
+                };
+
+                if (isCorrect) {
+                    this.isTransitioning = true;
+                    this.selectedIndex = null;
+                    this.renderBoards(true);
+
+                    setTimeout(() => {
+                        this.advanceToNext();
+                    }, 2000);
+                } else {
+                    // Flash red border briefly ONLY when explicitly evaluated
+                    const targetBoard = document.getElementById("target-board");
+                    if (targetBoard) {
+                        targetBoard.classList.add("border-red-500", "bg-red-50");
+                        setTimeout(() => {
+                            targetBoard.classList.remove("border-red-500", "bg-red-50");
+                        }, 600);
+                    }
+                }
+            }
+
+            passCurrentSentence() {
+                // Skip to next item
+                this.advanceToNext();
+            }
+
+            advanceToNext() {
+                if (this.currentIndex < this.items.length - 1) {
+                    this.currentIndex++;
+                    this.loadCurrentQuestion();
+                } else {
+                    this.showScoreScreen(false);
+                }
+            }
+
+            stopAndScore() {
+                this.showScoreScreen(true);
+            }
+
+            showScoreScreen(stoppedEarly = false) {
+                this.stopTimer();
+                const min = String(Math.floor(this.secondsElapsed / 60)).padStart(2, '0');
+                const sec = String(this.secondsElapsed % 60).padStart(2, '0');
+
+                let historyHTML = "";
+                this.resultsHistory.forEach((res, i) => {
+                    // If stopped early (in Stop & Score mode), mask sentence if not attempted or not solved
+                    const showText = stoppedEarly ? (res.attempted && res.isCorrect) : true;
+                    const sentenceDisplay = showText ? this.escapeHTML(res.sentence) : '<span class="italic text-slate-300">••••••••••</span>';
+
+                    historyHTML += `
+                        <div class="flex items-center justify-between py-2 border-b border-slate-100 text-xs sm:text-sm">
+                            <span class="font-bold text-slate-400 w-6">${i + 1}.</span>
+                            <span class="flex-grow font-medium text-slate-800 px-2 truncate">${sentenceDisplay}</span>
+                            <span>
+                                ${res.attempted 
+                                    ? (res.isCorrect 
+                                        ? '<span class="text-green-600 font-bold">✓</span>' 
+                                        : '<span class="text-slate-300 font-bold">✕</span>')
+                                    : '<span class="text-slate-300 font-bold">✕</span>'}
+                            </span>
+                        </div>
+                    `;
+                });
+
+                if (stoppedEarly) {
+                    // Pause/Stop & Score Screen: Has "Continue" and "Finish" buttons
+                    this.container.innerHTML = `
+                        <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-xl border border-slate-200 text-center modal-fade max-w-md mx-auto">
+                            <!-- Score Display -->
+                            <div class="text-3xl sm:text-4xl font-black text-slate-900 mb-1">
+                                ${this.correctCount}/${this.items.length} 🏆
+                            </div>
+                            <div class="text-sm font-bold text-slate-400 mb-6 tabular-nums">
+                                ${min}:${sec}
+                            </div>
+
+                            <!-- Itemized Summary List -->
+                            <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 mb-6 max-h-56 overflow-y-auto text-left">
+                                ${historyHTML}
+                            </div>
+
+                            <!-- Action Buttons Row -->
+                            <div class="grid grid-cols-2 gap-3">
+                                <button onclick="activeGameInstance.resumeGameplay()" 
+                                    class="w-full bg-slate-800 hover:bg-slate-900 text-white font-black py-3.5 px-4 rounded-2xl text-base shadow-md transition">
+                                    Continue
+                                </button>
+                                <button onclick="activeGameInstance.finishGame()" 
+                                    style="background-color: var(--color-stop);"
+                                    class="w-full text-white font-black py-3.5 px-4 rounded-2xl text-base shadow-md hover:brightness-105 transition">
+                                    Finish
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // Final Finished Screen: Shows full answers and "Restart" button
+                    this.container.innerHTML = `
+                        <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-xl border border-slate-200 text-center modal-fade max-w-md mx-auto">
+                            <!-- Score Display -->
+                            <div class="text-3xl sm:text-4xl font-black text-slate-900 mb-1">
+                                ${this.correctCount}/${this.items.length} 🏆
+                            </div>
+                            <div class="text-sm font-bold text-slate-400 mb-6 tabular-nums">
+                                ${min}:${sec}
+                            </div>
+
+                            <!-- Itemized Summary List (Full Answers Revealed) -->
+                            <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 mb-6 max-h-56 overflow-y-auto text-left">
+                                ${historyHTML}
+                            </div>
+
+                            <!-- Restart Button -->
+                            <button onclick="activeGameInstance.startGame()" 
+                                style="background-color: var(--color-ok);"
+                                class="w-full text-white font-black py-3.5 px-6 rounded-2xl text-base shadow-md hover:brightness-105 transition">
+                                Restart
+                            </button>
+                        </div>
+                    `;
+                }
+            }
+
+            finishGame() {
+                this.showScoreScreen(false);
+            }
+
+            resumeGameplay() {
+                this.renderGameplayScreen();
+                this.startTimer();
+                this.loadCurrentQuestion();
+            }
+
+            triggerSecretDownload() {
+                const pass = prompt("");
+                if (pass === "468") {
+                    const blob = new Blob([this.config.rawInput], { type: "text/plain;charset=utf-8" });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = `${this.config.compositeName}.txt`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }
+            }
+
+            escapeHTML(str) {
+                return (str || '').replace(/[&<>"']/g, function(m) {
+                    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
+                });
+            }
+        }
+
+        let activeGameInstance = null;
+        window.onload = function() {
+            activeGameInstance = new UnjumbleGameEngine("game-mount", GAME_CONFIG);
+        };
+
+        function handleBackdropClick(event, modalId) {
+            if (event.target === document.getElementById(modalId)) {
+                closeModals();
+            }
+        }
+        function showInfoModal() { document.getElementById("modal-info").classList.remove("hidden"); }
+        function showQRModal() {
+            const qrCanvas = document.getElementById("qr-modal-canvas");
+            qrCanvas.innerHTML = "";
+            new QRCode(qrCanvas, { text: window.location.href, width: 170, height: 170, colorDark : "#0f172a", colorLight : "#ffffff" });
+            document.getElementById("modal-qr").classList.remove("hidden");
+        }
+        function closeModals() {
+            document.getElementById("modal-info").classList.add("hidden");
+            document.getElementById("modal-qr").classList.add("hidden");
+        }
+        function downloadQRImage() {
+            const qrCanvas = document.querySelector("#qr-modal-canvas canvas");
+            if (qrCanvas) {
+                const link = document.createElement("a");
+                link.href = qrCanvas.toDataURL("image/png");
+                link.download = "qr-" + GAME_CONFIG.compositeName + ".png";
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+    </script>
+</body>
+</html>
