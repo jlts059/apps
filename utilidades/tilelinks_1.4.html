@@ -175,24 +175,24 @@
             background-color: #d35400;
         }
 
-        /* CONTENEDOR QR */
-        #qr-container {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: white;
-            padding: 8px;
-            border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-            cursor: pointer;
-            transition: transform 0.3s ease;
-            z-index: 100;
-            width: 96px;
-            height: 96px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
+/* CONTENEDOR QR */
+#qr-container {
+    position: fixed;   /* Keeps it pinned relative to viewport when scrolling */
+    top: 10px;         /* Distance from top edge */
+    right: 10px;       /* Distance from right edge */
+    background: white;
+    padding: 4px;      /* Compact border padding */
+    border-radius: 6px; /* Proportionally smaller rounded corners */
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    z-index: 100;
+    width: 44px;       /* Micro dimensions (matches standard touch targets) */
+    height: 44px;      /* Keeps standard square 1:1 ratio */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
 
         #qr-container:hover {
             transform: scale(1.05);
