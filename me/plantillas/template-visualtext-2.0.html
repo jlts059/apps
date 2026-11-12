@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lector Decluttered</title>
+    <style>
+        :root {
+            --bg-color: #f7f6f2; /* Blanco roto / Off-white */
+            --text-color: #2b2b2b;
+            --border-color: #e2e8f0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            min-height: 100vh;
+            padding: 4px 2px;
+            display: flex;
+            justify-content: center;
+        }
+
+        /* ----- VISTA 1: EDITOR / INPUT ----- */
+        #inputView {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 6px;
+        }
+
+        .tool-btn {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 6px 12px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .editor-box {
+            width: 100%;
+            min-height: 70vh;
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 6px 4px;
+            font-size: 16px;
+            line-height: 1.10;
+            outline: none;
+            overflow-y: auto;
+        }
+
+        .editor-box p, .editor-box div, .editor-box ul, .editor-box ol, .editor-box li {
+            margin-top: 12pt;
+            margin-bottom: 12pt;
+        }
+
+        .editor-box ul, .editor-box ol {
+            padding-left: 20px;
+        }
+
+        .generate-btn {
+            align-self: center;
+            margin: 6px 0;
+            background-color: #2d3748;
+            color: #ffffff;
+            border: none;
+            padding: 10px 24px;
+            font-size: 15px;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+
+        /* ----- VISTA 2: RESULTADO DECLUTTERED ----- */
+        #renderView {
+            display: none;
+            width: 100%;
+            position: relative;
+        }
+
+        #captureTarget {
+            background-color: var(--bg-color);
+            padding: 16px 12px;
+            line-height: 1.10;
+            color: var(--text-color);
+            word-wrap: break-word;
+            outline: none;
+        }
+
+        /* Espaciado unificado de 12pt */
+        #captureTarget p, 
+        #captureTarget div, 
+        #captureTarget ul, 
+        #captureTarget ol,
+        #captureTarget li {
+            margin-top: 12pt;
+            margin-bottom: 12pt;
+        }
+
+        #captureTarget ul, #captureTarget ol {
+            padding-left: 20px; 
+        }
+
+        /* Borde indicador al editar */
+        #captureTarget[contenteditable="true"] {
+            border: 1px dashed #cbd5e0;
+            border-radius: 4px;
+            background-color: #ffffff;
+            padding: 6px 4px;
+        }
+
+        /* Botón emergente de guardar cambios */
+        .save-edit-btn {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #2b6cb0;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            z-index: 1001;
+        }
+
+        /* ----- CONTROLES SUPERIORES ----- */
+        .top-controls {
+            position: fixed;
+            top: 6px;
+            right: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 1000;
+        }
+
+        .back-btn {
+            background: rgba(255, 255, 255, 0.85);
+            border: 1px solid var(--border-color);
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .settings-cog-wrapper {
+            position: relative;
+        }
+
+        .settings-cog-btn {
+            background: rgba(255, 255, 255, 0.85);
+            border: 1px solid var(--border-color);
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cog-dropdown-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 38px;
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            padding: 8px 12px;
+            flex-direction: column;
+            gap: 8px;
+            min-width: 180px;
+        }
+
+        .cog-dropdown-item {
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4px;
+            border-radius: 6px;
+        }
+
+        .cog-dropdown-item:hover {
+            background: #f1f5f9;
+        }
+
+        .landscape-option {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            user-select: none;
+            border-top: 1px solid var(--border-color);
+            padding-top: 6px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. VISTA DE ENTRADA -->
+    <div id="inputView">
+        <div class="toolbar">
+            <button class="tool-btn" onclick="formatDoc('bold')" title="Negrita"><b>B</b></button>
+            <button class="tool-btn" onclick="formatDoc('insertUnorderedList')" title="Lista Viñetas">• Lista</button>
+        </div>
+        <div id="editor" class="editor-box" contenteditable="true" placeholder="Pega tu texto aquí..."></div>
+        <button class="generate-btn" onclick="generateDeclutteredText()">Generar</button>
+    </div>
+
+    <!-- 2. VISTA DECLUTTERED -->
+    <div id="renderView">
+        <div class="top-controls">
+            <!-- Botón de volver al editor -->
+            <button class="back-btn" onclick="goBackToEditor()" title="Volver y editar">↩</button>
+            
+            <div class="settings-cog-wrapper">
+                <button class="settings-cog-btn" onclick="toggleCogDropdown(event, 'cogDropdownHeader')">⚙️</button>
+                <div class="cog-dropdown-menu" id="cogDropdownHeader">
+                    <!-- 1: Habilitar edición in-situ -->
+                    <div class="cog-dropdown-item" title="Editar Texto" onclick="enableDirectEditing()">✏️</div>
+                    <!-- 2: Guardar Captura PNG -->
+                    <div class="cog-dropdown-item" title="Guardar PNG" onclick="downloadCurrentAsImage()">📸</div>
+                    <!-- 3: Opción Horizontal / Apaisado -->
+                    <label class="landscape-option" onclick="event.stopPropagation();">
+                        <input type="checkbox" id="landscapeCheck"> Apaisado (Horizontal)
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div id="captureTarget"></div>
+        <button id="saveEditBtn" class="save-edit-btn" onclick="saveDirectEdits()">Guardar Cambios</button>
+    </div>
+
+    <script>
+        function formatDoc(command) {
+            document.execCommand(command, false, null);
+        }
+
+        function generateDeclutteredText() {
+            const content = document.getElementById('editor').innerHTML;
+            if (!content.trim()) return;
+
+            const target = document.getElementById('captureTarget');
+            target.innerHTML = content;
+            
+            document.getElementById('inputView').style.display = 'none';
+            document.getElementById('renderView').style.display = 'block';
+
+            adjustDynamicFontSize();
+        }
+
+        function goBackToEditor() {
+            const target = document.getElementById('captureTarget');
+            document.getElementById('editor').innerHTML = target.innerHTML;
+
+            document.getElementById('renderView').style.display = 'none';
+            document.getElementById('inputView').style.display = 'flex';
+        }
+
+        function adjustDynamicFontSize(overrideContainerWidth = null) {
+            const target = document.getElementById('captureTarget');
+            const containerWidth = overrideContainerWidth || target.clientWidth || window.innerWidth - 8;
+            
+            const elements = target.querySelectorAll('p, li, div, span');
+            let maxWords = 5;
+            
+            elements.forEach(el => {
+                const text = el.innerText || "";
+                const words = text.trim().split(/\s+/).length;
+                if (words > maxWords) maxWords = words;
+            });
+
+            if (maxWords === 5 && target.innerText.trim()) {
+                const words = target.innerText.trim().split(/\s+/).length;
+                if (words > maxWords) maxWords = words;
+            }
+
+            let calculatedSize = containerWidth / (5 * 0.65);
+
+            const totalWords = target.innerText.trim().split(/\s+/).length;
+            if (totalWords > 120) {
+                calculatedSize = Math.max(14, calculatedSize * 0.80);
+            }
+            
+            if (calculatedSize > 34) calculatedSize = 34;
+            if (calculatedSize < 12) calculatedSize = 12;
+
+            target.style.fontSize = calculatedSize + 'px';
+            return calculatedSize;
+        }
+
+        function toggleCogDropdown(event, menuId) {
+            event.stopPropagation();
+            const menu = document.getElementById(menuId);
+            const isOpen = menu.style.display === 'flex';
+            closeAllDropdowns();
+            menu.style.display = isOpen ? 'none' : 'flex';
+        }
+
+        function closeAllDropdowns() {
+            document.querySelectorAll('.cog-dropdown-menu').forEach(menu => {
+                menu.style.display = 'none';
+            });
+        }
+
+        document.addEventListener('click', closeAllDropdowns);
+
+        function enableDirectEditing() {
+            closeAllDropdowns();
+            const target = document.getElementById('captureTarget');
+            target.contentEditable = "true";
+            target.focus();
+            document.getElementById('saveEditBtn').style.display = 'block';
+        }
+
+        function saveDirectEdits() {
+            const target = document.getElementById('captureTarget');
+            target.contentEditable = "false";
+            document.getElementById('saveEditBtn').style.display = 'none';
+            document.getElementById('editor').innerHTML = target.innerHTML;
+            
+            adjustDynamicFontSize();
+        }
+
+        function downloadCurrentAsImage() {
+            closeAllDropdowns();
+            
+            const target = document.getElementById('captureTarget');
+            const wasEditing = target.isContentEditable;
+            if (wasEditing) saveDirectEdits();
+
+            const isLandscape = document.getElementById('landscapeCheck').checked;
+
+            const generateCanvas = () => {
+                const wrapper = document.createElement('div');
+                wrapper.style.position = 'absolute';
+                wrapper.style.left = '-9999px';
+                wrapper.style.top = '0';
+                
+                const exportWidth = isLandscape ? 844 : 414;
+                const exportHeight = isLandscape ? 390 : 736;
+                const maxPaddingVertical = 48; // Padding superior e inferior combinado (24px + 24px)
+                const availableHeight = exportHeight - maxPaddingVertical;
+
+                wrapper.style.width = exportWidth + 'px';
+                wrapper.style.minHeight = exportHeight + 'px';
+                wrapper.style.backgroundColor = '#f7f6f2';
+                wrapper.style.padding = '24px 28px';
+                wrapper.style.boxSizing = 'border-box';
+                wrapper.style.overflow = 'hidden';
+
+                const clone = target.cloneNode(true);
+                clone.style.width = '100%';
+                clone.style.backgroundColor = 'transparent';
+                clone.style.padding = '0';
+                
+                // Algoritmo de auto-reducción: calcular tamaño inicial y reducir si desborda la altura de la pantalla
+                let currentFontSize = adjustDynamicFontSize(exportWidth);
+                clone.style.fontSize = currentFontSize + 'px';
+                wrapper.appendChild(clone);
+                document.body.appendChild(wrapper);
+
+                // Bucle para reducir la fuente si el contenido es demasiado largo para la pantalla elegida
+                while (wrapper.scrollHeight > (availableHeight + maxPaddingVertical) && currentFontSize > 10) {
+                    currentFontSize -= 1;
+                    clone.style.fontSize = currentFontSize + 'px';
+                }
+
+                html2canvas(wrapper, { 
+                    backgroundColor: "#f7f6f2", 
+                    scale: 2, 
+                    useCORS: true,
+                    windowWidth: exportWidth,
+                    windowHeight: exportHeight
+                }).then(canvas => {
+                    document.body.removeChild(wrapper);
+                    adjustDynamicFontSize();
+
+                    const imgData = canvas.toDataURL('image/png');
+                    const link = document.createElement('a');
+                    link.href = imgData;
+                    link.download = `phone_${isLandscape ? 'landscape' : 'portrait'}_${Date.now()}.png`;
+                    link.click();
+                }).catch(err => {
+                    if (document.body.contains(wrapper)) document.body.removeChild(wrapper);
+                    adjustDynamicFontSize();
+                    console.error("Error al exportar la imagen:", err);
+                });
+            };
+
+            if (typeof html2canvas === 'undefined') {
+                const script = document.createElement('script');
+                script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
+                script.onload = generateCanvas;
+                document.head.appendChild(script);
+            } else {
+                generateCanvas();
+            }
+        }
+    </script>
+</body>
+</html>

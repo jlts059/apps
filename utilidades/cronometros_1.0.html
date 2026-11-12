@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Cronómetro Zen - 10 Pestañas</title>
     <style>
         :root {
@@ -12,35 +12,40 @@
             --btn-start-pastel: #a3cfbb; 
             --btn-clear-pastel: #e6a1a1; 
             --btn-edit-pastel: #e2e3e5;  
-            --btn-hover-darken: rgba(0, 0, 0, 0.05);
 
-            /* Fondos pastel sutiles y armónicos distribuidos entre las 10 pestañas */
-            --bg-tab-0: #f3f7f5; /* Mint suave */
-            --bg-tab-1: #f5f2f9; /* Lavanda suave */
-            --bg-tab-2: #f2f5f8; /* Azul pastel */
-            --bg-tab-3: #fdf8f2; /* Crema/Arena */
-            --bg-tab-4: #f4f8f3; /* Verde oliva claro */
-            --bg-tab-5: #faf3f5; /* Rosa empolvado */
-            --bg-tab-6: #f6f7f2; /* Salvia pálido */
-            --bg-tab-7: #f1f6f8; /* Hielo */
-            --bg-tab-8: #fbf5ef; /* Melocotón tenue */
-            --bg-tab-9: #f8f8f8; /* Gris Zen Custom */
+            /* Fondos pastel sutiles */
+            --bg-tab-0: #f3f7f5;
+            --bg-tab-1: #f5f2f9;
+            --bg-tab-2: #f2f5f8;
+            --bg-tab-3: #fdf8f2;
+            --bg-tab-4: #f4f8f3;
+            --bg-tab-5: #faf3f5;
+            --bg-tab-6: #f6f7f2;
+            --bg-tab-7: #f1f6f8;
+            --bg-tab-8: #fbf5ef;
+            --bg-tab-9: #f8f8f8;
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            height: 100dvh;
+            overflow: hidden;
         }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: #ffffff;
             color: #111111;
-            height: 100vh;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
             transition: background-color 0.4s ease;
         }
 
@@ -51,6 +56,7 @@
             z-index: 5;
             overflow-x: auto;
             scrollbar-width: thin;
+            flex-shrink: 0;
         }
 
         .tabs::-webkit-scrollbar {
@@ -65,11 +71,11 @@
         .tab-btn {
             flex: 1 1 0px;
             min-width: 55px;
-            padding: 16px 6px;
+            padding: 12px 6px;
             border: none;
             background: none;
             color: #88888d;
-            font-size: 17px;
+            font-size: 16px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
@@ -78,17 +84,15 @@
             white-space: nowrap;
         }
 
-        /* Pestaña Custom con un leve resalte de tamaño */
         .tab-btn-custom {
             flex: 1.3 1 0px;
-            font-size: 16px;
+            font-size: 15px;
         }
 
         .tab-btn.active {
             color: #111111;
             border-bottom: 3px solid #111111;
             font-weight: 700;
-            opacity: 1;
         }
 
         /* Contenedor principal */
@@ -96,6 +100,7 @@
             flex: 1;
             display: flex;
             position: relative;
+            overflow: hidden;
         }
 
         .tab-content {
@@ -104,7 +109,9 @@
             height: 100%;
             flex-direction: column;
             justify-content: space-between;
-            padding: 1vh 20px 4vh 20px;
+            align-items: center;
+            padding: 2vh 16px 4vh 16px;
+            box-sizing: border-box;
         }
 
         .tab-content.active {
@@ -122,45 +129,46 @@
         #tab-8 { background-color: var(--bg-tab-8); }
         #tab-9 { background-color: var(--bg-tab-9); }
 
-        /* DISPLAY DE TIEMPO GIGANTE */
+        /* DISPLAY DE TIEMPO EN MODO RETRATO (PORTRAIT) */
         .timer-display {
-            font-size: 38vh; 
+            font-size: clamp(4rem, 26vw, 32vh); 
             font-weight: 700;
             font-variant-numeric: tabular-nums; 
             color: #111111;
-            line-height: 0.85;
+            line-height: 0.9;
             text-align: center;
-            margin-top: auto;
-            margin-bottom: auto;
+            margin: auto 0;
             letter-spacing: -0.03em;
             user-select: none;
+            max-width: 100%;
+            word-break: keep-all;
         }
 
         .actions {
             display: flex;
             justify-content: center;
-            gap: 20px;
+            gap: 12px;
             width: 100%;
-            max-width: 900px;
+            max-width: 500px;
             margin: 0 auto;
         }
 
         .btn {
             flex: 1;
-            padding: 22px;
-            font-size: 22px;
+            padding: 16px 8px;
+            font-size: 18px;
             font-weight: bold;
             text-transform: uppercase;
             border: 3px solid var(--dark-border);
-            border-radius: 18px;
+            border-radius: 16px;
             cursor: pointer;
             transition: transform 0.1s, filter 0.2s;
-            box-shadow: 0 5px 0px var(--dark-border);
+            box-shadow: 0 4px 0px var(--dark-border);
             user-select: none;
         }
 
         .btn:active { 
-            transform: translateY(5px);
+            transform: translateY(4px);
             box-shadow: 0 0px 0px var(--dark-border);
         }
 
@@ -170,6 +178,7 @@
 
         .btn:hover { filter: brightness(0.94); }
 
+        /* Keypad Overlay Adaptativo */
         .keypad-overlay {
             display: none;
             position: absolute;
@@ -178,21 +187,21 @@
             justify-content: center;
             align-items: center;
             flex-direction: column;
-            padding: 20px;
+            padding: 16px;
             z-index: 10;
         }
 
         .keypad-overlay.open { display: flex; }
 
         .keypad-screen {
-            font-size: 30px;
+            font-size: clamp(18px, 5vw, 26px);
             font-weight: bold;
             background: #222222;
             color: #a3cfbb;
-            padding: 15px 50px;
+            padding: 10px 24px;
             border: 3px solid var(--dark-border);
-            border-radius: 14px;
-            margin-bottom: 25px;
+            border-radius: 12px;
+            margin-bottom: 16px;
             font-family: monospace;
             text-align: center;
             box-shadow: 0 4px 0px var(--dark-border);
@@ -200,41 +209,68 @@
 
         .keypad-grid {
             display: grid;
-            grid-template-columns: repeat(3, 95px);
-            grid-template-rows: repeat(4, 75px);
-            gap: 12px;
+            grid-template-columns: repeat(3, minmax(60px, 85px));
+            grid-template-rows: repeat(4, minmax(45px, 65px));
+            gap: 10px;
         }
 
         .key-btn {
             background-color: var(--btn-edit-pastel);
             color: #111111;
-            font-size: 32px;
+            font-size: clamp(20px, 6vw, 28px);
             font-weight: bold;
             border: 3px solid var(--dark-border);
-            border-radius: 16px;
+            border-radius: 14px;
             cursor: pointer;
             display: flex;
             justify-content: center;
             align-items: center;
-            box-shadow: 0 4px 0px var(--dark-border);
+            box-shadow: 0 3px 0px var(--dark-border);
             user-select: none;
         }
 
         .key-btn:active {
-            transform: translateY(4px);
+            transform: translateY(3px);
             box-shadow: 0 0px 0px var(--dark-border);
         }
 
-        .key-btn.set-key { background-color: var(--btn-start-pastel); font-size: 20px; color: #1c3d2e; }
-        .key-btn.clear-key { font-size: 18px; }
+        .key-btn.set-key { background-color: var(--btn-start-pastel); font-size: 16px; color: #1c3d2e; }
+        .key-btn.clear-key { font-size: 15px; }
 
-        /* Ajustes adaptativos para pantallas pequeñas */
-        @media (max-height: 600px) {
-            .timer-display { font-size: 28vh; }
-            .btn { padding: 14px; font-size: 18px; }
+        /* OPTIMIZACIÓN EN MODO APAISA/HORIZONTAL (LANDSCAPE) */
+        @media (orientation: landscape) {
+            .tab-btn {
+                padding: 8px 6px;
+                font-size: 14px;
+            }
+            .tab-content {
+                padding: 2px 24px 12px 24px;
+            }
+            /* Aumenta el tamaño del texto para llenar la pantalla a lo ancho */
+            .timer-display {
+                font-size: clamp(6rem, 40vh, 26vw);
+                line-height: 0.85;
+                margin: auto 0;
+            }
+            .actions {
+                max-width: 550px;
+            }
+            .btn {
+                padding: 10px 6px;
+                font-size: 15px;
+                border-radius: 12px;
+            }
+            .keypad-overlay {
+                flex-direction: row;
+                gap: 20px;
+            }
+            .keypad-screen {
+                margin-bottom: 0;
+            }
             .keypad-grid {
-                grid-template-columns: repeat(3, 75px);
-                grid-template-rows: repeat(4, 55px);
+                grid-template-columns: repeat(3, minmax(50px, 70px));
+                grid-template-rows: repeat(4, minmax(35px, 45px));
+                gap: 6px;
             }
         }
     </style>
@@ -254,31 +290,71 @@
         <button class="tab-btn tab-btn-custom" onclick="switchTab(9)">Custom</button>
     </div>
 
-    <div class="main-content" id="main-container">
-        <!-- Generado por JS para mantener código limpio y modular -->
-    </div>
+    <div class="main-content" id="main-container"></div>
 
 <script>
-    // Tiempos por defecto en segundos para las 10 pestañas:
-    // Pestañas 0 a 8: 2m, 3m, 4m, 5m, 10m, 15m, 20m, 30m, 40m.
-    // Pestaña 9 (Custom): 0m (00:00).
-    const defaultTimes = [
-        120,  // 2 min
-        180,  // 3 min
-        240,  // 4 min
-        300,  // 5 min
-        600,  // 10 min
-        900,  // 15 min
-        1200, // 20 min
-        1800, // 30 min
-        2400, // 40 min
-        0     // Custom (00:00)
-    ]; 
+    const defaultTimes = [120, 180, 240, 300, 600, 900, 1200, 1800, 2400, 0]; 
 
     let currentTimes = [...defaultTimes]; 
     let timeRemaining = [...defaultTimes]; 
+    let targetTimes = new Array(10).fill(null); 
     let intervals = new Array(10).fill(null);
     let keypadInputs = new Array(10).fill(""); 
+
+    const workerCode = `
+        let timerId = null;
+        self.onmessage = function(e) {
+            if (e.data === 'start') {
+                if (!timerId) {
+                    timerId = setInterval(() => {
+                        self.postMessage('tick');
+                    }, 250);
+                }
+            } else if (e.data === 'stop') {
+                clearInterval(timerId);
+                timerId = null;
+            }
+        };
+    `;
+    const blob = new Blob([workerCode], { type: 'application/javascript' });
+    const worker = new Worker(URL.createObjectURL(blob));
+
+    worker.onmessage = function() {
+        for (let i = 0; i < 10; i++) {
+            if (intervals[i]) {
+                const remainingMs = targetTimes[i] - Date.now();
+                const remainingSecs = Math.ceil(remainingMs / 1000);
+                
+                timeRemaining[i] = remainingSecs;
+                
+                if (remainingSecs <= 0) {
+                    timeRemaining[i] = 0;
+                    updateDisplay(i, 0);
+                    
+                    intervals[i] = null;
+                    checkWorkerState();
+                    
+                    const startBtn = document.getElementById(`start-${i}`);
+                    if (startBtn) {
+                        startBtn.innerText = "Start";
+                        startBtn.style.backgroundColor = "var(--btn-start-pastel)";
+                    }
+                    
+                    playZenHarpArpeggio(); 
+                    autoResetTimer(i); 
+                } else {
+                    updateDisplay(i, remainingSecs);
+                }
+            }
+        }
+    };
+
+    function checkWorkerState() {
+        const anyActive = intervals.some(val => val !== null);
+        if (!anyActive) {
+            worker.postMessage('stop');
+        }
+    }
 
     function renderTabsHTML() {
         const container = document.getElementById('main-container');
@@ -330,17 +406,24 @@
     }
 
     function updateDisplay(tabIndex, totalSeconds) {
-        const mins = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
-        const secs = (totalSeconds % 60).toString().padStart(2, '0');
-        document.getElementById(`display-${tabIndex}`).innerText = `${mins}:${secs}`;
+        const displayEl = document.getElementById(`display-${tabIndex}`);
+        if (displayEl) {
+            const mins = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+            const secs = (totalSeconds % 60).toString().padStart(2, '0');
+            displayEl.innerText = `${mins}:${secs}`;
+        }
     }
 
     function toggleTimer(tabIndex) {
         const startBtn = document.getElementById(`start-${tabIndex}`);
         
         if (intervals[tabIndex]) {
-            clearInterval(intervals[tabIndex]);
             intervals[tabIndex] = null;
+            checkWorkerState();
+            
+            const remaining = Math.max(0, Math.ceil((targetTimes[tabIndex] - Date.now()) / 1000));
+            timeRemaining[tabIndex] = remaining;
+            
             startBtn.innerText = "Start";
             startBtn.style.backgroundColor = "var(--btn-start-pastel)";
         } else {
@@ -349,26 +432,17 @@
             startBtn.innerText = "Pause";
             startBtn.style.backgroundColor = "#ffebad"; 
             
-            intervals[tabIndex] = setInterval(() => {
-                timeRemaining[tabIndex]--;
-                updateDisplay(tabIndex, timeRemaining[tabIndex]);
-                
-                if (timeRemaining[tabIndex] <= 0) {
-                    clearInterval(intervals[tabIndex]);
-                    intervals[tabIndex] = null;
-                    startBtn.innerText = "Start";
-                    startBtn.style.backgroundColor = "var(--btn-start-pastel)";
-                    
-                    playZenHarpArpeggio(); 
-                    autoResetTimer(tabIndex); 
-                }
-            }, 1000);
+            targetTimes[tabIndex] = Date.now() + (timeRemaining[tabIndex] * 1000);
+            intervals[tabIndex] = true;
+            
+            worker.postMessage('start');
         }
     }
 
     function clearTimer(tabIndex) {
-        clearInterval(intervals[tabIndex]);
         intervals[tabIndex] = null;
+        checkWorkerState();
+        targetTimes[tabIndex] = null;
         timeRemaining[tabIndex] = currentTimes[tabIndex];
         updateDisplay(tabIndex, timeRemaining[tabIndex]);
         
@@ -457,7 +531,6 @@
         });
     }
 
-    // Inicialización del DOM
     window.onload = function() {
         renderTabsHTML();
     };
