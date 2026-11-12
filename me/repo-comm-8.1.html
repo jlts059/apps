@@ -1,0 +1,1546 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phrase Filter</title>
+    <style>
+        :root {
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-color: #212529;
+            --primary-color: #4a90e2;
+            --accent-blue: #1a73e8;
+            --pinned-color: #ff9800;
+            --border-radius: 12px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 16px;
+            padding-bottom: 90px; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Input Setup Styling */
+        #setupContainer {
+            width: 100%;
+            max-width: 600px;
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        #setupContainer h2 {
+            margin: 0 0 4px 0;
+            font-size: 1.3rem;
+        }
+
+        .setup-field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .setup-field label {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #495057;
+        }
+
+        .one-line-input {
+            width: 100%;
+            padding: 10px;
+            font-size: 1rem;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+
+        textarea {
+            width: 100%;
+            height: 220px;
+            padding: 12px;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 1rem;
+            box-sizing: border-box;
+            resize: vertical;
+        }
+
+        .primary-btn {
+            width: 100%;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 14px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            margin-top: 8px;
+        }
+
+        /* App Layout Styles */
+        #appContainer {
+            display: none;
+            width: 100%;
+            max-width: 600px;
+            padding-bottom: 80px; 
+            box-sizing: border-box;
+        }
+
+        .menu-container {
+            width: 100%;
+            margin-bottom: 20px;
+            background-color: var(--bg-color);
+            border-radius: var(--border-radius);
+            position: sticky;
+            top: 0;
+            z-index: 900;
+            padding-top: 4px;
+            padding-bottom: 4px;
+            box-sizing: border-box;
+        }
+
+        .menu-container.bottom-frozen {
+            position: fixed;
+            bottom: 0;
+            top: auto;
+            left: 50%;
+            transform: translateX(-50%);
+            max-width: 600px;
+            margin-bottom: 0;
+            padding: 8px 16px;
+            box-sizing: border-box;
+            z-index: 999;
+            background: transparent;
+            pointer-events: none; 
+        }
+        
+        .menu-container.bottom-frozen > * {
+            pointer-events: auto;
+        }
+
+        .menu-summary {
+            display: none;
+            padding: 10px 14px;
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
+            border-radius: var(--border-radius);
+            align-items: center;
+            justify-content: space-between;
+            box-sizing: border-box;
+            gap: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .menu-summary-text {
+            cursor: pointer;
+            flex: 1;
+            padding: 4px 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: flex;
+            align-items: center;
+        }
+
+        .category-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+            z-index: 1001;
+            max-height: 250px;
+            overflow-y: auto;
+            margin-top: 4px;
+            box-sizing: border-box;
+        }
+
+        .bottom-frozen .category-dropdown {
+            top: auto;
+            bottom: 100%;
+            margin-top: 0;
+            margin-bottom: 4px;
+        }
+
+        .dropdown-item {
+            padding: 12px 16px;
+            color: var(--text-color);
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: normal;
+            border-bottom: 1px solid #eee;
+        }
+
+        .dropdown-item:hover {
+            background-color: #f1f3f5;
+        }
+
+        .dropdown-item.pinned-item {
+            color: var(--pinned-color);
+            font-weight: bold;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .header-btn {
+            border: none;
+            padding: 8px 12px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            white-space: nowrap;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .header-back-btn { background-color: #6c757d; color: white; }
+        .header-unpin-btn { display: none; background-color: #dc3545; color: white; }
+        .header-go-pinned-btn { background-color: var(--pinned-color); color: white; }
+
+        .button-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 12px;
+            justify-content: center;
+            background-color: #ffffff;
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+        .search-pinned-row {
+            display: flex;
+            width: 100%;
+            gap: 8px;
+            margin-bottom: 2px;
+            box-sizing: border-box;
+            align-items: center;
+        }
+
+        .search-box {
+            flex: 1;
+            padding: 14px 10px;
+            font-size: 1.1rem;
+            border: 2px solid #ccc;
+            border-radius: var(--border-radius);
+            box-sizing: border-box;
+            outline: none;
+            min-width: 0;
+            cursor: pointer;
+            background-color: #fff;
+        }
+
+        .search-box:focus { border-color: var(--primary-color); }
+
+        .category-btn {
+            flex: 1 1 calc(50% - 10px);
+            padding: 14px 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border: 2px solid var(--primary-color);
+            border-radius: var(--border-radius);
+            background-color: transparent;
+            color: var(--primary-color);
+            cursor: pointer;
+            text-align: center;
+            box-sizing: border-box;
+        }
+
+        .category-btn.pinned-cat-btn {
+            flex: 0 0 46px;
+            border-color: var(--pinned-color);
+            color: var(--pinned-color);
+            background-color: rgba(255, 152, 0, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 48px;
+            padding: 0;
+        }
+
+        .category-btn.group-mode-btn {
+            flex: 0 0 42px;
+            border-color: #ccc;
+            color: #6c757d;
+            background-color: #f8f9fa;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.95rem;
+            padding: 0;
+            height: 48px;
+        }
+
+        .category-btn.group-mode-btn.active {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+            background-color: #ffffff;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        .settings-cog-wrapper {
+            position: relative;
+            display: flex;
+            box-sizing: border-box;
+        }
+
+        .settings-cog-btn {
+            padding: 10px 12px;
+            font-size: 1.2rem;
+            background: #ffffff;
+            border: 2px solid #ccc;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            height: 48px;
+        }
+
+        .cog-dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1002;
+            margin-top: 4px;
+            min-width: 60px;
+            text-align: center;
+            box-sizing: border-box;
+        }
+
+        .cog-dropdown-item {
+            padding: 12px;
+            font-size: 1.3rem;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+        }
+        .cog-dropdown-item:last-child { border-bottom: none; }
+        .cog-dropdown-item:hover { background-color: #f1f3f5; }
+
+        .header-subcat-toggle {
+            display: none;
+            border: none;
+            background: #ffffff;
+            font-size: 1.2rem;
+            padding: 8px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+            align-items: center;
+            justify-content: center;
+            height: 38px;
+            box-sizing: border-box;
+        }
+
+        /* Showcase Graphic Panel Styles */
+        .main-screen-showcase-graphic {
+            display: none;
+            width: 100%;
+            margin-top: 20px;
+            box-sizing: border-box;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+        }
+
+        .main-screen-showcase-graphic img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .phrases-export-wrapper {
+            width: 100%;
+            padding: 12px;
+            box-sizing: border-box;
+            background-color: var(--bg-color);
+        }
+
+        .phrases-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            box-sizing: border-box;
+        }
+
+        .phrase-card {
+            position: relative;
+            background-color: var(--card-bg);
+            padding: 16px;
+            padding-right: 85px; 
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border-left: 5px solid var(--primary-color);
+            display: none;
+            animation: fadeIn 0.3s ease forwards;
+            font-size: 1.15rem;
+            line-height: 1.4;
+            color: var(--text-color);
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            box-sizing: border-box;
+        }
+
+        .phrase-card:hover {
+            box-shadow: 0 6px 12px rgba(0,0,0,0.08);
+        }
+
+        .phrase-card.is-pinned { border-left-color: var(--pinned-color); }
+        .phrase-card.is-pinned .pin-toggle { opacity: 1; }
+
+        .two-column-layout, .single-column-text { cursor: pointer; }
+        .two-column-layout { display: flex; width: 100%; gap: 16px; box-sizing: border-box; }
+        .col-left, .col-right { flex: 1; word-break: break-word; box-sizing: border-box; }
+        .col-left { font-weight: 600; color: var(--text-color); }
+        .col-right { color: #555555; }
+        .single-column-text { width: 100%; word-break: break-word; font-weight: 500; box-sizing: border-box; }
+
+        /* Action Buttons Area on Cards */
+        .card-actions-wrapper {
+            position: absolute;
+            top: 50%;
+            right: 12px;
+            transform: translateY(-50%);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            z-index: 10;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            font-size: 1.3rem;
+            cursor: pointer;
+            opacity: 0.35;
+            transition: opacity 0.2s, transform 0.1s;
+            user-select: none;
+            padding: 4px;
+        }
+
+        .action-btn:hover {
+            opacity: 0.9;
+            transform: scale(1.1);
+        }
+
+        .phrase-card.is-pinned .pin-toggle { opacity: 1; }
+
+        .floating-controls {
+            position: fixed;
+            bottom: 80px; 
+            right: 20px;
+            display: none; 
+            flex-direction: column;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        .floating-controls button {
+            color: white;
+            border: none;
+            padding: 14px 22px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+            white-space: nowrap;
+        }
+
+        .download-btn { background-color: #28a745; }
+        .back-input-btn { background-color: #6c757d; }
+
+        .hide-pins-snapshot .card-actions-wrapper { display: none !important; }
+        .hide-pins-snapshot .phrase-card { animation: none !important; opacity: 1 !important; padding-right: 16px !important; color: #000000 !important; }
+
+        /* Focus Popover Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.65);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(3px);
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .modal-popover-card {
+            background: var(--card-bg);
+            padding: 30px;
+            padding-right: 90px;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.3);
+            transform: scale(1.15);
+            animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            box-sizing: border-box;
+            position: relative;
+        }
+        .modal-popover-card .two-column-layout {
+            flex-direction: column;
+            gap: 16px;
+        }
+        .modal-popover-card .col-left {
+            font-size: 1.5rem;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        .modal-popover-card .col-right {
+            font-size: 1.3rem;
+            color: #495057;
+        }
+        .modal-popover-card .single-column-text {
+            font-size: 1.5rem;
+            text-align: center;
+        }
+        
+        .modal-popover-card .card-actions-wrapper {
+            right: 18px;
+        }
+
+        /* Search Overlay Modal Styles */
+        .search-modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.65);
+            z-index: 2500;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(3px);
+            padding: 16px;
+            box-sizing: border-box;
+        }
+        .search-modal-card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 560px;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.3);
+            animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            box-sizing: border-box;
+        }
+        .search-modal-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            position: relative;
+            box-sizing: border-box;
+            width: 100%;
+        }
+        .search-modal-input {
+            flex: 1;
+            width: 100%;
+            padding: 12px 14px;
+            font-size: 1.1rem;
+            border: 2px solid var(--primary-color);
+            border-radius: 10px;
+            outline: none;
+            box-sizing: border-box;
+            min-width: 0;
+        }
+        .search-modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #6c757d;
+            padding: 0 6px;
+            flex-shrink: 0;
+        }
+        .search-results-counter {
+            font-size: 0.85rem;
+            font-weight: bold;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 8px;
+            box-sizing: border-box;
+        }
+        .search-modal-results {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 60vh;
+            padding-right: 4px;
+            box-sizing: border-box;
+        }
+        .search-modal-results .phrase-card {
+            display: block !important;
+            margin-bottom: 0;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+            border: 1px solid #eee;
+            border-left: 5px solid var(--primary-color);
+        }
+        .search-modal-results .phrase-card.is-pinned {
+            border-left-color: var(--pinned-color);
+        }
+
+        .export-snapshot-header {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: bold;
+            font-size: 1.3rem;
+            padding: 14px;
+            border-radius: var(--border-radius) var(--border-radius) 0 0;
+            margin-bottom: 10px;
+            text-align: left;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+
+    
+
+    <div id="appContainer" style="display: block;">
+        <div class="menu-container" id="menuWrapper">
+            <div class="menu-summary" id="menuSummary" style="display: none;">
+                <div class="menu-summary-text" id="menuSummaryText" onclick="toggleDropdown(event, 'dropdownTop')"></div>
+                <div class="category-dropdown" id="dropdownTop" style="display: none;"><div class="dropdown-item pinned-item" onclick="filterPinnedOnly()">📌 Pinned</div><div class="dropdown-item" onclick="filterPhrases('🙋 - 👋', '🙋 - 👋')">🙋 - 👋</div><div class="dropdown-item" onclick="filterPhrases('👍 - 👎 - 🗯️', '👍 - 👎 - 🗯️')">👍 - 👎 - 🗯️</div><div class="dropdown-item" onclick="filterPhrases('🙇 - 🙏', '🙇 - 🙏')">🙇 - 🙏</div><div class="dropdown-item" onclick="filterPhrases('🤷 - 👌 - ✋', '🤷 - 👌 - ✋')">🤷 - 👌 - ✋</div><div class="dropdown-item" onclick="filterPhrases(':-) / Sonstiges', ':-) / Sonstiges')">:-) / Sonstiges</div></div>
+                <div class="header-actions" style="flex: 1; justify-content: flex-end;">
+                    <button class="header-subcat-toggle" id="headerSubcatToggleBtn" onclick="toggleSubcategoryView()" title="View Subcategories">🗂️</button>
+                    <div class="settings-cog-wrapper">
+                        <button class="settings-cog-btn" onclick="toggleCogDropdown(event, 'cogDropdownHeader')">⚙️</button>
+                        <div class="cog-dropdown-menu" id="cogDropdownHeader" style="display: none;">
+                            <div class="cog-dropdown-item" title="Edit Data" onclick="enableLiveEditing()">✏️</div>
+                            <div class="cog-dropdown-item" title="To Image" onclick="downloadCurrentAsImage()">📸</div>
+                        </div>
+                    </div>
+                    <button class="header-btn header-go-pinned-btn" id="headerGoPinnedBtn" onclick="filterPinnedOnly()">📌</button>
+                    <button class="header-btn header-unpin-btn" id="headerUnpinBtn" onclick="clearAllPins()">🗑️</button>
+                    <button class="header-btn header-back-btn" id="headerBackBtn" onclick="handleHeaderBack()">↩</button>
+                </div>
+            </div>
+            <div class="button-container" id="actualButtons" style="display: flex;"><div class="search-pinned-row"><div class="settings-cog-wrapper">
+                <button class="settings-cog-btn" onclick="toggleCogDropdown(event, 'cogDropdown')">⚙️</button>
+                <div class="cog-dropdown-menu" id="cogDropdown" style="display: none;">
+                    <div class="cog-dropdown-item" title="To Image" onclick="downloadCurrentAsImage()">📸</div>
+                </div>
+            </div><button class="category-btn pinned-cat-btn" onclick="filterPinnedOnly()">📌</button><button class="category-btn group-mode-btn active" id="groupBtn1" title="Group by Column 1" style="display: flex;">1️⃣</button><button class="category-btn group-mode-btn " id="groupBtn2" title="Group by Column 2" style="display: flex;">2️⃣</button><input type="text" class="search-box" id="liveSearchBox" readonly="" placeholder="Search..."></div><button class="category-btn" onclick="filterPhrases('🙋 - 👋', '🙋 - 👋')">🙋 - 👋</button><button class="category-btn" onclick="filterPhrases('👍 - 👎 - 🗯️', '👍 - 👎 - 🗯️')">👍 - 👎 - 🗯️</button><button class="category-btn" onclick="filterPhrases('🙇 - 🙏', '🙇 - 🙏')">🙇 - 🙏</button><button class="category-btn" onclick="filterPhrases('🤷 - 👌 - ✋', '🤷 - 👌 - ✋')">🤷 - 👌 - ✋</button><button class="category-btn" onclick="filterPhrases(':-) / Sonstiges', ':-) / Sonstiges')">:-) / Sonstiges</button></div>
+        </div>
+
+        <div class="main-screen-showcase-graphic" id="mainScreenShowcaseGraphic" style="display: none;"></div>
+
+        <div class="phrases-export-wrapper" id="captureTarget">
+            <div class="phrases-container" id="phrasesList"><div class="phrase-card" data-cat1="🙋 - 👋" data-cat2="hallo" style="display: none;"><div class="single-column-text">guten M/A/T Gute Nacht / Morgen! n’Abend (allerseits)! / schönen GT!</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙋 - 👋" data-cat2="hallo" style="display: none;"><div class="single-column-text">Tagchen! / Hallo zusammen! / Hallo meine Lieben / Tag, die Herren/Damen</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙋 - 👋" data-cat2="hallo" style="display: none;"><div class="single-column-text">wie geht’s dir/Ihnen?</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙋 - 👋" data-cat2="hallo" style="display: none;"><div class="single-column-text">(mir)(geht’s) sehr gut / mir geht’s heute richtig (gut) / so la la</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙋 - 👋" data-cat2="hallo" style="display: none;"><div class="single-column-text">es geht so / nicht schlecht / so mittelmäßig</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙋 - 👋" data-cat2="hallo" style="display: none;"><div class="single-column-text">es geht schon wieder (nach einem Unfall - Ernie) / das wird (schon gut gehen)<br>-no se donde puse este tipo<br>de frases</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙋 - 👋" data-cat2="hallo" style="display: none;"><div class="single-column-text">und dir / und selbst?</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙋 - 👋" data-cat2="hallo" style="display: none;"><div class="single-column-text">alles bestens / na bestens! / super! / alles in Grünen Bereich! (ugs.)</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙋 - 👋" data-cat2="hallo" style="display: none;"><div class="single-column-text">da kann man nicht meckern!</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙋 - 👋" data-cat2="hallo" style="display: none;"><div class="single-column-text">was gibt’s (Neues bei dir)? was ist (los)? (whats happening)</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙋 - 👋" data-cat2="hallo" style="display: none;"><div class="single-column-text">was ist (denn) (mit dir) los?, was ist hier denn los?</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙋 - 👋" data-cat2="hallo" style="display: none;"><div class="single-column-text">fit in Verein? alles klar? alles gut bei dir?</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙋 - 👋" data-cat2="hallo" style="display: none;"><div class="single-column-text">wie heißt du / wie ist dein Name?</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙋 - 👋" data-cat2="hallo" style="display: none;"><div class="single-column-text">hallo, ich bin der Jose</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙋 - 👋" data-cat2="hallo" style="display: none;"><div class="single-column-text">freut mich! sehr erfreut! (sehr) angenehm</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙋 - 👋" data-cat2="hallo" style="display: none;"><div class="single-column-text">wir kennen uns glaub ich noch gar nicht</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙋 - 👋" data-cat2="hallo" style="display: none;"><div class="single-column-text">(es) hat mich total gefreut / es war schön, dich kennen zu lernen / getroffen zu haben</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙋 - 👋" data-cat2="hallo" style="display: none;"><div class="single-column-text">schön dich (wieder) zu sehen / (dich) zu treffen</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙋 - 👋" data-cat2="hallo" style="display: none;"><div class="single-column-text">Herzlich willkommen! Fühl dich wie zuhause! Kann ich dir etwas anbieten?</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙋 - 👋" data-cat2="hallo" style="display: none;"><div class="single-column-text">Entschuldigung, hallo? (interpelar)</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙋 - 👋" data-cat2="hallo" style="display: none;"><div class="single-column-text">was soll’s (das heißen)?</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙋 - 👋" data-cat2="hallo" style="display: none;"><div class="single-column-text">geht's wieder? ist was?</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙋 - 👋" data-cat2="tschüss" style="display: none;"><div class="single-column-text">auf Wiedersehen / Hören (phone)</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙋 - 👋" data-cat2="tschüss" style="display: none;"><div class="single-column-text">bis bald/ später/ gleich/ zum nächsten Mal / auf bald! / bis dann / tchü-tchü</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙋 - 👋" data-cat2="tschüss" style="display: none;"><div class="single-column-text">(ich wünsche euch einen) schönen Tag / Abend noch!</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙋 - 👋" data-cat2="tschüss" style="display: none;"><div class="single-column-text">pass auf dich auf! fühl dich gedrückt! mach's gut! meld dich mal!</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙋 - 👋" data-cat2="tschüss" style="display: none;"><div class="single-column-text">gleichfalls, ebenso, du auch</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙋 - 👋" data-cat2="tschüss" style="display: none;"><div class="single-column-text">war nett, dich mal wiederzusehen!</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙋 - 👋" data-cat2="tschüss" style="display: none;"><div class="single-column-text">entschuldige, aber ich muss jetzt gehen</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙋 - 👋" data-cat2="tschüss" style="display: none;"><div class="single-column-text">ich muss mich verabschieden / ich muss jetzt gehen / weg / los</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙋 - 👋" data-cat2="tschüss" style="display: none;"><div class="single-column-text">gute Reise! schöne Ferien / schönen Urlaub / Gute Heimreise! Viel Spass noch!</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙋 - 👋" data-cat2="tschüss" style="display: none;"><div class="single-column-text">viel Spass / Viel Spaß beim Lernen! / ich wünsche Ihnen eine gute Zeit! / 'nen guten Start in die Neue Woche!</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙋 - 👋" data-cat2="tschüss" style="display: none;"><div class="single-column-text">dir auch einen guten Start ins neue Schuljahr / einen guten Start dir auch</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙋 - 👋" data-cat2="tschüss" style="display: none;"><div class="single-column-text">viel Glück bei der / für die* Prüfung / viel Erfolg! / du schafft es! alles Gute!</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙋 - 👋" data-cat2="tschüss" style="display: none;"><div class="single-column-text">gute Besserung! (danke, jetzt geht’s wieder gut)</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙋 - 👋" data-cat2="tschüss" style="display: none;"><div class="single-column-text">alles Gute für die Zukunft</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙋 - 👋" data-cat2="tschüss" style="display: none;"><div class="single-column-text">alles Liebe, viele / liebe Grüße (Brief)</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙋 - 👋" data-cat2="tschüss" style="display: none;"><div class="single-column-text">* bei (nur sie), für (alle Umstände bis zur Pruf)</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙋 - 👋" data-cat2="tschüss" style="display: none;"><div class="single-column-text">wir schreiben uns!</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙋 - 👋" data-cat2="tschüss" style="display: none;"><div class="single-column-text">ich begleite dich zu!</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙋 - 👋" data-cat2="tschüss" style="display: none;"><div class="single-column-text">ruht ihr gut aus und bis Donnerstag!</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="ja" style="display: none;"><div class="single-column-text">ja / jö / (sí… (dubitativo)/sí claro)/ doch doch / jup!</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="ja" style="display: none;"><div class="single-column-text">sicher / (aber)(sehr) gerne! (gerne!) / ja freilich / gerne! (volontiers) natürlich / selbstverständlich / ja schon!</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="ja" style="display: none;"><div class="single-column-text">(ganz) genau (so) / exakt / richtig / eben / natürlich / selbstverständlich / sicherlich (nicht)</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="ja" style="display: none;"><div class="single-column-text">ohne Zweifel / absolut! / unbedingt! das kannst du laut sagen! / na logo! / zu recht, zu recht…</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="ja" style="display: none;"><div class="single-column-text">na klar, das sieht man sofort! ist doch wahr!</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="ja" style="display: none;"><div class="single-column-text">das ist mir recht / (alles) ok bei mir</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="ja" style="display: none;"><div class="single-column-text">ich würde ja gern, aber…</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="ja" style="display: none;"><div class="single-column-text">das mache ich sehr gerne / (gar) kein Problem</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="ja" style="display: none;"><div class="single-column-text">muss aber! (have to though)</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="ja" style="display: none;"><div class="single-column-text">das reicht mir / genügt mir völlig</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="ja" style="display: none;"><div class="single-column-text">sieht (ganz) so aus, oder? (colloq)</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="ja" style="display: none;"><div class="single-column-text">jein / das ist mir (doch / absolut / völlig / scheiss) egal / wenn überhaupt (if any(thing))</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="ja" style="display: none;"><div class="single-column-text">es erinnert MICH an …</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="ja" style="display: none;"><div class="single-column-text">das sagt mir etwas (sagt dir das etwas?)</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="ja" style="display: none;"><div class="single-column-text">man möchte meinen (you’d think)</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="ja" style="display: none;"><div class="single-column-text">gleich! (ya mismo) / schon unterwegs!</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="ja" style="display: none;"><div class="single-column-text">ja, das sehe ich / ja, das hilft total!</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="ja" style="display: none;"><div class="single-column-text">schon gut…</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="ja" style="display: none;"><div class="single-column-text">also gut, also schön</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="ja" style="display: none;"><div class="single-column-text">na schön / gut!</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="ja" style="display: none;"><div class="single-column-text">genau das ist der Plan!</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="ja" style="display: none;"><div class="single-column-text">bin dabei! (I’m in), ich bin froh / zufrieden, dass…</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="ja" style="display: none;"><div class="single-column-text">(richtig) schön! / läuft / klappt / geht (+auch = tb puede ser)</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="ja" style="display: none;"><div class="single-column-text">tja… / na ja… / so knapp! (casi)</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="ja" style="display: none;"><div class="single-column-text">jawohl, so ist es! du hast voll(ïg)(kommen) recht (voll sólo informal)</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="ja" style="display: none;"><div class="single-column-text">Freue mich fur dich!!</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="ja" style="display: none;"><div class="single-column-text">Wohl verdient</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="ja" style="display: none;"><div class="single-column-text">teils, teils</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="ja" style="display: none;"><div class="single-column-text">das glaube ich dir gern!</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="ja" style="display: none;"><div class="single-column-text">Voll, voll!</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="ja" style="display: none;"><div class="single-column-text">ist es wirklich war?</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="ja" style="display: none;"><div class="single-column-text">ist das dein Ernst?</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="ja" style="display: none;"><div class="single-column-text">wirklich (wahr)? ach?</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="ja" style="display: none;"><div class="single-column-text">ehrlich? und was wenn nicht?</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="ja" style="display: none;"><div class="single-column-text">das kann nicht dein Ernst sein!</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="ja" style="display: none;"><div class="single-column-text">echt? ach ja? ach wirklich?</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="ja" style="display: none;"><div class="single-column-text">(meinst du das) im Ernst?</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="ja" style="display: none;"><div class="single-column-text">echt jetzt?? jetzt echt??</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="ja" style="display: none;"><div class="single-column-text">du machst Witz, oder?</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="ja" style="display: none;"><div class="single-column-text">ohne Witze? ohne Scheiss(e)??</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="ja" style="display: none;"><div class="single-column-text">sicher? Überlegs dir mal gut!</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="ja" style="display: none;"><div class="single-column-text">mal sehen</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="ja" style="display: none;"><div class="single-column-text">das ware gut / gut wär’s</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="ja" style="display: none;"><div class="single-column-text">möglicherweise / wahrscheinlich</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="ja" style="display: none;"><div class="single-column-text">wer weiß!</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="ja" style="display: none;"><div class="single-column-text">jaaa könnte man sagen</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="ja" style="display: none;"><div class="single-column-text">man weiß ja nie!</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="ja" style="display: none;"><div class="single-column-text">das kann doch nicht sein!</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="ja" style="display: none;"><div class="single-column-text">das gibt’s nicht!</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="ja" style="display: none;"><div class="single-column-text">könnte stimmen</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="ja" style="display: none;"><div class="single-column-text">da bin ich ja mal gespannt</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="ja" style="display: none;"><div class="single-column-text">ich dachte ich spinnte</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="ja" style="display: none;"><div class="single-column-text">was mich immer in D erstaunt / verblüfft / schockiert / ensetzt / beeindruckt</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="ja" style="display: none;"><div class="single-column-text">wäre eine Idee… / gut (podría ser)</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="nein" style="display: none;"><div class="single-column-text">né / nö/ nein, auf keinen Fall, überhaupt nicht</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="nein" style="display: none;"><div class="single-column-text">das will ich gar nicht</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="nein" style="display: none;"><div class="single-column-text">gar nichts</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="nein" style="display: none;"><div class="single-column-text">nichts dergleichen</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="nein" style="display: none;"><div class="single-column-text">das habe ich gar nicht gern</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="nein" style="display: none;"><div class="single-column-text">ich kann mir nicht vorstellen</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="nein" style="display: none;"><div class="single-column-text">das ergibt kein Sinn</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="nein" style="display: none;"><div class="single-column-text">das/darauf habe ich keine Lust</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="nein" style="display: none;"><div class="single-column-text">das gibt doch gar nichts!</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="nein" style="display: none;"><div class="single-column-text">es geht schon, danke (no, gracias)</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="nein" style="display: none;"><div class="single-column-text">muss das sein…?</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="nein" style="display: none;"><div class="single-column-text">Ende der Diskussion!</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="nein" style="display: none;"><div class="single-column-text">das kommt überhaupt nicht in Frage!</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="nein" style="display: none;"><div class="single-column-text">ich rede nur Quatsch!</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="nein" style="display: none;"><div class="single-column-text">ja, lieber nicht!</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="nein" style="display: none;"><div class="single-column-text">ne? / nicht wahr? / heißer Tag heute, <b>nicht?</b></div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="nein" style="display: none;"><div class="single-column-text">is gut! / keine Sorge / brauchst du nicht! / mach dir keine Gedanken</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="Ok?" style="display: none;"><div class="single-column-text">… / in Ordnung ok / gut?</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="Ok?" style="display: none;"><div class="single-column-text">insgesamt hat sehr gut gelaufen</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="Ok?" style="display: none;"><div class="single-column-text">unter / außer Kontrolle</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="Ok?" style="display: none;"><div class="single-column-text">passt dir das oder nicht?</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="Ok?" style="display: none;"><div class="single-column-text">ist das ok bei dir?</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="Ok?" style="display: none;"><div class="single-column-text">ich hab alles im Griff!</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="Ok?" style="display: none;"><div class="single-column-text">das passt mir gut</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="🗯️" style="display: none;"><div class="single-column-text">sag mal, hör mal (ma), pass auf (escucha!)</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="👍 - 👎 - 🗯️" data-cat2="🗯️" style="display: none;"><div class="single-column-text">ansonsten… (sinon…)</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙇 - 🙏" data-cat2="Danke" style="display: none;"><div class="single-column-text">ich danke dir / Ihnen / dafür</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙇 - 🙏" data-cat2="Danke" style="display: none;"><div class="single-column-text">vielen Dank…für den Tipp /eHilfe / eFahrt eMühe / eEinladung</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙇 - 🙏" data-cat2="Danke" style="display: none;"><div class="single-column-text">das ist sehr nett / lieb (von dir)</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙇 - 🙏" data-cat2="Danke" style="display: none;"><div class="single-column-text">ich bedanke mich für X bei dir</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙇 - 🙏" data-cat2="danke" style="display: none;"><div class="single-column-text">danke noch mal</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙇 - 🙏" data-cat2="danke" style="display: none;"><div class="single-column-text">noch mal vielen Dank</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙇 - 🙏" data-cat2="danke" style="display: none;"><div class="single-column-text">besten / herzlichen Dank!</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙇 - 🙏" data-cat2="danke" style="display: none;"><div class="single-column-text">(danke) nein, ich habe dich zu danken!</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙇 - 🙏" data-cat2="danke" style="display: none;"><div class="single-column-text">gerne! immer gern!</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙇 - 🙏" data-cat2="danke" style="display: none;"><div class="single-column-text">nichts zu danken / keine Ursache</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙇 - 🙏" data-cat2="danke" style="display: none;"><div class="single-column-text">nicht der Rede wert</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙇 - 🙏" data-cat2="danke" style="display: none;"><div class="single-column-text">gern geschehen (my pleasure)</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙇 - 🙏" data-cat2="Entschuldigung" style="display: none;"><div class="single-column-text">verzeihen Sie, sorry</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙇 - 🙏" data-cat2="Entschuldigung" style="display: none;"><div class="single-column-text">tut mir leid, das alles so doof gelaufen ist</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙇 - 🙏" data-cat2="Entschuldigung" style="display: none;"><div class="single-column-text">entschuldigen/e Sie (bitte)</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙇 - 🙏" data-cat2="Entschuldigung" style="display: none;"><div class="single-column-text">tut mir (schon)(übrigens) leid</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙇 - 🙏" data-cat2="Entschuldigung" style="display: none;"><div class="single-column-text">(ich konnte nicht widerstehen)</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙇 - 🙏" data-cat2="Entschuldigung" style="display: none;"><div class="single-column-text">macht nichts</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙇 - 🙏" data-cat2="Entschuldigung" style="display: none;"><div class="single-column-text">das ist nicht so schlimm</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙇 - 🙏" data-cat2="Entschuldigung" style="display: none;"><div class="single-column-text">kein Problem, keine Sorge, kein Thema</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙇 - 🙏" data-cat2="Entschuldigung" style="display: none;"><div class="single-column-text">diesmal war es meine Schuld</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙇 - 🙏" data-cat2="Entschuldigung" style="display: none;"><div class="single-column-text">das so ist! (that’s the way it is)</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙇 - 🙏" data-cat2="Entschuldigung" style="display: none;"><div class="single-column-text">es macht mir nichts aus</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙇 - 🙏" data-cat2="Entschuldigung" style="display: none;"><div class="single-column-text">egal(, ob… / egal, wie …)</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙇 - 🙏" data-cat2="Entschuldigung" style="display: none;"><div class="single-column-text">kein Thema / Drama / Stress / Schon in Ordnung</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙇 - 🙏" data-cat2="Entschuldigung" style="display: none;"><div class="single-column-text">keine Ursache (ugs), nichts leichter als das</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🙇 - 🙏" data-cat2="Entschuldigung" style="display: none;"><div class="single-column-text">sorry, du wolltest gerade sagen...?</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🤷 - 👌 - ✋" data-cat2="🤷" style="display: none;"><div class="single-column-text">es ist mir klar / bewusst, …</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🤷 - 👌 - ✋" data-cat2="🤷" style="display: none;"><div class="single-column-text">(ja, durchhaus!)</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🤷 - 👌 - ✋" data-cat2="🤷" style="display: none;"><div class="single-column-text">ja, kann mir vorstellen...</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🤷 - 👌 - ✋" data-cat2="🤷" style="display: none;"><div class="single-column-text">ich verstehe schon</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🤷 - 👌 - ✋" data-cat2="🤷" style="display: none;"><div class="single-column-text">das kann ich nachvollziehen</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🤷 - 👌 - ✋" data-cat2="🤷" style="display: none;"><div class="single-column-text">Schiess los!</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🤷 - 👌 - ✋" data-cat2="🤷" style="display: none;"><div class="single-column-text">… / nicht ganz / gar nichts</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🤷 - 👌 - ✋" data-cat2="🤷" style="display: none;"><div class="single-column-text">ich kann nicht begreifen, dass</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🤷 - 👌 - ✋" data-cat2="🤷" style="display: none;"><div class="single-column-text">ich finde’s verwirrend</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🤷 - 👌 - ✋" data-cat2="🤷" style="display: none;"><div class="single-column-text">das ist verwirrend / bin verwirrt</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🤷 - 👌 - ✋" data-cat2="🤷" style="display: none;"><div class="single-column-text">Ich bin durcheinander</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🤷 - 👌 - ✋" data-cat2="🤷" style="display: none;"><div class="single-column-text">ich weiß es nicht / gar nicht</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🤷 - 👌 - ✋" data-cat2="🤷" style="display: none;"><div class="single-column-text">ich habe nicht aufgepasst</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🤷 - 👌 - ✋" data-cat2="🤷" style="display: none;"><div class="single-column-text">ich bin (mir) nicht /ganz sicher</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🤷 - 👌 - ✋" data-cat2="🤷" style="display: none;"><div class="single-column-text">ich weiß es nicht, was das soll / das weiß ich nicht</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🤷 - 👌 - ✋" data-cat2="🤷" style="display: none;"><div class="single-column-text">ich komme damit nicht klar</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🤷 - 👌 - ✋" data-cat2="🤷" style="display: none;"><div class="single-column-text">ich komme nicht dahinter, warum..</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🤷 - 👌 - ✋" data-cat2="🤷" style="display: none;"><div class="single-column-text">wie meinen Sie das? (whatcha mean)</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🤷 - 👌 - ✋" data-cat2="🤷" style="display: none;"><div class="single-column-text">du weißt gar nichts</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🤷 - 👌 - ✋" data-cat2="🤷" style="display: none;"><div class="single-column-text">ich kriege’s nicht in den Kopf</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🤷 - 👌 - ✋" data-cat2="🤷" style="display: none;"><div class="single-column-text">keine Ahnung / wusste ja gar nicht! / keine Idee</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🤷 - 👌 - ✋" data-cat2="🤷" style="display: none;"><div class="single-column-text">ich komme nicht hinter, es geht alles zu schnell!</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🤷 - 👌 - ✋" data-cat2="🤷" style="display: none;"><div class="single-column-text">Das ist schwer zu sagen.</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🤷 - 👌 - ✋" data-cat2="🤷" style="display: none;"><div class="single-column-text">DAS verstehe ich nicht</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🤷 - 👌 - ✋" data-cat2="🤷" style="display: none;"><div class="single-column-text">davon / darunter verstehe ich nichts!</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🤷 - 👌 - ✋" data-cat2="🤷" style="display: none;"><div class="single-column-text">was meinst du damit?</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🤷 - 👌 - ✋" data-cat2="🤷" style="display: none;"><div class="single-column-text">kannst du wiederholen?</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🤷 - 👌 - ✋" data-cat2="🤷" style="display: none;"><div class="single-column-text">nochmal bitte!</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🤷 - 👌 - ✋" data-cat2="🤷" style="display: none;"><div class="single-column-text">wie bitte / was?</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🤷 - 👌 - ✋" data-cat2="🤷" style="display: none;"><div class="single-column-text">… / begriffen / kapiert</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🤷 - 👌 - ✋" data-cat2="🤷" style="display: none;"><div class="single-column-text">ist das klar?</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🤷 - 👌 - ✋" data-cat2="✋" style="display: none;"><div class="single-column-text">dauert noch einen kleinen Augenblick...</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1="🤷 - 👌 - ✋" data-cat2="✋" style="display: none;"><div class="single-column-text">keine Hektik!</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1=":-) / Sonstiges" data-cat2="" style="display: none;"><div class="single-column-text">na ja, sollen wir!</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1=":-) / Sonstiges" data-cat2="" style="display: none;"><div class="single-column-text">hierherum (ugs), hier in der Gegend</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1=":-) / Sonstiges" data-cat2="" style="display: none;"><div class="single-column-text">Alles gute hat ein Ende</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1=":-) / Sonstiges" data-cat2="" style="display: none;"><div class="single-column-text">kurz &amp; bündig &amp; kurz &amp; schmerzlos</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1=":-) / Sonstiges" data-cat2="" style="display: none;"><div class="single-column-text">zur Verfügung stehen</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1=":-) / Sonstiges" data-cat2="" style="display: none;"><div class="single-column-text">bis wann / wie viel Uhr...?</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1=":-) / Sonstiges" data-cat2="" style="display: none;"><div class="single-column-text">es gab ein DURCHEINANDER</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1=":-) / Sonstiges" data-cat2="" style="display: none;"><div class="single-column-text">ich hab mich verspätet, ich komme zu spät (ugs), der Zug hat Verspätung / ist verspätet / ich bin zehn Minuten zu spät</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1=":-) / Sonstiges" data-cat2="" style="display: none;"><div class="single-column-text">es fällt mir leicht/schwer</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1=":-) / Sonstiges" data-cat2="" style="display: none;"><div class="single-column-text">da/dort drüben, dahinten</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1=":-) / Sonstiges" data-cat2="" style="display: none;"><div class="single-column-text">eine Schachtel / Packung Zigaretten</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1=":-) / Sonstiges" data-cat2="" style="display: none;"><div class="single-column-text">morgen kann ich AUSSCHLAFEN / sie habe letztes WE auschlafen können (KI: Modalverben, kein Partizip)</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1=":-) / Sonstiges" data-cat2="" style="display: none;"><div class="single-column-text">Vortrag, Präsentation / Referat (Schule/Uni) / Eine Rede halten (Hochzeit)</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1=":-) / Sonstiges" data-cat2="" style="display: none;"><div class="single-column-text">na ja, du wusstest es nicht</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1=":-) / Sonstiges" data-cat2="" style="display: none;"><div class="single-column-text">wenn man vom Teufel spricht...</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1=":-) / Sonstiges" data-cat2="" style="display: none;"><div class="single-column-text">Nach dem Weg fragen</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1=":-) / Sonstiges" data-cat2="" style="display: none;"><div class="single-column-text">Ein volles Wochenende haben</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1=":-) / Sonstiges" data-cat2="" style="display: none;"><div class="single-column-text">Das ist bei mir genauso / mir geht’s genauso</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1=":-) / Sonstiges" data-cat2="" style="display: none;"><div class="single-column-text">Von Kinderbeinen an</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1=":-) / Sonstiges" data-cat2="" style="display: none;"><div class="single-column-text">ich sage/gebe dir Bescheid / melde mich bei dir / halte dich auf dem Laufenden (sobald ich Neuigkeiten habe) / informiere Sie regelmäßig</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div><div class="phrase-card" data-cat1=":-) / Sonstiges" data-cat2="" style="display: none;"><div class="single-column-text">lass mich mal gucken!</div><div class="card-actions-wrapper"><button class="action-btn trash-toggle" title="Remove temporarily">🗑️</button><button class="action-btn pin-toggle">📌</button></div></div></div>
+        </div>
+
+        <div class="menu-container bottom-frozen" id="menuWrapperBottom">
+            <div class="menu-summary" id="menuSummaryBottom" style="display: none;">
+                <div class="menu-summary-text" id="menuSummaryTextBottom" onclick="toggleDropdown(event, 'dropdownBottom')"></div>
+                <div class="category-dropdown" id="dropdownBottom" style="display: none;"><div class="dropdown-item pinned-item" onclick="filterPinnedOnly()">📌 Pinned</div><div class="dropdown-item" onclick="filterPhrases('🙋 - 👋', '🙋 - 👋')">🙋 - 👋</div><div class="dropdown-item" onclick="filterPhrases('👍 - 👎 - 🗯️', '👍 - 👎 - 🗯️')">👍 - 👎 - 🗯️</div><div class="dropdown-item" onclick="filterPhrases('🙇 - 🙏', '🙇 - 🙏')">🙇 - 🙏</div><div class="dropdown-item" onclick="filterPhrases('🤷 - 👌 - ✋', '🤷 - 👌 - ✋')">🤷 - 👌 - ✋</div><div class="dropdown-item" onclick="filterPhrases(':-) / Sonstiges', ':-) / Sonstiges')">:-) / Sonstiges</div></div>
+                <div class="header-actions" style="flex: 1; justify-content: flex-end;">
+                    <button class="header-btn header-go-pinned-btn" id="headerGoPinnedBtnBottom" onclick="filterPinnedOnly()">📌</button>
+                    <button class="header-btn header-unpin-btn" id="headerUnpinBtnBottom" onclick="clearAllPins()">🗑️</button>
+                    <button class="header-btn header-back-btn" id="headerBackBtnBottom" onclick="handleHeaderBack()">↩</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Overlay Modal -->
+    <div id="searchModalOverlay" class="search-modal-overlay" onclick="closeSearchModal()" style="display: none;">
+        <div class="search-modal-card" onclick="event.stopPropagation()">
+            <div class="search-modal-header">
+                <input type="text" id="searchModalInput" class="search-modal-input" placeholder="Search..." oninput="handleSearchModalInput(this.value)">
+                <button class="search-modal-close" onclick="closeSearchModal()">✕</button>
+            </div>
+            <div id="searchResultsCounter" class="search-results-counter">0 Resultados</div>
+            <div id="searchModalResults" class="search-modal-results"></div>
+        </div>
+    </div>
+
+    <!-- Popover Lightbox Container -->
+    <div id="popoverModal" class="modal-overlay" onclick="closePopoverModal()" style="display: none;">
+        <div class="modal-popover-card" id="modalPopoverCard" onclick="event.stopPropagation()"></div>
+    </div>
+
+    
+
+    <script>
+        let currentMode = 'category'; // 'category', 'subcategories', 'items', 'pinned'
+        let currentActiveCategory = '';
+        let currentActiveSubcategory = null;
+        let isSingleColumnMode = false;
+        
+        let activeGroupMode = 'cat1'; 
+        let hasThreeColumns = true;
+        let categoriesCat1 = new Set(["🙋 - 👋","👍 - 👎 - 🗯️","🙇 - 🙏","🤷 - 👌 - ✋",":-) / Sonstiges"]);
+        let categoriesCat2 = new Set(["hallo","tschüss","ja","nein","Ok?","🗯️","Danke","danke","Entschuldigung","🤷","✋"]);
+
+        let savedGraphicUrl = '';
+        let baseFilename = 'testestets';
+        let activeModalCardRef = null;
+
+        document.addEventListener('click', () => {
+            closeAllDropdowns();
+            const cogDropdown = document.getElementById('cogDropdown');
+            if (cogDropdown) cogDropdown.style.display = 'none';
+            const cogDropdownHeader = document.getElementById('cogDropdownHeader');
+            if (cogDropdownHeader) cogDropdownHeader.style.display = 'none';
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeSearchModal();
+                closePopoverModal();
+            }
+        });
+
+        function toggleCogDropdown(event, menuId = 'cogDropdown') {
+            event.stopPropagation();
+            const menu = document.getElementById(menuId);
+            const isOpen = menu.style.display === 'block';
+            closeAllDropdowns();
+            menu.style.display = isOpen ? 'none' : 'block';
+        }
+
+        function toggleMainImageVisibility() {
+            const imgBox = document.getElementById('mainScreenShowcaseGraphic');
+            if (!imgBox || !savedGraphicUrl) return;
+            
+            if (currentMode === 'category' && currentActiveCategory === '') {
+                imgBox.style.display = 'block';
+            } else {
+                imgBox.style.display = 'none';
+            }
+        }
+
+        function restoreTemporarilyTrashedItems() {
+            document.querySelectorAll('.phrase-card').forEach(card => {
+                card.removeAttribute('data-trashed');
+            });
+        }
+
+        function trashItemTemporarily(cardElement) {
+            cardElement.setAttribute('data-trashed', 'true');
+            cardElement.style.display = 'none';
+            if (activeModalCardRef === cardElement) {
+                closePopoverModal();
+            }
+            const searchOverlay = document.getElementById('searchModalOverlay');
+            if (searchOverlay.style.display === 'flex') {
+                const searchInput = document.getElementById('searchModalInput');
+                if (searchInput) handleSearchModalInput(searchInput.value);
+            }
+        }
+
+        function openSearchModal() {
+            const overlay = document.getElementById('searchModalOverlay');
+            overlay.style.display = 'flex';
+            const input = document.getElementById('searchModalInput');
+            input.value = '';
+            handleSearchModalInput('');
+            setTimeout(() => input.focus(), 50);
+        }
+
+        function closeSearchModal() {
+            document.getElementById('searchModalOverlay').style.display = 'none';
+            const liveBox = document.getElementById('liveSearchBox');
+            if (liveBox) liveBox.value = '';
+        }
+
+        function handleSearchModalInput(query) {
+            const cleanQuery = query.toLowerCase().trim();
+            const allCards = document.querySelectorAll('#phrasesList .phrase-card');
+            const resultsContainer = document.getElementById('searchModalResults');
+            const counterElement = document.getElementById('searchResultsCounter');
+            resultsContainer.innerHTML = '';
+
+            if (cleanQuery === '') {
+                counterElement.innerText = `0 Resultados`;
+                return;
+            }
+
+            let matchedCards = [];
+            allCards.forEach(card => {
+                if (card.getAttribute('data-trashed') === 'true') return;
+                let textContent = card.innerText.toLowerCase();
+
+                if (textContent.includes(cleanQuery)) {
+                    matchedCards.push(card);
+                }
+            });
+
+            counterElement.innerText = `${matchedCards.length} ${matchedCards.length === 1 ? 'RESULTADO' : 'RESULTADOS'}`;
+
+            matchedCards.forEach(card => {
+                const clone = card.cloneNode(true);
+                const trashBtn = clone.querySelector('.trash-toggle');
+                const pinBtn = clone.querySelector('.pin-toggle');
+                const origCard = card;
+
+                if (trashBtn) {
+                    trashBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        trashItemTemporarily(origCard);
+                        handleSearchModalInput(query);
+                    };
+                }
+                if (pinBtn) {
+                    pinBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        togglePinItem(origCard);
+                        pinBtn.style.opacity = origCard.classList.contains('is-pinned') ? '1' : '0.35';
+                        clone.classList.toggle('is-pinned', origCard.classList.contains('is-pinned'));
+                    };
+                }
+
+                const textTarget = clone.querySelector('.two-column-layout, .single-column-text');
+                if (textTarget) {
+                    textTarget.onclick = () => {
+                        closeSearchModal();
+                        openPopoverModal(origCard);
+                    };
+                }
+
+                resultsContainer.appendChild(clone);
+            });
+        }
+
+        function openPopoverModal(cardElement) {
+            activeModalCardRef = cardElement;
+            const modal = document.getElementById('popoverModal');
+            const cardContentBox = document.getElementById('modalPopoverCard');
+            
+            const layoutDiv = cardElement.querySelector('.two-column-layout');
+            const singleDiv = cardElement.querySelector('.single-column-text');
+            
+            let baseHTML = '';
+            if (layoutDiv) baseHTML = layoutDiv.outerHTML;
+            else if (singleDiv) baseHTML = singleDiv.outerHTML;
+            
+            cardContentBox.innerHTML = baseHTML;
+            
+            const actionsWrapper = document.createElement('div');
+            actionsWrapper.className = 'card-actions-wrapper';
+
+            const trashBtn = document.createElement('button');
+            trashBtn.className = 'action-btn trash-toggle';
+            trashBtn.innerHTML = '🗑️';
+            trashBtn.title = 'Remove temporarily';
+            trashBtn.onclick = (e) => {
+                e.stopPropagation();
+                trashItemTemporarily(cardElement);
+            };
+
+            const modalPin = document.createElement('button');
+            modalPin.className = 'action-btn pin-toggle';
+            modalPin.innerHTML = '📌';
+            modalPin.onclick = (e) => {
+                e.stopPropagation();
+                togglePinItem(cardElement);
+                modalPin.style.opacity = cardElement.classList.contains('is-pinned') ? '1' : '0.35';
+            };
+
+            actionsWrapper.appendChild(trashBtn);
+            actionsWrapper.appendChild(modalPin);
+            cardContentBox.appendChild(actionsWrapper);
+            
+            modalPin.style.opacity = cardElement.classList.contains('is-pinned') ? '1' : '0.35';
+            modal.style.display = 'flex';
+        }
+
+        function closePopoverModal() {
+            document.getElementById('popoverModal').style.display = 'none';
+            activeModalCardRef = null;
+        }
+
+        function parseExcelSpreadsheetRows(text) {
+            const lines = [];
+            let row = [''];
+            let inQuotes = false;
+
+            for (let i = 0; i < text.length; i++) {
+                let c = text[i];
+                let next = text[i+1];
+
+                if (c === '"') {
+                    if (inQuotes && next === '"') { row[row.length - 1] += '"'; i++; } 
+                    else { inQuotes = !inQuotes; }
+                } else if (c === '\t' && !inQuotes) {
+                    row.push('');
+                } else if ((c === '\n' || c === '\r') && !inQuotes) {
+                    if (c === '\r' && next === '\n') { i++; }
+                    lines.push(row);
+                    row = [''];
+                } else {
+                    row[row.length - 1] += c;
+                }
+            }
+            if (row.length > 1 || row[0] !== '') lines.push(row);
+            return lines;
+        }
+
+        function buildAppFromInput() {
+            const rawText = document.getElementById('rawData').value;
+            if(!rawText.trim()) return alert("Please paste some data first!");
+
+            const filenameInput = document.getElementById('customFilename').value.trim();
+            baseFilename = filenameInput ? filenameInput : 'phrases_clean_app';
+
+            savedGraphicUrl = document.getElementById('showcaseImageUrl').value.trim();
+            const imgContainer = document.getElementById('mainScreenShowcaseGraphic');
+            if(savedGraphicUrl) {
+                imgContainer.innerHTML = `<img src="${savedGraphicUrl}" alt="Showcase Context Graphic">`;
+                imgContainer.style.display = 'block';
+            } else {
+                imgContainer.innerHTML = '';
+                imgContainer.style.display = 'none';
+            }
+
+            const parsedRows = parseExcelSpreadsheetRows(rawText);
+            
+            categoriesCat1.clear();
+            categoriesCat2.clear();
+            hasThreeColumns = parsedRows.some(r => r.length >= 3 && r.some(cell => cell.trim() !== ""));
+            activeGroupMode = 'cat1';
+
+            const phrasesList = document.getElementById('phrasesList');
+            phrasesList.innerHTML = '';
+            
+            isSingleColumnMode = false;
+            currentActiveCategory = '';
+            currentActiveSubcategory = null;
+            currentMode = 'category';
+
+            parsedRows.forEach((parts) => {
+                if (!parts || parts.every(cell => cell.trim() === "")) return;
+
+                let cat1 = "All_Items";
+                let cat2 = "";
+                let col1Text = "";
+                let col2Text = "";
+
+                if (hasThreeColumns) {
+                    const rawCat1 = parts[0] ? parts[0].trim() : "";
+                    const rawCat2 = parts[1] ? parts[1].trim() : "";
+                    col1Text = parts[2] ? parts[2].trim() : "";
+                    col2Text = parts[3] ? parts[3].trim() : "";
+
+                    if (col1Text === "" && col2Text === "") return;
+
+                    cat1 = rawCat1 || "All_Items";
+                    cat2 = rawCat2;
+
+                    if (rawCat1 !== "") categoriesCat1.add(cat1);
+                    if (rawCat2 !== "") categoriesCat2.add(cat2);
+                } else if (parts.length === 1) {
+                    col1Text = parts[0].trim();
+                } else if (parts.length === 2) {
+                    const rawCat1 = parts[0].trim();
+                    col2Text = parts[1].trim();
+                    if (col2Text === "") return;
+
+                    if (rawCat1 !== "") {
+                        cat1 = rawCat1;
+                        categoriesCat1.add(cat1);
+                    }
+                    col1Text = col2Text;
+                    col2Text = "";
+                }
+
+                const htmlCol1 = col1Text.replace(/\n/g, "<br>");
+                const htmlCol2 = col2Text.replace(/\n/g, "<br>");
+
+                const card = document.createElement('div');
+                card.className = 'phrase-card';
+                card.setAttribute('data-cat1', cat1);
+                card.setAttribute('data-cat2', cat2);
+                
+                if (col1Text !== "" && col2Text !== "") {
+                    const layoutDiv = document.createElement('div');
+                    layoutDiv.className = 'two-column-layout';
+
+                    const leftDiv = document.createElement('div');
+                    leftDiv.className = 'col-left';
+                    leftDiv.innerHTML = htmlCol1;
+                    
+                    const rightDiv = document.createElement('div');
+                    rightDiv.className = 'col-right';
+                    rightDiv.innerHTML = htmlCol2;
+
+                    layoutDiv.appendChild(leftDiv);
+                    layoutDiv.appendChild(rightDiv);
+                    card.appendChild(layoutDiv);
+                } else {
+                    const singleDiv = document.createElement('div');
+                    singleDiv.className = 'single-column-text';
+                    singleDiv.innerHTML = col1Text !== "" ? htmlCol1 : htmlCol2;
+                    card.appendChild(singleDiv);
+                }
+
+                const actionsWrapper = document.createElement('div');
+                actionsWrapper.className = 'card-actions-wrapper';
+
+                const trashBtn = document.createElement('button');
+                trashBtn.className = 'action-btn trash-toggle';
+                trashBtn.innerHTML = '🗑️';
+                trashBtn.title = 'Remove temporarily';
+
+                const pinBtn = document.createElement('button');
+                pinBtn.className = 'action-btn pin-toggle';
+                pinBtn.innerHTML = '📌';
+
+                actionsWrapper.appendChild(trashBtn);
+                actionsWrapper.appendChild(pinBtn);
+                card.appendChild(actionsWrapper);
+
+                phrasesList.appendChild(card);
+            });
+
+            if (categoriesCat1.size === 0 && categoriesCat2.size === 0) {
+                isSingleColumnMode = true;
+            }
+
+            renderCategoryButtons();
+
+            document.getElementById('setupContainer').style.display = 'none';
+            document.getElementById('appContainer').style.display = 'block';
+            document.getElementById('floatingControls').style.display = 'flex'; 
+        }
+
+        function switchGroupMode(mode) {
+            activeGroupMode = mode;
+            const btn1 = document.getElementById('groupBtn1');
+            const btn2 = document.getElementById('groupBtn2');
+            if(btn1 && btn2) {
+                btn1.classList.toggle('active', mode === 'cat1');
+                btn2.classList.toggle('active', mode === 'cat2');
+            }
+            resetView();
+            renderCategoryButtons();
+        }
+
+        function getCurrentCategorySet() {
+            return (activeGroupMode === 'cat2' && hasThreeColumns) ? categoriesCat2 : categoriesCat1;
+        }
+
+        function renderCategoryButtons() {
+            const actualButtons = document.getElementById('actualButtons');
+            actualButtons.innerHTML = '';
+
+            const searchRow = document.createElement('div');
+            searchRow.className = 'search-pinned-row';
+
+            const cogWrapper = document.createElement('div');
+            cogWrapper.className = 'settings-cog-wrapper';
+            cogWrapper.innerHTML = `
+                <button class="settings-cog-btn" onclick="toggleCogDropdown(event, 'cogDropdown')">⚙️</button>
+                <div class="cog-dropdown-menu" id="cogDropdown">
+                    <div class="cog-dropdown-item" title="To Image" onclick="downloadCurrentAsImage()">📸</div>
+                </div>
+            `;
+
+            const pinnedBtn = document.createElement('button');
+            pinnedBtn.className = 'category-btn pinned-cat-btn';
+            pinnedBtn.setAttribute('onclick', "filterPinnedOnly()");
+            pinnedBtn.innerText = '📌';
+
+            const searchInput = document.createElement('input');
+            searchInput.type = 'text';
+            searchInput.className = 'search-box';
+            searchInput.id = 'liveSearchBox';
+            searchInput.readOnly = true;
+            searchInput.placeholder = 'Search...';
+            searchInput.onclick = () => openSearchModal();
+
+            searchRow.appendChild(cogWrapper);
+            searchRow.appendChild(pinnedBtn);
+
+            if (hasThreeColumns) {
+                const groupBtn1 = document.createElement('button');
+                groupBtn1.className = `category-btn group-mode-btn ${activeGroupMode === 'cat1' ? 'active' : ''}`;
+                groupBtn1.id = 'groupBtn1';
+                groupBtn1.style.display = 'flex';
+                groupBtn1.innerText = '1️⃣';
+                groupBtn1.title = 'Group by Column 1';
+                groupBtn1.onclick = () => switchGroupMode('cat1');
+                searchRow.appendChild(groupBtn1);
+
+                const groupBtn2 = document.createElement('button');
+                groupBtn2.className = `category-btn group-mode-btn ${activeGroupMode === 'cat2' ? 'active' : ''}`;
+                groupBtn2.id = 'groupBtn2';
+                groupBtn2.style.display = 'flex';
+                groupBtn2.innerText = '2️⃣';
+                groupBtn2.title = 'Group by Column 2';
+                groupBtn2.onclick = () => switchGroupMode('cat2');
+                searchRow.appendChild(groupBtn2);
+            }
+
+            searchRow.appendChild(searchInput);
+            actualButtons.appendChild(searchRow);
+
+            const activeSet = getCurrentCategorySet();
+
+            if (!isSingleColumnMode && activeSet.size > 0) {
+                activeSet.forEach(cat => {
+                    const btn = document.createElement('button');
+                    btn.className = 'category-btn';
+                    const safeCat = cat.replace(/'/g, "\\'");
+                    btn.setAttribute('onclick', `filterPhrases('${safeCat}', '${safeCat}')`);
+                    btn.innerText = cat;
+                    actualButtons.appendChild(btn);
+                });
+                renderDropdownMenus();
+            } else {
+                const cards = document.querySelectorAll('.phrase-card');
+                cards.forEach(card => card.style.display = 'block');
+                pinnedBtn.style.flex = "1 1 auto";
+            }
+        }
+
+        function clearAllPins() {
+            const cards = document.querySelectorAll('.phrase-card');
+            cards.forEach(card => card.classList.remove('is-pinned'));
+            resetView();
+        }
+
+        function downloadCurrentHTML() {
+            const docClone = document.documentElement.cloneNode(true);
+            
+            if(docClone.querySelector('#setupContainer')) docClone.querySelector('#setupContainer').remove();
+            if(docClone.querySelector('#floatingControls')) docClone.querySelector('#floatingControls').remove();
+            if(docClone.querySelector('#popoverModal')) docClone.querySelector('#popoverModal').style.display = 'none';
+            if(docClone.querySelector('#searchModalOverlay')) docClone.querySelector('#searchModalOverlay').style.display = 'none';
+            
+            const actualBtnsWrapper = docClone.querySelector('#actualButtons');
+            if (actualBtnsWrapper) {
+                actualBtnsWrapper.style.display = 'flex';
+            }
+
+            const appBlock = docClone.querySelector('#appContainer');
+            if (appBlock) appBlock.style.display = 'block';
+            if (docClone.querySelector('#menuSummary')) docClone.querySelector('#menuSummary').style.display = 'none';
+            if (docClone.querySelector('#menuSummaryBottom')) docClone.querySelector('#menuSummaryBottom').style.display = 'none';
+            
+            const imgBoxClone = docClone.querySelector('#mainScreenShowcaseGraphic');
+            if (imgBoxClone && savedGraphicUrl) {
+                imgBoxClone.style.display = 'block';
+            }
+
+            const cleanCards = docClone.querySelectorAll('.phrase-card');
+            cleanCards.forEach(c => {
+                c.style.display = isSingleColumnMode ? 'block' : 'none';
+                c.classList.remove('is-pinned');
+                c.removeAttribute('data-trashed');
+            });
+
+            const cleanScript = docClone.querySelector('script');
+            if(cleanScript) {
+                let cat1ArrayStr = JSON.stringify(Array.from(categoriesCat1));
+                let cat2ArrayStr = JSON.stringify(Array.from(categoriesCat2));
+                let scriptContent = cleanScript.innerHTML;
+                
+                scriptContent = scriptContent.replace(/let isSingleColumnMode = (true|false);/, `let isSingleColumnMode = ${isSingleColumnMode};`);
+                scriptContent = scriptContent.replace(/let hasThreeColumns = (true|false);/, `let hasThreeColumns = ${hasThreeColumns};`);
+                scriptContent = scriptContent.replace(/let categoriesCat1 = new Set\(\);/, `let categoriesCat1 = new Set(${cat1ArrayStr});`);
+                scriptContent = scriptContent.replace(/let categoriesCat2 = new Set\(\);/, `let categoriesCat2 = new Set(${cat2ArrayStr});`);
+                scriptContent = scriptContent.replace(/let savedGraphicUrl = '';/, `let savedGraphicUrl = '${savedGraphicUrl.replace(/'/g, "\\'")}';`);
+                scriptContent = scriptContent.replace(/let baseFilename = 'phrases_clean_app';/, `let baseFilename = '${baseFilename.replace(/'/g, "\\'")}';`);
+                
+                cleanScript.innerHTML = scriptContent;
+            }
+
+            const totalSource = "<!DOCTYPE html>\n" + docClone.outerHTML;
+            const blob = new Blob([totalSource], { type: "text/html;charset=utf-8" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `${baseFilename}.html`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function renderDropdownMenus() {
+            const topDropdown = document.getElementById('dropdownTop');
+            const bottomDropdown = document.getElementById('dropdownBottom');
+            let htmlContent = `<div class="dropdown-item pinned-item" onclick="filterPinnedOnly()">📌 Pinned</div>`;
+            
+            if ((currentMode === 'subcategories' || currentMode === 'items') && currentActiveCategory && hasThreeColumns) {
+                const subcats = new Set();
+                const cards = document.querySelectorAll('.phrase-card');
+                cards.forEach(card => {
+                    if (card.getAttribute('data-cat1') === currentActiveCategory) {
+                        const subcat = card.getAttribute('data-cat2') || "";
+                        subcats.add(subcat);
+                    }
+                });
+                subcats.forEach(subcat => {
+                    const safeSubcat = subcat.replace(/'/g, "\\'");
+                    const labelHtml = subcat === "" ? "&nbsp;" : subcat;
+                    htmlContent += `<div class="dropdown-item" onclick="filterBySubcategory('${safeSubcat}')">${labelHtml}</div>`;
+                });
+            } else {
+                const activeSet = getCurrentCategorySet();
+                activeSet.forEach(cat => {
+                    const safeCat = cat.replace(/'/g, "\\'");
+                    htmlContent += `<div class="dropdown-item" onclick="filterPhrases('${safeCat}', '${safeCat}')">${cat}</div>`;
+                });
+            }
+
+            topDropdown.innerHTML = htmlContent;
+            bottomDropdown.innerHTML = htmlContent;
+        }
+
+        function toggleDropdown(event, id) {
+            event.stopPropagation();
+            renderDropdownMenus();
+            const targetMenu = document.getElementById(id);
+            const isOpen = targetMenu.style.display === 'block';
+            closeAllDropdowns();
+            if (!isOpen) targetMenu.style.display = 'block';
+        }
+
+        function closeAllDropdowns() {
+            document.getElementById('dropdownTop').style.display = 'none';
+            document.getElementById('dropdownBottom').style.display = 'none';
+        }
+
+        function togglePinItem(cardElement) {
+            cardElement.classList.toggle('is-pinned');
+            
+            if (activeModalCardRef === cardElement) {
+                const modalPin = document.querySelector('#modalPopoverCard .pin-toggle');
+                if (modalPin) {
+                    modalPin.style.opacity = cardElement.classList.contains('is-pinned') ? '1' : '0.35';
+                }
+            }
+
+            if(document.activeElement) {
+                document.activeElement.blur();
+            }
+
+            if (currentMode === 'pinned' && !cardElement.classList.contains('is-pinned')) {
+                cardElement.style.display = 'none';
+                checkPinnedCountOrReset();
+            }
+        }
+
+        function filterPhrases(category, labelText) {
+            restoreTemporarilyTrashedItems();
+            
+            currentMode = 'category';
+            currentActiveCategory = category;
+            currentActiveSubcategory = null;
+            const cards = document.querySelectorAll('.phrase-card');
+            
+            const matchAttr = (activeGroupMode === 'cat2' && hasThreeColumns) ? 'data-cat2' : 'data-cat1';
+
+            cards.forEach(card => {
+                if (card.getAttribute(matchAttr) === category) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+            document.getElementById('actualButtons').style.display = 'none';
+            updateMenuUI(labelText + " ▾");
+            closeAllDropdowns();
+        }
+
+        function toggleSubcategoryView() {
+            if (currentMode !== 'category' && currentMode !== 'items') return;
+            if (!currentActiveCategory || activeGroupMode !== 'cat1' || !hasThreeColumns) return;
+            
+            currentMode = 'subcategories';
+            currentActiveSubcategory = null;
+            
+            const subcats = new Set();
+            const cards = document.querySelectorAll('.phrase-card');
+            cards.forEach(card => {
+                if (card.getAttribute('data-cat1') === currentActiveCategory) {
+                    const subcat = card.getAttribute('data-cat2') || "";
+                    subcats.add(subcat);
+                }
+            });
+
+            cards.forEach(card => card.style.display = 'none');
+
+            const actualButtons = document.getElementById('actualButtons');
+            actualButtons.style.display = 'flex';
+            actualButtons.innerHTML = '';
+            
+            subcats.forEach(subcat => {
+                const btn = document.createElement('button');
+                btn.className = 'category-btn';
+                const safeSubcat = subcat.replace(/'/g, "\\'");
+                btn.setAttribute('onclick', `filterBySubcategory('${safeSubcat}')`);
+                if (subcat === "") {
+                    btn.innerHTML = "&nbsp;";
+                    btn.style.minHeight = "52px";
+                } else {
+                    btn.innerText = subcat;
+                }
+                actualButtons.appendChild(btn);
+            });
+
+            updateMenuUI(currentActiveCategory + " > Subcategories ▾");
+        }
+
+        function filterBySubcategory(subcatName) {
+            restoreTemporarilyTrashedItems();
+            currentMode = 'items';
+            currentActiveSubcategory = subcatName;
+
+            const actualButtons = document.getElementById('actualButtons');
+            actualButtons.style.display = 'none';
+
+            const cards = document.querySelectorAll('.phrase-card');
+            cards.forEach(card => {
+                const cardCat2 = card.getAttribute('data-cat2') || "";
+                if (card.getAttribute('data-cat1') === currentActiveCategory && cardCat2 === subcatName) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            const headerLabel = subcatName !== "" ? `${currentActiveCategory} > ${subcatName} ▾` : `${currentActiveCategory} > ▾`;
+            updateMenuUI(headerLabel);
+            closeAllDropdowns();
+        }
+
+        function filterPinnedOnly() {
+            restoreTemporarilyTrashedItems();
+
+            const actualButtons = document.getElementById('actualButtons');
+            actualButtons.style.display = 'none';
+
+            const cards = document.querySelectorAll('.phrase-card');
+            let pinnedCount = 0;
+            cards.forEach(card => {
+                if (card.classList.contains('is-pinned')) {
+                    card.style.display = 'block';
+                    pinnedCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+            if(pinnedCount === 0) {
+                alert("You don't have any items pinned yet!");
+                return;
+            }
+            currentMode = 'pinned';
+            currentActiveCategory = '';
+            currentActiveSubcategory = null;
+            updateMenuUI("📌 Clipboard ▾");
+            closeAllDropdowns();
+        }
+
+        function checkPinnedCountOrReset() {
+            const visibleCards = Array.from(document.querySelectorAll('.phrase-card')).filter(c => c.style.display === 'block');
+            if (visibleCards.length === 0) resetView();
+        }
+
+        function updateMenuUI(summaryText) {
+            document.getElementById('menuSummaryText').innerText = summaryText;
+            document.getElementById('menuSummaryTextBottom').innerText = summaryText;
+            document.getElementById('menuSummary').style.display = 'flex';
+            document.getElementById('menuSummaryBottom').style.display = 'flex';
+            
+            const isPinnedMode = (currentMode === 'pinned');
+            document.getElementById('headerGoPinnedBtn').style.display = isPinnedMode ? 'none' : 'block'; 
+            document.getElementById('headerGoPinnedBtnBottom').style.display = isPinnedMode ? 'none' : 'block'; 
+            
+            document.getElementById('headerUnpinBtn').style.display = isPinnedMode ? 'block' : 'none';
+            document.getElementById('headerUnpinBtnBottom').style.display = isPinnedMode ? 'block' : 'none';
+
+            const subcatToggleBtn = document.getElementById('headerSubcatToggleBtn');
+            if ((currentMode === 'category' || currentMode === 'items') && currentActiveCategory !== '' && activeGroupMode === 'cat1' && hasThreeColumns) {
+                subcatToggleBtn.style.display = 'flex';
+            } else {
+                subcatToggleBtn.style.display = 'none';
+            }
+
+            toggleMainImageVisibility();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function handleHeaderBack() {
+            if (currentMode === 'items' && currentActiveSubcategory !== null) {
+                toggleSubcategoryView();
+            } else if (currentMode === 'subcategories') {
+                filterPhrases(currentActiveCategory, currentActiveCategory);
+            } else if (currentMode === 'category' && currentActiveCategory !== '') {
+                resetView();
+            } else if (currentMode === 'pinned') {
+                resetView();
+            } else {
+                resetView();
+            }
+        }
+
+        function resetView() {
+            restoreTemporarilyTrashedItems();
+            const cards = document.querySelectorAll('.phrase-card');
+
+            currentActiveCategory = '';
+            currentActiveSubcategory = null;
+            currentMode = 'category';
+
+            if(isSingleColumnMode) {
+                cards.forEach(card => card.style.display = 'block');
+            } else {
+                cards.forEach(card => card.style.display = 'none');
+            }
+            document.getElementById('actualButtons').style.display = 'flex';
+            document.getElementById('menuSummary').style.display = 'none';
+            document.getElementById('menuSummaryBottom').style.display = 'none';
+            document.getElementById('headerSubcatToggleBtn').style.display = 'none';
+            
+            renderCategoryButtons();
+            toggleMainImageVisibility();
+            closeAllDropdowns();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function backToInputSetup() {
+            document.getElementById('appContainer').style.display = 'none';
+            document.getElementById('floatingControls').style.display = 'none';
+            document.getElementById('setupContainer').style.display = 'flex';
+            document.getElementById('rawData').value = '';
+            document.getElementById('showcaseImageUrl').value = '';
+            document.getElementById('customFilename').value = '';
+            document.getElementById('customFilename').focus();
+        }
+
+        function downloadCurrentAsImage() {
+            const target = document.getElementById('captureTarget');
+            const visibleCards = Array.from(target.querySelectorAll('.phrase-card')).filter(c => c.style.display !== 'none');
+            if (visibleCards.length === 0) return alert("There are no visible phrases to export!");
+
+            const generateCanvas = () => {
+                target.classList.add('hide-pins-snapshot');
+                
+                let tempHeader = null;
+                if (currentMode === 'category' && currentActiveCategory !== '') {
+                    tempHeader = document.createElement('div');
+                    tempHeader.className = 'export-snapshot-header';
+                    tempHeader.innerText = currentActiveCategory;
+                    target.insertBefore(tempHeader, target.firstChild);
+                } else if (currentMode === 'items' && currentActiveSubcategory !== null) {
+                    tempHeader = document.createElement('div');
+                    tempHeader.className = 'export-snapshot-header';
+                    tempHeader.innerText = currentActiveSubcategory !== '' ? (currentActiveCategory + ' > ' + currentActiveSubcategory) : currentActiveCategory;
+                    target.insertBefore(tempHeader, target.firstChild);
+                } else if (currentMode === 'pinned') {
+                    tempHeader = document.createElement('div');
+                    tempHeader.className = 'export-snapshot-header';
+                    tempHeader.style.backgroundColor = 'var(--pinned-color)';
+                    tempHeader.innerText = '📌 Pinned Clipboard';
+                    target.insertBefore(tempHeader, target.firstChild);
+                }
+
+                html2canvas(target, { backgroundColor: "#f8f9fa", scale: 2, useCORS: true }).then(canvas => {
+                    target.classList.remove('hide-pins-snapshot');
+                    if (tempHeader) tempHeader.remove();
+                    
+                    const imgData = canvas.toDataURL('image/png');
+                    const link = document.createElement('a');
+                    link.href = imgData;
+                    link.download = `phrases_export_${currentMode}.png`;
+                    link.click();
+                }).catch(() => {
+                    target.classList.remove('hide-pins-snapshot');
+                    if (tempHeader) tempHeader.remove();
+                });
+            };
+
+            if (typeof html2canvas === 'undefined') {
+                const script = document.createElement('script');
+                script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
+                script.onload = generateCanvas;
+                document.head.appendChild(script);
+            } else {
+                generateCanvas();
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => { 
+            if(!isSingleColumnMode && (categoriesCat1.size > 0 || categoriesCat2.size > 0)) { 
+                renderCategoryButtons(); 
+            }
+
+            const phrasesList = document.getElementById('phrasesList');
+            if (phrasesList) {
+                phrasesList.addEventListener('click', (e) => {
+                    const targetEl = e.target.nodeType === Node.TEXT_NODE ? e.target.parentElement : e.target;
+                    const card = targetEl.closest('.phrase-card');
+                    if (!card) return;
+
+                    if (targetEl.closest('.trash-toggle')) {
+                        e.stopPropagation();
+                        trashItemTemporarily(card);
+                    } else if (targetEl.closest('.pin-toggle')) {
+                        e.stopPropagation();
+                        togglePinItem(card);
+                    } else if (targetEl.closest('.two-column-layout, .single-column-text')) {
+                        openPopoverModal(card);
+                    }
+                });
+            }
+        });
+    </script>
+
+</body></html>
