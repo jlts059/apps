@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>packingefb21</title>
+    <style>
+        :root {
+            --btn-go: #16a34a;
+            --btn-go-hover: #15803d;
+            --btn-shuffle: #7c3aed;
+            --btn-shuffle-hover: #6d28d9;
+            --btn-stop: #dc2626;
+            --btn-stop-hover: #b91c1c;
+            --btn-pass: #d97706;
+            --btn-next: #2563eb;
+            --btn-next-hover: #1d4ed8;
+            --bg: #f0f4f8;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 18px;
+        }
+        .wrapper {
+            width: 100%;
+            max-width: 560px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .game-card {
+            position: relative;
+            background: var(--card-bg);
+            padding: 26px 24px 28px;
+            border-radius: 24px;
+            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            text-align: center;
+            min-height: 330px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .top-left-counter {
+            position: absolute;
+            top: 14px;
+            left: 16px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #64748b;
+            background: #f1f5f9;
+            padding: 4px 10px;
+            border-radius: 8px;
+            user-select: none;
+        }
+        .top-right-cluster {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 10;
+        }
+        .game-type-badge {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #64748b;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 4px 8px;
+            border-radius: 8px;
+            letter-spacing: 0.3px;
+            user-select: none;
+        }
+        .info-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            background: #ffffff;
+            color: #334155;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            padding: 0;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .info-btn:hover { transform: scale(1.06); box-shadow: 0 3px 8px rgba(0,0,0,0.08); }
+        .qr-mini-widget {
+            width: 44px;
+            height: 44px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 3px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .qr-mini-widget:hover { transform: scale(1.08); box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+        .qr-mini-widget img { width: 100%; height: 100%; display: block; }
+        .game-header { margin-top: 26px; margin-bottom: 12px; }
+        .game-header.has-qr { padding-top: 18px; padding-left: 16px; padding-right: 16px; }
+        .game-title-display { margin: 0; font-size: 1.65rem; font-weight: 800; color: var(--text-main); word-break: break-word; }
+        .start-actions { display: flex; gap: 14px; justify-content: center; align-items: center; margin-top: 24px; flex-wrap: wrap; }
+        .btn-game { color: white; font-weight: bold; border: none; border-radius: 14px; cursor: pointer; transition: background 0.2s, transform 0.1s; }
+        .btn-game:active { transform: scale(0.97); }
+        .btn-go { background: var(--btn-go); padding: 18px 46px; font-size: 1.65rem; }
+        .btn-go:hover { background: var(--btn-go-hover); }
+        .btn-shuffle { background: var(--btn-shuffle); padding: 18px 28px; font-size: 1.25rem; }
+        .btn-shuffle:hover { background: var(--btn-shuffle-hover); }
+        .timer-display { font-size: 2rem; font-weight: 800; color: var(--btn-next); margin-top: 24px; margin-bottom: 8px; }
+        .card-stage { display: flex; align-items: center; justify-content: center; gap: 20px; margin: 22px 0 26px; min-height: 96px; padding: 0 8px; }
+        .huge-index { font-size: 3.8rem; font-weight: 900; color: #cbd5e1; line-height: 1; user-select: none; border-right: 3px solid #e2e8f0; padding-right: 18px; }
+        .prompt-text { font-size: 1.7rem; font-weight: 700; color: var(--text-main); text-align: left; flex: 1; word-break: break-word; }
+        .play-actions { display: flex; gap: 12px; width: 100%; }
+        .btn-next { background: var(--btn-next); flex: 2; padding: 14px; font-size: 1.35rem; }
+        .btn-next:hover { background: var(--btn-next-hover); }
+        .btn-stop { background: var(--btn-stop); flex: 1; padding: 14px; font-size: 1.35rem; }
+        .btn-stop:hover { background: var(--btn-stop-hover); }
+        .final-score { font-size: 3rem; font-weight: 900; color: var(--btn-next); margin: 28px 0 16px; }
+        .end-controls { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        .btn-check { background: var(--btn-go); padding: 11px 24px; font-size: 0.98rem; letter-spacing: 0.5px; text-transform: uppercase; }
+        .btn-check:hover { background: var(--btn-go-hover); }
+        .btn-toggle-q { background: #64748b; padding: 11px 18px; font-size: 0.92rem; }
+        .btn-toggle-q:hover { background: #475569; }
+        .btn-restart { background: var(--btn-next); padding: 11px 24px; font-size: 0.95rem; margin-top: 14px; }
+        .btn-restart:hover { background: var(--btn-next-hover); }
+        .review-table-wrap { max-height: 260px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 12px; margin-top: 14px; display: flex; justify-content: center; }
+        table { width: auto; min-width: 240px; border-collapse: collapse; text-align: left; margin: 0 auto; }
+        td { padding: 10px 14px; border-bottom: 1px solid #f1f5f9; font-size: 1rem; }
+        .td-num { color: #94a3b8; font-weight: 700; width: 40px; text-align: right; padding-right: 12px; }
+        .td-word { color: #0f172a; font-weight: 700; padding-left: 10px; }
+        .td-def { color: #475569; padding-left: 22px; }
+        .notepad-footer { width: 100%; display: flex; justify-content: flex-end; margin-top: 22px; padding-right: 6px; }
+        .notepad-trigger { font-size: 1.15rem; opacity: 0.35; cursor: pointer; user-select: none; transition: opacity 0.2s, transform 0.2s; }
+        .notepad-trigger:hover { opacity: 0.85; transform: scale(1.1); }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.55); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 16px; }
+        .modal-card { background: white; padding: 24px; border-radius: 20px; max-width: 420px; width: 100%; text-align: center; position: relative; box-shadow: 0 15px 35px rgba(0,0,0,0.25); }
+        .modal-close { position: absolute; top: 12px; right: 16px; font-size: 1.4rem; font-weight: bold; color: #64748b; cursor: pointer; line-height: 1; }
+        .qr-large-img { width: 230px; height: 230px; margin: 8px auto 14px; display: block; border: 1px solid #e2e8f0; border-radius: 12px; padding: 6px; }
+        .btn-qr-download { background: var(--btn-next); color: white; border: none; padding: 10px 20px; font-size: 1.35rem; font-weight: bold; border-radius: 10px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; line-height: 1; }
+        .btn-qr-download:hover { background: var(--btn-next-hover); }
+        .info-modal-title { margin: 0 0 12px; font-size: 1.2rem; color: var(--text-main); }
+        .info-modal-body { font-size: 0.94rem; color: #334155; line-height: 1.55; text-align: left; margin: 0; }
+        .info-modal-body p { margin: 0 0 10px; }
+        .info-modal-body p:last-child { margin-bottom: 0; }
+        .pwd-input { width: 140px; padding: 10px; font-size: 1.2rem; text-align: center; border: 2px solid #cbd5e1; border-radius: 10px; outline: none; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <div class="game-card">
+            <div class="top-left-counter" id="counter">0 / 20</div>
+            <div class="top-right-cluster">
+                <span class="game-type-badge">Vocab Race</span>
+                <button type="button" class="info-btn" onclick="openModal('infoModal')" title="Instrucciones">ℹ️</button>
+                <div class="qr-mini-widget" onclick="openModal('qr-lightbox-overlay')" title="Ampliar QR">
+                    <img id="qr-mini" alt="QR">
+                </div>
+            </div>
+
+            <div id="screen-start">
+                <div class="game-header has-qr">
+                    <h1 class="game-title-display">packingefb21</h1>
+                </div>
+                <div class="start-actions">
+                    <button type="button" class="btn-game btn-go" onclick="startGame(false)">GO</button>
+                    <button type="button" class="btn-game btn-shuffle" onclick="startGame(true)">SHUFFLE</button>
+                </div>
+            </div>
+
+            <div id="screen-play" class="hidden">
+                <div class="timer-display" id="timer">0.0s</div>
+                <div class="card-stage">
+                    <div class="huge-index" id="huge-num">1</div>
+                    <div class="prompt-text" id="prompt"></div>
+                </div>
+                <div class="play-actions">
+                    <button type="button" class="btn-game btn-next" onclick="nextItem()">NEXT</button>
+                    <button type="button" class="btn-game btn-stop" onclick="endGame()">STOP</button>
+                </div>
+            </div>
+
+            <div id="screen-end" class="hidden">
+                <div class="final-score" id="final-score">⏱️ 0.0s</div>
+                <div class="end-controls">
+                    <button type="button" class="btn-game btn-check" onclick="toggleReview()">CHECK</button>
+                    <button type="button" class="btn-game btn-toggle-q hidden" id="toggle-q-btn" onclick="toggleQuestions()">Ver preguntas</button>
+                </div>
+                <div class="review-table-wrap hidden" id="review-wrap">
+                    <table>
+                        <tbody id="review-tbody"></tbody>
+                    </table>
+                </div>
+                <div>
+                    <button type="button" class="btn-game btn-restart" onclick="resetToStart()">PLAY AGAIN</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="notepad-footer">
+            <span class="notepad-trigger" onclick="openPasswordModal()">📝</span>
+        </div>
+    </div>
+
+    <div id="qr-lightbox-overlay" class="modal-overlay" onclick="closeModal('qr-lightbox-overlay')">
+        <div class="modal-card" onclick="event.stopPropagation()">
+            <span class="modal-close" onclick="closeModal('qr-lightbox-overlay')">&times;</span>
+            <img id="qr-large" class="qr-large-img" alt="QR Code">
+            <button type="button" class="btn-qr-download" onclick="downloadQR()">📥</button>
+        </div>
+    </div>
+
+    <div id="infoModal" class="modal-overlay" onclick="closeModal('infoModal')">
+        <div class="modal-card" onclick="event.stopPropagation()">
+            <span class="modal-close" onclick="closeModal('infoModal')">&times;</span>
+            <h3 class="info-modal-title">Instrucciones</h3>
+            <div class="info-modal-body">
+                <p>Escribe una columna de números (en la esquina superior izquierda tienes cuantos) en una hoja de papel y dale al play.</p>
+                <p>Es un juego de velocidad y precisión. Verás preguntas o palabras que traducir. Si la sabes, tienes que escribir tu respuesta lo más rápido posible. Dale a "next" y verás la siguiente.</p>
+                <p>Al final verás tu record de tiempo y las soluciones. Corrige tu hoja: ganas un punto por cada respuesta perfecta y medio si hay errores de ortografía.</p>
+                <p>Modo VERSUS: juegas contra tu compañero. El primero que acabe <b>para</b> el juego y se comparan puntos por respuestas correctas. El más rápido se lleva un bonus de puntos: 25% del total. Por ejemplo, si hay 20 preguntas, son 5 puntos.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="pwdModal" class="modal-overlay" onclick="closeModal('pwdModal')">
+        <div class="modal-card" style="max-width:240px;" onclick="event.stopPropagation()">
+            <span class="modal-close" onclick="closeModal('pwdModal')">&times;</span>
+            <input type="password" id="pwdInput" class="pwd-input" maxlength="10" onkeydown="if(event.key==='Enter') verifyPwd()">
+        </div>
+    </div>
+
+    <script>
+        const ORIGINAL_DECK = [{"d":"albornoz","w":"bathrobe"},{"d":"pila","w":"batteries"},{"d":"cargador","w":"charger"},{"d":"peine","w":"comb"},{"d":"desodorante","w":"deodorant"},{"d":"auriculares de botón (_p_)","w":"earphones"},{"d":"chanclas","w":"flip-flops"},{"d":"doblar (ropa)","w":"fold"},{"d":"secador","w":"hairdryer"},{"d":"cascos","w":"headphones"},{"d":"hacer las maletas","w":"pack your suitcase"},{"d":"impermeable","w":"raincoat"},{"d":"crema solar","w":"sunscreen"},{"d":"bermudas de baño","w":"swimming trunks"},{"d":"bañador (de cuerpo entero)","w":"swimsuit"},{"d":"cepillo de dientes","w":"toothbrush"},{"d":"toalla","w":"towel"},{"d":"ropa interior","w":"underwear"},{"d":"deshacer (las maletas)","w":"unpack"},{"d":"neceser","w":"wash bag"}];
+        const RAW_SOURCE_TEXT = "albornoz\tbathrobe \npila\tbatteries \ncargador\tcharger \npeine \tcomb \ndesodorante\tdeodorant\nauriculares de botón (_p_)\tearphones \nchanclas \tflip-flops \ndoblar (ropa)\tfold\nsecador \thairdryer \ncascos\theadphones \nhacer las maletas\tpack your suitcase\nimpermeable \traincoat \ncrema solar \tsunscreen \nbermudas de baño \tswimming trunks \nbañador (de cuerpo entero)\tswimsuit \ncepillo de dientes\ttoothbrush \ntoalla \ttowel \nropa interior\tunderwear \ndeshacer (las maletas)\tunpack \nneceser\twash bag";
+        const GAME_TITLE = "packingefb21";
+        const SAFE_TITLE = "packingefb21";
+
+        let activeDeck = [...ORIGINAL_DECK];
+        let idx = 0;
+        let startTime = 0;
+        let timerTicker = null;
+        let showQuestions = false;
+
+        function initQR() {
+            const url = window.location.href;
+            const qrApi = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(url);
+            document.getElementById('qr-mini').src = qrApi;
+            document.getElementById('qr-large').src = qrApi;
+        }
+        window.onload = initQR;
+
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        async function downloadQR() {
+            const qrUrl = document.getElementById('qr-large').src;
+            try {
+                const resp = await fetch(qrUrl);
+                const blob = await resp.blob();
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = 'qr-' + SAFE_TITLE + '.png';
+                link.click();
+            } catch (e) {
+                window.open(qrUrl, '_blank');
+            }
+        }
+
+        function resetToStart() {
+            clearInterval(timerTicker);
+            activeDeck = [...ORIGINAL_DECK];
+            idx = 0;
+            showQuestions = false;
+            document.getElementById('counter').innerText = '0 / ' + activeDeck.length;
+            document.getElementById('screen-start').classList.remove('hidden');
+            document.getElementById('screen-play').classList.add('hidden');
+            document.getElementById('screen-end').classList.add('hidden');
+            document.getElementById('review-wrap').classList.add('hidden');
+            document.getElementById('toggle-q-btn').classList.add('hidden');
+            document.getElementById('toggle-q-btn').innerText = 'Ver preguntas';
+        }
+
+        function startGame(shuffle) {
+            activeDeck = [...ORIGINAL_DECK];
+            if (shuffle) {
+                for (let i = activeDeck.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [activeDeck[i], activeDeck[j]] = [activeDeck[j], activeDeck[i]];
+                }
+            }
+            idx = 0;
+            document.getElementById('screen-start').classList.add('hidden');
+            document.getElementById('screen-end').classList.add('hidden');
+            document.getElementById('screen-play').classList.remove('hidden');
+
+            startTime = Date.now();
+            document.getElementById('timer').innerText = '0.0s';
+            timerTicker = setInterval(() => {
+                document.getElementById('timer').innerText = ((Date.now() - startTime) / 1000).toFixed(1) + 's';
+            }, 100);
+            renderItem();
+        }
+
+        function renderItem() {
+            if (idx >= activeDeck.length) { endGame(); return; }
+            document.getElementById('counter').innerText = (idx + 1) + ' / ' + activeDeck.length;
+            document.getElementById('huge-num').innerText = idx + 1;
+            document.getElementById('prompt').innerText = activeDeck[idx].d;
+        }
+
+        function nextItem() {
+            idx++;
+            renderItem();
+        }
+
+        function endGame() {
+            clearInterval(timerTicker);
+            showQuestions = false;
+            document.getElementById('screen-play').classList.add('hidden');
+            document.getElementById('screen-end').classList.remove('hidden');
+            document.getElementById('final-score').innerText = '⏱️ ' + document.getElementById('timer').innerText;
+            document.getElementById('toggle-q-btn').innerText = 'Ver preguntas';
+
+            let rows = '';
+            activeDeck.forEach((item, i) => {
+                rows += '<tr>' +
+                    '<td class="td-num">' + (i + 1) + '</td>' +
+                    '<td class="td-word">' + esc(item.w) + '</td>' +
+                    '<td class="td-def q-col hidden">' + esc(item.d) + '</td>' +
+                '</tr>';
+            });
+            document.getElementById('review-tbody').innerHTML = rows;
+        }
+
+        function toggleReview() {
+            const wrap = document.getElementById('review-wrap');
+            const qBtn = document.getElementById('toggle-q-btn');
+            wrap.classList.toggle('hidden');
+            qBtn.classList.toggle('hidden', wrap.classList.contains('hidden'));
+        }
+
+        function toggleQuestions() {
+            showQuestions = !showQuestions;
+            document.querySelectorAll('.q-col').forEach(el => {
+                el.classList.toggle('hidden', !showQuestions);
+            });
+            document.getElementById('toggle-q-btn').innerText = showQuestions ? 'Ocultar preguntas' : 'Ver preguntas';
+        }
+
+        function openPasswordModal() {
+            const inp = document.getElementById('pwdInput');
+            inp.value = '';
+            openModal('pwdModal');
+            setTimeout(() => inp.focus(), 50);
+        }
+
+        function verifyPwd() {
+            const inp = document.getElementById('pwdInput');
+            if (inp.value.trim() === '468') {
+                closeModal('pwdModal');
+                const safeFile = GAME_TITLE.replace(/[\\/:*?"<>|]/g, '_') + '.txt';
+                const blob = new Blob([RAW_SOURCE_TEXT], { type: 'text/plain;charset=utf-8' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = safeFile;
+                link.click();
+            } else {
+                inp.value = '';
+                inp.focus();
+            }
+        }
+
+        function esc(s) {
+            return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+    </script>
+</body>
+</html>
