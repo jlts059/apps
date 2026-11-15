@@ -1,0 +1,12 @@
+my anagram
+		find your match
+gap
+match
+quiz
+quizGR
+quizVS-mcq
+quizVS-oneanswer
+reorder
+spinwheel
+unjumble
+vocrace
