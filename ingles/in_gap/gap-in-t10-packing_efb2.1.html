@@ -24,15 +24,6 @@
             font-weight: 600;
         }
 
-        .top-right-controls {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            z-index: 20;
-        }
         .qr-widget-box {
             background: #ffffff;
             border: 1px solid #e2e8f0;
@@ -68,20 +59,25 @@
         }
         .info-btn:hover { background: #f8fafc; border-color: #94a3b8; transform: scale(1.06); }
 
-        .has-qr {
-            padding-top: 38px;
-            padding-right: 95px;
-        }
-
         .tabular-nums { font-variant-numeric: tabular-nums; }
 
         .frozen-bank {
             position: sticky;
-            top: 10px;
+            top: 8px;
             z-index: 15;
-            min-height: 76px;
+            min-height: 64px;
             background-color: #eff6ff;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        @media (orientation: landscape) and (max-height: 540px) {
+            .frozen-bank {
+                max-height: 34vh;
+                overflow-y: auto;
+                min-height: 48px;
+                padding: 0.6rem;
+                margin-bottom: 0.9rem;
+            }
         }
 
         .btn-go { background-color: #16a34a; color: white; font-weight: bold; }
@@ -108,22 +104,30 @@
         .qr-lightbox-overlay.hidden { display: none; }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen p-4 font-sans flex items-center justify-center">
+<body class="bg-gray-100 min-h-screen p-2 sm:p-4 font-sans flex items-center justify-center">
 
-    <div id="game-container" class="max-w-2xl w-full mx-auto bg-white rounded-xl shadow-lg p-6 relative">
+    <div id="game-container" class="w-full max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-3 sm:p-6">
         
-        <!-- Top-Right Persistent Controls -->
-        <div class="top-right-controls">
-            <span class="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 text-slate-500 border border-slate-200 select-none">GAP-FILL</span>
-            <button type="button" onclick="openInfoModal()" class="info-btn" title="Instrucciones">ℹ️</button>
-            <div id="qrcode" onclick="openQRModal()" class="qr-widget-box" title="Click para ampliar QR"></div>
+        <!-- Top Bar: HUD Left + Controls Right (single top line, full width below) -->
+        <div class="flex items-center justify-between gap-2 mb-3">
+            <div id="hud-box" class="invisible inline-flex items-center gap-2 sm:gap-3 bg-slate-100 border border-slate-200 px-2.5 sm:px-3 py-1 rounded-lg text-xs font-bold text-slate-700 tabular-nums">
+                <span id="hud-counter">0 / 0</span>
+                <span class="text-slate-300">|</span>
+                <span id="hud-timer">00:00</span>
+            </div>
+
+            <div class="flex items-center gap-2 ml-auto">
+                <span class="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 text-slate-500 border border-slate-200 select-none">GAP-FILL</span>
+                <button type="button" onclick="openInfoModal()" class="info-btn" title="Instrucciones">ℹ️</button>
+                <div id="qrcode" onclick="openQRModal()" class="qr-widget-box" title="Click para ampliar QR"></div>
+            </div>
         </div>
 
         <!-- START SCREEN -->
-        <div id="start-screen" class="has-qr text-center py-8">
-            <h1 class="text-2xl md:text-3xl font-extrabold text-gray-800 mb-2">packing <span class="title-paren">(efb2.1)</span></h1>
-            <p id="start-subtitle" class="text-base font-bold text-slate-500 mb-8 tabular-nums"></p>
-            <div class="flex flex-wrap justify-center gap-4">
+        <div id="start-screen" class="w-full text-center py-6 sm:py-8">
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-800 mb-2 break-words">packing <span class="title-paren">(efb2.1)</span></h1>
+            <p id="start-subtitle" class="text-base font-bold text-slate-500 mb-6 sm:mb-8 tabular-nums"></p>
+            <div class="flex flex-wrap justify-center gap-3 sm:gap-4">
                 <button id="btn-start-go" class="btn-go px-8 py-3 rounded-full text-base shadow-md transition transform hover:scale-105">
                     GO
                 </button>
@@ -134,28 +138,18 @@
         </div>
 
         <!-- ACTIVE GAMEPLAY SCREEN -->
-        <div id="play-screen" class="hidden">
-            <div class="flex items-center gap-3 mb-3">
-                <div class="inline-flex items-center gap-3 bg-slate-100 border border-slate-200 px-3 py-1 rounded-lg text-xs font-bold text-slate-700 tabular-nums">
-                    <span id="hud-counter">0 / 0</span>
-                    <span class="text-slate-300">|</span>
-                    <span id="hud-timer">00:00</span>
-                </div>
-            </div>
+        <div id="play-screen" class="w-full hidden">
+            <div id="items-container" class="frozen-bank w-full flex flex-wrap gap-2 p-3 sm:p-4 rounded-lg border-2 border-dashed border-blue-200 mb-5"></div>
+            <div id="sentences-list" class="w-full space-y-3.5 sm:space-y-4 mb-6"></div>
+            <div id="result-container" class="hidden w-full mb-6 p-4 rounded-xl text-center font-bold text-xl border shadow-sm tabular-nums"></div>
 
-            <div class="has-qr !pt-4">
-                <div id="items-container" class="frozen-bank flex flex-wrap gap-2 p-4 rounded-lg border-2 border-dashed border-blue-200 mb-6"></div>
-                <div id="sentences-list" class="space-y-4 mb-6"></div>
-                <div id="result-container" class="hidden mb-6 p-4 rounded-xl text-center font-bold text-xl border shadow-sm tabular-nums"></div>
-
-                <div class="flex flex-wrap gap-3 justify-center items-center">
-                    <button id="btn-stop-score" class="btn-stop px-6 py-2.5 rounded-full text-sm transition shadow-md">
-                        STOP &amp; SCORE
-                    </button>
-                    <button id="btn-reset" class="btn-next px-6 py-2.5 rounded-full text-sm transition shadow-md">
-                        NEXT / REINICIAR
-                    </button>
-                </div>
+            <div class="flex flex-wrap gap-3 justify-center items-center">
+                <button id="btn-stop-score" class="btn-stop px-6 py-2.5 rounded-full text-sm transition shadow-md">
+                    STOP &amp; SCORE
+                </button>
+                <button id="btn-reset" class="btn-next px-6 py-2.5 rounded-full text-sm transition shadow-md">
+                    NEXT / REINICIAR
+                </button>
             </div>
         </div>
     </div>
@@ -181,7 +175,7 @@
     </div>
 
     <script>
-        const vocabulary = [{"id":1,"text":"batteries","solution":"batteries","sentence":"Have you got any [gap]? I need some for this remote control."},{"id":2,"text":"phone charger","solution":"phone charger","sentence":"Have you seen my [gap]? My battery is nearly flat."},{"id":3,"text":"comb","solution":"comb","sentence":"My hair is very fine so I only need a [gap]."},{"id":4,"text":"deodorant","solution":"deodorant","sentence":"I put on some [gap] after I have a shower in the morning."},{"id":5,"text":"earphones","solution":"earphones","sentence":"Can you take out your [gap] for a minute? I want to talk to you."},{"id":6,"text":"fold","solution":"fold","sentence":"I've just washed these clothes. Can you [gap] them?"},{"id":7,"text":"pack","solution":"pack","sentence":"Our flight is tomorrow so we should [gap] our suitcases tonight."},{"id":8,"text":"raincoat","solution":"raincoat","sentence":"You’ll need your [gap] if you’re going to Wales on holiday."},{"id":9,"text":"sunscreen","solution":"sunscreen","sentence":"It’s 30 degrees today. Don’t forget to put [gap] on the kids."},{"id":10,"text":"swimming trunks","solution":"swimming trunks","sentence":"I really don’t like [gap]. I much prefer shorts."},{"id":11,"text":"swimsuit","solution":"swimsuit","sentence":"I’m going to the pool. Have you seen my [gap]?"},{"id":12,"text":"toothbrush","solution":"toothbrush","sentence":"The dentist said I need a new [gap]."},{"id":13,"text":"towel","solution":"towel","sentence":"I’m going to put this [gap] on the balcony to dry."},{"id":14,"text":"unpack","solution":"unpack","sentence":"Do you [gap] your suitcase as soon as you get back?"},{"id":15,"text":"wash bag","solution":"wash bag","sentence":"I’ve got a toothbrush and razor in my [gap]. I don’t need anything else."}];
+        const vocabulary = [{"id":1,"text":"batteries","solution":"batteries","sentence":"Have you got any [gap]? I need some for this remote control."},{"id":2,"text":"phone charger","solution":"phone charger","sentence":"Have you seen my [gap]? My battery is nearly flat."},{"id":3,"text":"comb","solution":"comb","sentence":"My hair is very fine so I only need a [gap]."},{"id":4,"text":"deodorant","solution":"deodorant","sentence":"I put on some [gap] after I have a shower in the morning."},{"id":5,"text":"earphones","solution":"earphones","sentence":"Can you take out your [gap] for a minute? I want to talk to you."},{"id":6,"text":"fold","solution":"fold","sentence":"I've just washed these clothes. Can you [gap] them?"},{"id":7,"text":"pack","solution":"pack","sentence":"Our flight is tomorrow so we should [gap] our suitcases tonight."},{"id":8,"text":"raincoat","solution":"raincoat","sentence":"You’ll need your [gap] if you’re going to Wales on holiday."},{"id":9,"text":"sunscreen","solution":"sunscreen","sentence":"It’s 30 degrees today. Don’t forget to put [gap] on the kids."},{"id":10,"text":"swimsuit","solution":"swimsuit","sentence":"I’m going to the pool. Have you seen my [gap]?"},{"id":11,"text":"toothbrush","solution":"toothbrush","sentence":"The dentist said I need a new [gap]."},{"id":12,"text":"towel","solution":"towel","sentence":"I’m going to put this [gap] on the balcony to dry."},{"id":13,"text":"unpack","solution":"unpack","sentence":"Do you [gap] your suitcase as soon as you get back?"},{"id":14,"text":"wash bag","solution":"wash bag","sentence":"I’ve got a toothbrush and razor in my [gap]. I don’t need anything else."}];
         const SAFE_TITLE = "packing_efb2.1";
         let state = {
             selectedItem: null,
@@ -197,6 +191,7 @@
         const itemsContainer = document.getElementById('items-container');
         const sentencesList = document.getElementById('sentences-list');
         const resultContainer = document.getElementById('result-container');
+        const hudBox = document.getElementById('hud-box');
         const hudCounter = document.getElementById('hud-counter');
         const hudTimer = document.getElementById('hud-timer');
 
@@ -262,6 +257,7 @@
 
         function showStartScreen() {
             stopTimer();
+            hudBox.classList.add('invisible');
             document.getElementById('start-subtitle').textContent = '0 / ' + vocabulary.length;
             document.getElementById('start-screen').classList.remove('hidden');
             document.getElementById('play-screen').classList.add('hidden');
@@ -273,6 +269,8 @@
             state.selectedItem = null;
             state.selectedSlot = null;
             resultContainer.classList.add('hidden');
+            itemsContainer.classList.remove('hidden');
+            hudBox.classList.remove('invisible');
             state.currentOrder = shuffle ? shuffleArray(vocabulary) : [...vocabulary];
             state.bankOrder = shuffleArray(vocabulary);
             document.getElementById('start-screen').classList.add('hidden');
@@ -303,7 +301,7 @@
             sentencesList.innerHTML = '';
             state.currentOrder.forEach((data, index) => {
                 const div = document.createElement('div');
-                div.className = "flex flex-wrap items-baseline text-gray-800 leading-relaxed text-sm md:text-base";
+                div.className = "flex flex-wrap items-baseline text-gray-800 leading-relaxed text-sm sm:text-base";
                 const parts = data.sentence.split('[gap]');
                 const startText = document.createElement('span');
                 startText.textContent = (index + 1) + '. ' + parts[0];
@@ -402,8 +400,9 @@
             });
             state.isCorrected = true;
 
+            itemsContainer.classList.add('hidden');
             resultContainer.textContent = correctCount + ' / ' + vocabulary.length + ' 🏆(' + formatTime(state.secondsElapsed) + ')';
-            resultContainer.className = 'mb-6 p-4 rounded-xl text-center font-bold text-xl border shadow-sm tabular-nums ' + (correctCount === vocabulary.length ? 'bg-green-50 border-green-200 text-green-800' : 'bg-amber-50 border-amber-200 text-amber-900');
+            resultContainer.className = 'w-full mb-6 p-4 rounded-xl text-center font-bold text-xl border shadow-sm tabular-nums ' + (correctCount === vocabulary.length ? 'bg-green-50 border-green-200 text-green-800' : 'bg-amber-50 border-amber-200 text-amber-900');
             resultContainer.classList.remove('hidden');
             render();
         };
