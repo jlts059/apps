@@ -57,7 +57,7 @@
     <script>
         const GAME_CONFIG = {
             title: "packing (efb2.1)",
-            compositeName: "unjumble-in-t10-packing_efb21",
+            compositeName: "voc-race-in-t10-packing_efb21",
             items: [{"clue":"","sentence":"Is this your bathrobe? You left it on the bathroom floor.","words":["Is","this","your","bathrobe?","You","left","it","on","the","bathroom","floor."]},{"clue":"","sentence":"Have you got any batteries? I need some for this remote control.","words":["Have","you","got","any","batteries?","I","need","some","for","this","remote","control."]},{"clue":"","sentence":"Have you seen my phone charger? My battery is nearly flat.","words":["Have","you","seen","my","phone","charger?","My","battery","is","nearly","flat."]},{"clue":"","sentence":"My hair is very fine so I only need a comb.","words":["My","hair","is","very","fine","so","I","only","need","a","comb."]},{"clue":"","sentence":"I put on some deodorant after I have a shower in the morning.","words":["I","put","on","some","deodorant","after","I","have","a","shower","in","the","morning."]},{"clue":"","sentence":"Can you take out your earphones for a minute? I want to talk to you.","words":["Can","you","take","out","your","earphones","for","a","minute?","I","want","to","talk","to","you."]},{"clue":"","sentence":"Flip-flops make me think of the beach and summer.","words":["Flip-flops","make","me","think","of","the","beach","and","summer."]},{"clue":"","sentence":"I've just washed these clothes. Can you fold them?","words":["I've","just","washed","these","clothes.","Can","you","fold","them?"]},{"clue":"","sentence":"There’s a hairdryer in the hotel room.","words":["There’s","a","hairdryer","in","the","hotel","room."]},{"clue":"","sentence":"I prefer to listen to music through my headphones.","words":["I","prefer","to","listen","to","music","through","my","headphones."]},{"clue":"","sentence":"Our flight is tomorrow so we should pack our suitcases tonight.","words":["Our","flight","is","tomorrow","so","we","should","pack","our","suitcases","tonight."]},{"clue":"","sentence":"You’ll need your raincoat if you’re going to Wales on holiday.","words":["You’ll","need","your","raincoat","if","you’re","going","to","Wales","on","holiday."]},{"clue":"","sentence":"It’s 30 degrees today. Don’t forget to put sunscreen on the kids.","words":["It’s","30","degrees","today.","Don’t","forget","to","put","sunscreen","on","the","kids."]},{"clue":"","sentence":"I really don’t like swimming trunks. I much prefer shorts.","words":["I","really","don’t","like","swimming","trunks.","I","much","prefer","shorts."]},{"clue":"","sentence":"I’m going to the pool. Have you seen my swimsuit?","words":["I’m","going","to","the","pool.","Have","you","seen","my","swimsuit?"]},{"clue":"","sentence":"The dentist said I need a new toothbrush.","words":["The","dentist","said","I","need","a","new","toothbrush."]},{"clue":"","sentence":"I’m going to put this towel on the balcony to dry.","words":["I’m","going","to","put","this","towel","on","the","balcony","to","dry."]},{"clue":"","sentence":"Don't forget to pack some underwear.","words":["Don't","forget","to","pack","some","underwear."]},{"clue":"","sentence":"Do you unpack your suitcase as soon as you get back?","words":["Do","you","unpack","your","suitcase","as","soon","as","you","get","back?"]},{"clue":"","sentence":"I’ve got a toothbrush and razor in my wash bag. I don’t need anything else.","words":["I’ve","got","a","toothbrush","and","razor","in","my","wash","bag.","I","don’t","need","anything","else."]}],
             rawInput: "Is this your bathrobe? You left it on the bathroom floor. \nHave you got any batteries? I need some for this remote control. \nHave you seen my phone charger? My battery is nearly flat.\nMy hair is very fine so I only need a comb.\nI put on some deodorant after I have a shower in the morning. \nCan you take out your earphones for a minute? I want to talk to you. \nFlip-flops make me think of the beach and summer.\nI've just washed these clothes. Can you fold them? \nThere’s a hairdryer in the hotel room.\nI prefer to listen to music through my headphones. \nOur flight is tomorrow so we should pack our suitcases tonight. \nYou’ll need your raincoat if you’re going to Wales on holiday.\nIt’s 30 degrees today. Don’t forget to put sunscreen on the kids.\nI really don’t like swimming trunks. I much prefer shorts.\nI’m going to the pool. Have you seen my swimsuit?\nThe dentist said I need a new toothbrush.\nI’m going to put this towel on the balcony to dry.\nDon't forget to pack some underwear. \nDo you unpack your suitcase as soon as you get back? \nI’ve got a toothbrush and razor in my wash bag. I don’t need anything else."
         };
@@ -79,11 +79,17 @@
                 this.isCorrectAnswerState = false; // Track correct highlight state
                 
                 this.manualMode = false;
+                this.fiftyPercentMode = false;
                 this.attemptedCount = 0;
                 this.correctCount = 0;
                 this.resultsHistory = []; // { index, prompt, sentence, isCorrect, attempted }
 
                 this.initHomeScreen();
+            }
+
+            formatTitleHTML(rawTitle) {
+                const escaped = this.escapeHTML(rawTitle || "Unjumble Game");
+                return escaped.replace(/\(([^)]*)\)/g, '<span style="color: rgba(31, 41, 55, 0.65);">($1)</span>');
             }
 
             initHomeScreen() {
@@ -100,7 +106,7 @@
                             </div>
                         </div>
 
-                        <h2 class="text-2xl sm:text-3xl font-black text-slate-900 mb-6">${this.escapeHTML(this.config.title || "Unjumble Game")}</h2>
+                        <h2 class="text-2xl sm:text-3xl font-black text-slate-900 mb-6">${this.formatTitleHTML(this.config.title)}</h2>
                         
                         <div class="grid grid-cols-2 gap-3 mb-6">
                             <button onclick="activeGameInstance.startGame()" 
@@ -115,9 +121,15 @@
                             </button>
                         </div>
 
-                        <div class="flex items-center justify-center gap-2">
-                            <input type="checkbox" id="chk-manual-advance" class="w-5 h-5 text-blue-600 rounded border-slate-300 focus:ring-blue-500">
-                            <label for="chk-manual-advance" class="text-sm font-bold text-slate-700 select-none cursor-pointer">Avance manual</label>
+                        <div class="flex items-center justify-center gap-6">
+                            <div class="flex items-center gap-2">
+                                <input type="checkbox" id="chk-manual-advance" ${this.manualMode ? 'checked' : ''} class="w-5 h-5 text-blue-600 rounded border-slate-300 focus:ring-blue-500 cursor-pointer">
+                                <label for="chk-manual-advance" class="text-sm font-bold text-slate-700 select-none cursor-pointer">Avance manual</label>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <input type="checkbox" id="chk-fifty-percent" ${this.fiftyPercentMode ? 'checked' : ''} class="w-5 h-5 text-blue-600 rounded border-slate-300 focus:ring-blue-500 cursor-pointer">
+                                <label for="chk-fifty-percent" class="text-sm font-bold text-slate-700 select-none cursor-pointer">50%</label>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -147,8 +159,11 @@
             }
 
             startGame() {
-                const chk = document.getElementById("chk-manual-advance");
-                this.manualMode = chk ? chk.checked : false;
+                const chkManual = document.getElementById("chk-manual-advance");
+                if (chkManual) this.manualMode = chkManual.checked;
+
+                const chkFifty = document.getElementById("chk-fifty-percent");
+                if (chkFifty) this.fiftyPercentMode = chkFifty.checked;
                 
                 this.currentIndex = 0;
                 this.secondsElapsed = 0;
@@ -224,24 +239,28 @@
                         </div>
 
                         <!-- Bottom Action Buttons Toolbar -->
-                        <div class="grid grid-cols-4 gap-2 pt-1 pb-4 border-t border-slate-100">
+                        <div class="grid grid-cols-5 gap-1.5 pt-1 pb-4 border-t border-slate-100">
                             <button onclick="activeGameInstance.initHomeScreen()" 
-                                class="bg-slate-700 hover:bg-slate-800 text-white font-extrabold py-2.5 px-2 rounded-xl transition text-base flex items-center justify-center shadow-sm">
+                                class="bg-slate-700 hover:bg-slate-800 text-white font-extrabold py-2.5 px-1 rounded-xl transition text-base flex items-center justify-center shadow-sm">
                                 ↩
                             </button>
                             <button onclick="activeGameInstance.checkManualValidation()" 
                                 style="background-color: var(--color-ok);"
-                                class="text-white font-black py-2.5 px-2 rounded-xl transition text-xs sm:text-sm flex items-center justify-center shadow-sm">
+                                class="text-white font-black py-2.5 px-1 rounded-xl transition text-xs sm:text-sm flex items-center justify-center shadow-sm">
                                 OK?
                             </button>
                             <button onclick="activeGameInstance.passCurrentSentence()" 
                                 style="background-color: var(--color-pass);"
-                                class="text-white font-black py-2.5 px-2 rounded-xl transition text-xs sm:text-sm flex items-center justify-center shadow-sm">
+                                class="text-white font-black py-2.5 px-1 rounded-xl transition text-xs sm:text-sm flex items-center justify-center shadow-sm">
                                 PASS
+                            </button>
+                            <button onclick="activeGameInstance.resetCurrentBoard()" 
+                                class="bg-black hover:bg-neutral-800 text-white font-black py-2.5 px-1 rounded-xl transition text-xs sm:text-sm flex items-center justify-center shadow-sm uppercase">
+                                RESET
                             </button>
                             <button onclick="activeGameInstance.stopAndScore()" 
                                 style="background-color: var(--color-stop);"
-                                class="text-white font-black py-2.5 px-2 rounded-xl transition text-xs sm:text-xs md:text-sm flex items-center justify-center shadow-sm uppercase tracking-tight">
+                                class="text-white font-black py-2.5 px-1 rounded-xl transition text-[11px] sm:text-xs flex items-center justify-center shadow-sm uppercase tracking-tight leading-tight text-center">
                                 STOP & SCORE
                             </button>
                         </div>
@@ -279,17 +298,58 @@
                 document.getElementById("counter-display").textContent = `${this.currentIndex + 1} / ${this.items.length}`;
                 document.getElementById("clue-display").textContent = item.clue || "";
 
-                // Initialize target slots array with nulls
-                this.placedSlots = new Array(item.words.length).fill(null);
+                const totalWords = item.words.length;
+                this.placedSlots = new Array(totalWords).fill(null);
 
-                // Prepare pool words shuffled
-                const wordsShuffled = item.words.map((w, idx) => ({ id: `w_${idx}_${Date.now()}_${Math.random()}`, text: w }));
-                for (let i = wordsShuffled.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [wordsShuffled[i], wordsShuffled[j]] = [wordsShuffled[j], wordsShuffled[i]];
+                // Create word objects for every position
+                const allWordObjs = item.words.map((w, idx) => ({
+                    id: `w_${idx}_${Date.now()}_${Math.random()}`,
+                    text: w
+                }));
+
+                // Determine indices to pre-place if 50% mode is enabled
+                const prePlacedIndices = new Set();
+                if (this.fiftyPercentMode && totalWords > 1) {
+                    const numToPlace = Math.floor(totalWords / 2);
+                    const availableIndices = Array.from({ length: totalWords }, (_, i) => i);
+                    for (let i = availableIndices.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [availableIndices[i], availableIndices[j]] = [availableIndices[j], availableIndices[i]];
+                    }
+                    for (let i = 0; i < numToPlace; i++) {
+                        prePlacedIndices.add(availableIndices[i]);
+                    }
                 }
-                this.poolWords = wordsShuffled;
 
+                // Place pre-filled words in their correct slots; send the rest to the pool
+                const remainingForPool = [];
+                allWordObjs.forEach((wordObj, idx) => {
+                    if (prePlacedIndices.has(idx)) {
+                        this.placedSlots[idx] = wordObj;
+                    } else {
+                        remainingForPool.push(wordObj);
+                    }
+                });
+
+                // Shuffle remaining pool words
+                for (let i = remainingForPool.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [remainingForPool[i], remainingForPool[j]] = [remainingForPool[j], remainingForPool[i]];
+                }
+                this.poolWords = remainingForPool;
+
+                this.renderBoards();
+            }
+
+            resetCurrentBoard() {
+                if (this.isTransitioning) return;
+                this.selectedIndex = null;
+                for (let i = 0; i < this.placedSlots.length; i++) {
+                    if (this.placedSlots[i] !== null) {
+                        this.poolWords.push(this.placedSlots[i]);
+                        this.placedSlots[i] = null;
+                    }
+                }
                 this.renderBoards();
             }
 
