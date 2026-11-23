@@ -1,0 +1,859 @@
+<html lang="en"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pro Flashcard Study Tool</title>
+
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: #f0f2f5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+    overflow-x: hidden;
+  }
+
+  /* SETUP VIEW */
+  #setup-container {
+    background: white;
+    padding: 2rem;
+    border-radius: 24px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+    max-width: 600px;
+    width: 90%;
+    text-align: center;
+    margin-top: 40px;
+  }
+
+  /* HOME SCREEN FOR GENERATED FULL FILE */
+  #home-screen-view {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 550px;
+    margin-top: 10px;
+  }
+
+  .cover-image {
+    max-width: 100%;
+    max-height: 380px;
+    object-fit: contain;
+    border-radius: 16px;
+    margin: 20px auto;
+    display: block;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+  }
+
+  .input-field {
+    width: 100%;
+    padding: 12px;
+    margin: 0.5rem 0 1rem 0;
+    border: 2px solid #e0e6ed;
+    border-radius: 12px;
+    font-family: inherit;
+    box-sizing: border-box;
+    font-size: 1rem;
+  }
+
+  textarea {
+    width: 100%;
+    height: 180px;
+    margin: 0.5rem 0 1rem 0;
+    padding: 10px;
+    border: 2px solid #e0e6ed;
+    border-radius: 12px;
+    font-family: inherit;
+    box-sizing: border-box;
+  }
+
+  /* FLASHCARD VIEW */
+  #flashcard-view {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+  }
+
+  /* HEADER CONTAINER WITH PERFECT SYMMETRY */
+  .header-container {
+    width: 90%;
+    max-width: 550px;
+    margin-top: 10px;
+    margin-bottom: 15px;
+    position: relative;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .progress-left-box {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .progress { 
+    font-size: 0.9rem; 
+    color: #90a4ae; 
+    font-weight: bold;
+  }
+
+  .utility-right-box {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .deck-title-centered {
+    font-size: 1.6rem;
+    color: #2c3e50;
+    font-weight: 700;
+    text-align: center;
+    padding: 0 85px;
+    word-wrap: break-word;
+  }
+
+  /* UTILITY ICONS */
+  .qr-custom-icon {
+    width: 26px;
+    height: 26px;
+    border: 1px solid #dcdcdc;
+    background: #fff;
+    padding: 2px;
+    box-sizing: border-box;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.1s;
+    border-radius: 2px;
+  }
+  .qr-custom-icon:active { transform: scale(0.9); }
+  .qr-row { display: flex; justify-content: space-between; height: 6px; }
+  .qr-block { width: 6px; height: 6px; background: #000; }
+  .qr-dot-row { display: flex; justify-content: space-around; height: 3px; width: 100%; }
+  .qr-dot { width: 3px; height: 3px; background: #000; }
+
+  .info-custom-btn {
+    width: 28px;
+    height: 28px;
+    background: #4a90e2;
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15), inset 0 -2px 0 rgba(0,0,0,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-family: "Georgia", serif;
+    font-weight: bold;
+    font-style: italic;
+    font-size: 1.1rem;
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.1s;
+  }
+  .info-custom-btn:active { transform: scale(0.9); }
+
+  #indicators-container {
+    display: flex;
+    gap: 10px;
+    min-height: 20px;
+    margin-bottom: 5px;
+  }
+
+  #star-indicator {
+    font-size: 1rem;
+    font-weight: bold;
+    color: #f1c40f;
+    visibility: hidden;
+  }
+
+  #error-indicator {
+    font-size: 1rem;
+    font-weight: bold;
+    color: #d32f2f;
+    visibility: hidden;
+  }
+
+  #card {
+    background: white;
+    border-radius: 24px;
+    padding: 1.5rem 1.5rem;
+    max-width: 550px;
+    width: 90%;
+    min-height: 180px;
+    display: flex;
+    flex-direction: column; 
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 1.6rem;
+    line-height: 1.4;
+    cursor: pointer;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+    transition: transform 0.1s ease, background 0.3s ease;
+    border-bottom: 8px solid #2c3e50;
+    margin-bottom: 25px;
+    color: #2c3e50;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    position: relative;
+    box-sizing: border-box;
+  }
+
+  #card:active { transform: scale(0.98); }
+
+  .controls-container {
+    display: flex;
+    flex-direction: column;
+    gap: 14px; 
+    width: 100%;
+    max-width: 550px;
+    align-items: center;
+  }
+
+  .controls-row { 
+    display: flex; 
+    gap: 10px; 
+    justify-content: center; 
+    width: 100%;
+  }
+
+  button {
+    padding: 8px 16px;
+    font-size: 1.2rem;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+  }
+
+  button:active { transform: translateY(2px); box-shadow: none; }
+  button:disabled { background: #ccc !important; color: #666 !important; border-color: #ccc !important; cursor: not-allowed; box-shadow: none !important; transform: none !important; }
+
+  /* Shortcut label style */
+  .btn-shortcut {
+    color: #666;
+    font-size: 0.8em;
+    margin-left: 6px;
+    font-weight: normal;
+  }
+
+  .row-half-btn {
+    flex: 1;
+    width: 50%;
+    max-width: 270px;
+  }
+
+  .btn-next { 
+    background: #f5f0ff; 
+    color: #7e57c2; 
+    border: 2px solid #7e57c2; 
+    box-shadow: 0 4px 0 #5e35b1; 
+  } 
+  
+  .btn-know { 
+    background: #f0f7f0; 
+    color: #1b5e20; 
+    border: 2px solid #1b5e20;
+    box-shadow: 0 4px 0 #0d3c12; 
+  } 
+
+  .btn-discard { 
+    background: #f0fff4; 
+    color: #00c853; 
+    border: 2px solid #00c853;
+    box-shadow: 0 4px 0 #009624; 
+  } 
+
+  .btn-star { 
+    background: #ffffff; 
+    border: 2px solid #ffd600; 
+    box-shadow: 0 4px 0 #ffd600; 
+  }
+
+  .btn-error { 
+    background: #ffffff; 
+    color: #d32f2f;
+    border: 2px solid #d32f2f;
+    box-shadow: 0 4px 0 #b71c1c; 
+  } 
+
+  .btn-utility { 
+    background: #ffffff; 
+    color: #2c3e50; 
+    box-shadow: 0 3px 0 #cfd8dc; 
+    border: 1px solid #cfd8dc; 
+    font-size: 1rem; 
+    padding: 6px 10px; 
+    flex: 1;
+  }
+  
+  .row-half-btn.btn-utility {
+    max-width: 270px;
+    font-size: 1.2rem;
+    padding: 8px 16px;
+  }
+
+  .btn-orange-border {
+    background: #ffffff;
+    color: #ff9800;
+    border: 2px solid #ff9800;
+    box-shadow: 0 4px 0 #e65100;
+  }
+
+  .btn-save { 
+    background: #ffffff; 
+    color: #00b0ff; 
+    border: 2px solid #00b0ff; 
+    box-shadow: 0 3px 0 #0091ea; 
+    font-size: 0.95rem; 
+    padding: 6px 14px; 
+    flex: 1;
+    max-width: 175px;
+  }
+
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 100;
+    left: 0; top: 0; width: 100%; height: 100%;
+    background-color: rgba(0,0,0,0.5);
+  }
+  .modal-content {
+    background-color: white;
+    margin: 5% auto;
+    padding: 25px;
+    border-radius: 15px;
+    width: 80%;
+    max-width: 700px;
+    max-height: 80vh;
+    overflow-y: auto;
+    position: relative;
+  }
+  
+  .modal-centered-content {
+    margin: 5% auto;
+    max-width: 500px;
+    text-align: left;
+  }
+
+  .help-list {
+    list-style: none;
+    padding: 0;
+    margin: 15px 0 5px 0;
+    font-size: 0.95rem;
+    color: #2c3e50;
+    line-height: 1.6;
+  }
+
+  .help-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .help-icon {
+    min-width: 60px;
+    font-weight: bold;
+    display: inline-block;
+  }
+
+  .close-x {
+    position: absolute;
+    top: 12px;
+    right: 15px;
+    font-size: 1.2rem;
+    color: #90a4ae;
+    cursor: pointer;
+    user-select: none;
+    font-weight: 300;
+    transition: color 0.2s;
+  }
+  .close-x:hover { color: #546e7a; }
+
+  #classroom-qr-container img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+  }
+
+  table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+  th, td { border: 1px solid #ddd; padding: 12px; text-align: left; font-size: 0.9rem; }
+  th { background-color: #f8f9fa; }
+</style>
+<style>
+  .imageye-selected {
+    outline: 2px solid black !important;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5) !important;
+  }
+</style></head>
+<body>
+
+  <!-- DECK SETUP CREATOR VIEW -->
+  <div id="setup-container" style="display: none;">
+    <h2 style="color: #2c3e50; margin-top: 0; margin-bottom: 1.5rem;">Create Your Deck</h2>
+    
+    <label style="display:block; text-align:left; font-weight:bold; color:#2c3e50; font-size:0.9rem;">Deck Title:</label>
+    <input type="text" id="deck-title-input" class="input-field" placeholder="Enter deck title...">
+
+    <label style="display:block; text-align:left; font-weight:bold; color:#2c3e50; font-size:0.9rem;">Cover Image URL (Optional):</label>
+    <input type="text" id="deck-image-input" class="input-field" placeholder="Enter image link (http://...)...">
+    
+    <label style="display:block; text-align:left; font-weight:bold; color:#2c3e50; font-size:0.9rem;">Flashcard Content:</label>
+    <textarea id="csv-input" placeholder="Term [TAB] Definition 
+or: Term , Definition"></textarea>
+    
+    <button style="background: #27ae60; color: white; width: 100%; font-size: 1.1rem; padding: 10px;" onclick="loadCustomDeck()">Generate Flashcards ➔</button>
+  </div>
+
+  <!-- HOME SCREEN VIEW FOR EXPORTED FILE -->
+  <div id="home-screen-view" style="display: none;">
+    <div class="header-container" style="width: 100%;">
+      <div class="progress-left-box">
+        <div class="progress" id="home-progress">0 Cards</div>
+      </div>
+      <div class="deck-title-centered" id="home-deck-title-display">Deck Title</div>
+      <div class="utility-right-box">
+        <div class="qr-custom-icon" onclick="openQRModal()" title="View QR Link">
+          <div class="qr-row"><div class="qr-block"></div><div class="qr-block"></div></div>
+          <div class="qr-dot-row"><div class="qr-dot"></div><div class="qr-dot"></div><div class="qr-dot"></div></div>
+          <div class="qr-row"><div class="qr-block"></div><div class="qr-block"></div></div>
+        </div>
+        <div class="info-custom-btn" onclick="openInfoModal()" title="Instructions">i</div>
+      </div>
+    </div>
+    
+    <div id="home-image-container" style="width: 100%;"></div>
+    
+    <button style="background: #2ecc71; color: white; width: 100%; font-size: 1.4rem; padding: 14px; border-radius: 12px; margin-top: 15px; box-shadow: 0 4px 0 #27ae60;" onclick="startFromHome()">GO</button>
+  </div>
+
+  <!-- MAIN FLASHCARD VIEW -->
+  <div id="flashcard-view" style="display: flex;">
+    <div class="header-container">
+      <div class="progress-left-box">
+        <div class="progress" id="progress">Card 1 of 203</div>
+      </div>
+      <div class="deck-title-centered" id="deck-title-display">Bildung-INT-SUP</div>
+      <div class="utility-right-box">
+        <div class="qr-custom-icon" id="open-qr-btn" onclick="openQRModal()" title="View QR Link">
+          <div class="qr-row"><div class="qr-block"></div><div class="qr-block"></div></div>
+          <div class="qr-dot-row"><div class="qr-dot"></div><div class="qr-dot"></div><div class="qr-dot"></div></div>
+          <div class="qr-row"><div class="qr-block"></div><div class="qr-block"></div></div>
+        </div>
+        <div class="info-custom-btn" onclick="openInfoModal()" title="Instructions">i</div>
+      </div>
+    </div>
+    
+    <div id="indicators-container">
+      <span id="star-indicator" style="visibility: hidden;">⭐ Starred</span>
+      <span id="error-indicator" style="visibility: hidden;">⚠️ Error</span>
+    </div>
+    
+    <div id="card" onclick="flipCard()" style="background: white; color: rgb(44, 62, 80);"><div>a largo plazo (a_ D_)</div></div>
+    
+    <div class="controls-container">
+      <div class="controls-row">
+        <button class="btn-error row-half-btn" id="errorBtn" onclick="toggleError()" title="Report Error (E)">⚠️<span class="btn-shortcut">[E]</span></button>
+        <button class="btn-next row-half-btn" id="nextBtn" onclick="nextCard()" title="Next (V)">❌➡️<span class="btn-shortcut">[V]</span></button>
+      </div>
+      
+      <div class="controls-row">
+        <button class="btn-utility row-half-btn" id="leftListBtn" onclick="showList('left')">👁 ❌</button>
+        <button class="btn-know row-half-btn" id="knowBtn" onclick="knowCard()" title="Discard (Z)">✅🗑️<span class="btn-shortcut">[Z]</span></button>
+      </div>
+
+      <div class="controls-row">
+        <button class="btn-star row-half-btn" id="starBtn" onclick="toggleStar()" title="Star (C)">⭐<span class="btn-shortcut">[C]</span></button>
+        <button class="btn-discard row-half-btn" id="discardBtn" onclick="discardCardWithPeek()" title="Peek &amp; Discard (X)">✅👀🗑️<span class="btn-shortcut">[X]</span></button>
+      </div>
+      
+      <div class="controls-row">
+        <button class="btn-utility" id="listBtn" onclick="showList('all')">👁</button>
+        <button class="btn-utility" id="starListBtn" onclick="showList('star')">👁 ⭐</button>
+        <button class="btn-utility" id="errorListBtn" onclick="showList('error')">👁 ⚠️</button>
+      </div>
+
+      <div class="controls-row">
+        <button class="btn-orange-border row-half-btn" id="shuffleBtn" onclick="shuffleDeck()" title="Shuffle">🔀</button>
+        <button class="btn-orange-border row-half-btn" id="restartBtn" onclick="resetDeckSequential()" title="Restart">🔄</button>
+      </div>
+
+      <div class="controls-row">
+        <button class="btn-save" id="saveFullBtn" onclick="downloadDeck('full')">💾 Full</button>
+        <button class="btn-save" id="saveLeftBtn" onclick="downloadDeck('left')">💾 ❌</button>
+        <button class="btn-save" id="saveStarBtn" onclick="downloadDeck('star')">💾 ⭐</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODALS -->
+  <div id="list-modal" class="modal" onclick="closeList(event)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <div style="display:flex; justify-content: space-between; align-items: center;">
+        <h3 id="modal-title" style="margin:0">List</h3>
+        <div style="display: flex; gap: 10px; margin-right: 25px;">
+          <button id="download-txt-btn" class="btn-save" onclick="downloadErrorTxt()" style="display:none; flex:none; width:auto; padding: 0.4rem 1rem;">⬇️ Download TXT</button>
+        </div>
+      </div>
+      <span class="close-x" onclick="closeList(event)">✕</span>
+      <table id="vocab-table">
+        <thead><tr><th>Column 1</th><th>Column 2</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="info-modal" class="modal" onclick="closeInfoModal()">
+    <div class="modal-content modal-centered-content" onclick="event.stopPropagation()">
+      <span class="close-x" onclick="closeInfoModal()">✕</span>
+      <h3 style="margin-top: 0; color: #2c3e50;">Instrucciones / Shortcuts</h3>
+      <ul class="help-list">
+        <li><span class="help-icon">⚠️</span> <span><b>[ E ]</b> Marca "error"</span></li>
+        <li><span class="help-icon">❌➡️</span> <span><b>[ V ]</b> No la sabes; pasa a la siguiente sin descartarla</span></li>
+        <li><span class="help-icon">👁️❌</span> <span>Muestra la lista con las tarjetas activas que aún quedan</span></li>
+        <li><span class="help-icon">✅🗑️</span> <span><b>[ Z ]</b> La sabes y descartas.</span></li>
+        <li><span class="help-icon">⭐</span> <span><b>[ C ]</b> Marca "importante"</span></li>
+        <li><span class="help-icon">✅👀🗑️</span> <span><b>[ X ]</b> La sabes pero quieres verla antes de descartarla</span></li>
+        <li><span class="help-icon">👁️</span> <span>Muestra la lista completa</span></li>
+        <li><span class="help-icon">👁️⭐</span> <span>Muestra las que tienen estrellas</span></li>
+        <li><span class="help-icon">👁️⚠️</span> <span>Muestra las que tienen errores (incluye descarga en .txt ).</span></li>
+        <li><span class="help-icon">🔀</span> <span>Mezcla el mazo</span></li>
+        <li><span class="help-icon">🔄</span> <span>Recupera todas las tarjetas, empezamos de 0</span></li>
+        <li><span class="help-icon">💾❌</span> <span>Guarda un HTML con las tarjetas restantes</span></li>
+        <li><span class="help-icon">💾⭐</span> <span>Guarda un HTML con las estrellas</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div id="qr-modal" class="modal" onclick="closeQRModal()">
+    <div class="modal-content modal-centered-content" style="text-align: center;" onclick="event.stopPropagation()">
+      <span class="close-x" onclick="closeQRModal()">✕</span>
+      <div id="classroom-qr-container" style="margin-top: 15px;"><img src="https://quickchart.io/qr?text=https%3A%2F%2Fjlts059.github.io%2Fapps%2Fme%2Fplantillas%2Fflashcards_1.8.html&amp;size=220&amp;margin=1"></div>
+    </div>
+  </div>
+
+<script>
+// <!-- DATA_SLOT -->
+let originalDeck = [{"sideA":"a largo plazo (a_ D_)","sideB":"auf Dauer","starred":false,"hasError":false},{"sideA":"capaz","sideB":"fähig","starred":false,"hasError":false},{"sideA":"situaciones <b>cotidianas</b>","sideB":"alltägliche Situationen","starred":false,"hasError":false},{"sideA":"(Note 5) insuficiente o suspenso","sideB":"mangelhaft","starred":false,"hasError":false},{"sideA":"espontáneo, improvisado(mente)","sideB":"spontan","starred":false,"hasError":false},{"sideA":"fluido (manera de hablar)","sideB":"fließend","starred":false,"hasError":false},{"sideA":"poner la nota \"sobresaliente\" (1) o \"notable\" (2)","sideB":"mit \"sehr gut\" oder \"gut\" bewerten","starred":false,"hasError":false},{"sideA":"nativo","sideB":"muttersprachlich","starred":false,"hasError":false},{"sideA":"(Note 6) muy deficiente (u_)","sideB":"ungenügend","starred":false,"hasError":false},{"sideA":"(Note 3) bien (b_)","sideB":"befriedigend","starred":false,"hasError":false},{"sideA":"(Note 4) suficiente (a_)","sideB":"ausreichend","starred":false,"hasError":false},{"sideA":"educación primaria, secundaria, post-16","sideB":"Primarstufe (Grundschule) / Sekundarstufe I + II","starred":false,"hasError":false},{"sideA":"el área","sideB":"das Gebiet, -e","starred":false,"hasError":false},{"sideA":"el cerebro","sideB":"das Gehirn, -e","starred":false,"hasError":false},{"sideA":"el entorno de aprendizaje","sideB":"die Lernumgebung, -en","starred":false,"hasError":false},{"sideA":"el entrenamiento individual","sideB":"das Einzeltraining, -s","starred":false,"hasError":false},{"sideA":"el entrenamiento vocal","sideB":"das Stimmtraining, -s","starred":false,"hasError":false},{"sideA":"el esfuerzo","sideB":"die Mühe, -n","starred":false,"hasError":false},{"sideA":"el instituto","sideB":"das Gymnasium, -ien","starred":false,"hasError":false},{"sideA":"el progreso","sideB":"der Fortschritt, -e","starred":false,"hasError":false},{"sideA":"el rendimiento de la memoria","sideB":"die Gedächtnisleistung, -en","starred":false,"hasError":false},{"sideA":"el retroceso","sideB":"der Rückschritt, -e","starred":false,"hasError":false},{"sideA":"el seminario","sideB":"das Seminar, -e","starred":false,"hasError":false},{"sideA":"el vocablo","sideB":"die Vokabel, -n","starred":false,"hasError":false},{"sideA":"el vocabulario","sideB":"der Wortschatz, -¨e","starred":false,"hasError":false},{"sideA":"el/la avanzado/a","sideB":"der/die Fortgeschrittene, -n","starred":false,"hasError":false},{"sideA":"explanatory notes or comments (Fit fürs Zertif.)","sideB":"Erläuterungen","starred":false,"hasError":false},{"sideA":"la duración","sideB":"die Dauer, (sg)","starred":false,"hasError":false},{"sideA":"la escuela especial","sideB":"die Sonderschule, -n","starred":false,"hasError":false},{"sideA":"la escuela primaria","sideB":"die Grundschule, -n","starred":false,"hasError":false},{"sideA":"la escuela profesional","sideB":"die Berufsschule, -n","starred":false,"hasError":false},{"sideA":"la expresión","sideB":"der Ausdruck, -¨e","starred":false,"hasError":false},{"sideA":"la formación continua","sideB":"die Weiterbildung, -en","starred":false,"hasError":false},{"sideA":"la lengua extranjera","sideB":"die Fremdsprache, -n","starred":false,"hasError":false},{"sideA":"la relación","sideB":"der Zusammenhang, -¨e","starred":false,"hasError":false},{"sideA":"la universidad popular","sideB":"die Volkshochschule (VHS), -en","starred":false,"hasError":false},{"sideA":"la voz","sideB":"die Stimme, -n","starred":false,"hasError":false},{"sideA":"tipos de escuela secundaria (g_, h_, m_, r_)","sideB":"die Gesamt- Real- Haupt- Mittel- schule, -n","starred":false,"hasError":false},{"sideA":"tutoría (uni?)","sideB":"Sprechstunde","starred":false,"hasError":false},{"sideA":"me he apuntao al examen x2","sideB":"ich habe mich für die C2 Prüfung <b>angemeldet / eingeschrieben</b> (formeller)","starred":false,"hasError":false},{"sideA":"tambien otro truco es... (noch)","sideB":"ein Trick ist auch noch...","starred":false,"hasError":false},{"sideA":"aclarar","sideB":"verdeutlichen","starred":false,"hasError":false},{"sideA":"acortar","sideB":"verkürzen","starred":false,"hasError":false},{"sideA":"alargar","sideB":"verlängern","starred":false,"hasError":false},{"sideA":"ampliar (a sí mismo/a algo)","sideB":"vergrößern (sich/etw.)","starred":false,"hasError":false},{"sideA":"anotar","sideB":"aufschreiben (jmdm. etw.)","starred":false,"hasError":false},{"sideA":"aprender de memoria","sideB":"auswendig lernen","starred":false,"hasError":false},{"sideA":"aprobar (formal)","sideB":"genehmigen","starred":false,"hasError":false},{"sideA":"comprometerse","sideB":"verpflichten","starred":false,"hasError":false},{"sideA":"concentrarse (en)","sideB":"sich konzentrieren (auf)","starred":false,"hasError":false},{"sideA":"desarrollar (a sí mismo/a algo)","sideB":"entwickeln (sich/etw.)","starred":false,"hasError":false},{"sideA":"dominar","sideB":"beherrschen","starred":false,"hasError":false},{"sideA":"embellecer","sideB":"verschönern","starred":false,"hasError":false},{"sideA":"empeorar (a sí mismo/a algo)","sideB":"sich verschlechtern","starred":false,"hasError":false},{"sideA":"expresar (a sí mismo/a algo)","sideB":"ausdrücken (sich/etw.)","starred":false,"hasError":false},{"sideA":"mejorar (a sí mismo/a algo)","sideB":"verbessern (sich/etw.)","starred":false,"hasError":false},{"sideA":"motivar (a sí mismo/a alguien)","sideB":"motivieren (sich/jmdn.)","starred":false,"hasError":false},{"sideA":"ocurrir","sideB":"einfallen","starred":false,"hasError":false},{"sideA":"olvidar (algo aprendido)","sideB":"verlernen","starred":false,"hasError":false},{"sideA":"participar (en)","sideB":"sich beteiligen (an)","starred":false,"hasError":false},{"sideA":"permitir","sideB":"gestatten (+ A+ D)","starred":false,"hasError":false},{"sideA":"reducir (a sí mismo/a algo)","sideB":"verkleinern (sich/etw.)","starred":false,"hasError":false},{"sideA":"refinar","sideB":"verfeinern","starred":false,"hasError":false},{"sideA":"retener","sideB":"behalten","starred":false,"hasError":false},{"sideA":"ser capaz de hacer algo","sideB":"in der Lage sein, etwas zu tun","starred":false,"hasError":false},{"sideA":"simplificar","sideB":"vereinfachen","starred":false,"hasError":false},{"sideA":"mochila de la escuela","sideB":"der Schulranzen, -","starred":false,"hasError":false},{"sideA":"cometer errores","sideB":"Fehler begehen","starred":false,"hasError":false},{"sideA":"la cultura general","sideB":"die Allgemeinbildung","starred":false,"hasError":false},{"sideA":"investigar (académicamente)","sideB":"recherchieren","starred":false,"hasError":false},{"sideA":"buscar en Google","sideB":"googeln","starred":false,"hasError":false},{"sideA":"ser culto","sideB":"gebildet sein","starred":false,"hasError":false},{"sideA":"analizar o considerar algo críticamente","sideB":"etwas kritisch betrachten","starred":false,"hasError":false},{"sideA":"comprender las conexiones","sideB":"Zusammenhänge verstehen","starred":false,"hasError":false},{"sideA":"filtrar información","sideB":"Informationen filtern","starred":false,"hasError":false},{"sideA":"transmitir conocimientos","sideB":"Wissen vermitteln","starred":false,"hasError":false},{"sideA":"cuestionarse algo","sideB":"etwas hinterfragen","starred":false,"hasError":false},{"sideA":"el buscador","sideB":"die Suchmaschine","starred":false,"hasError":false},{"sideA":"sobrecarga de información","sideB":"die Datenflut","starred":false,"hasError":false},{"sideA":"disponer de conocimientos","sideB":"über Wissen verfügen","starred":false,"hasError":false},{"sideA":"notas del examen","sideB":"Examennoten","starred":false,"hasError":false},{"sideA":"¿qué nivel tienes en este idioma?","sideB":"auf welchem Niveau beherrscht du diese Sprache?","starred":false,"hasError":false},{"sideA":"(ir al) instituto","sideB":"(aufs) Gymnasium gehen","starred":false,"hasError":false},{"sideA":"acabar los estudios","sideB":"ein Studium abschließen","starred":false,"hasError":false},{"sideA":"adaptar la formación profesional","sideB":"Berufsbildung anpassen","starred":false,"hasError":false},{"sideA":"alumnos (x2 S_ / L_)","sideB":"die Schüler / Lernenden, (pl)","starred":false,"hasError":false},{"sideA":"ampliar la formación profesional","sideB":"Berufsbildung erweitern","starred":false,"hasError":false},{"sideA":"aprobar un examen","sideB":"bestehen","starred":false,"hasError":false},{"sideA":"asignatura libre","sideB":"das Freifach","starred":false,"hasError":false},{"sideA":"asignatura obligatoria","sideB":"das Pflichtfach","starred":false,"hasError":false},{"sideA":"asignaturas (troncales)","sideB":"die (Kern)sFächer","starred":false,"hasError":false},{"sideA":"ayuda o apoyo / financiación beca o subvención (F_)","sideB":"die Förderung, (sg)","starred":false,"hasError":false},{"sideA":"beca (S_)","sideB":"das Stipendium, -en","starred":false,"hasError":false},{"sideA":"bueno en cálculo","sideB":"gut im Rechnen","starred":false,"hasError":false},{"sideA":"calificaciones","sideB":"die Zensur, -en","starred":false,"hasError":false},{"sideA":"certificado","sideB":"das Zertifikat, -e","starred":false,"hasError":false},{"sideA":"ciclo formativo","sideB":"der Lehrgang, -ä-e","starred":false,"hasError":false},{"sideA":"coherencia","sideB":"die Kohärenz (sg)","starred":false,"hasError":false},{"sideA":"compañeros de universidad","sideB":"der Kommilitone, -n","starred":false,"hasError":false},{"sideA":"conexiones","sideB":"Zusammenhänge","starred":false,"hasError":false},{"sideA":"conocimientos lingüísticos","sideB":"Sprachkenntnisse","starred":false,"hasError":false},{"sideA":"corregir deberes","sideB":"Hausaufgaben kontrollieren","starred":false,"hasError":false},{"sideA":"criterios","sideB":"Kriterien","starred":false,"hasError":false},{"sideA":"curso","sideB":"Kurs","starred":false,"hasError":false},{"sideA":"curso de idiomas","sideB":"Sprachkurs","starred":false,"hasError":false},{"sideA":"deberes","sideB":"Hausaufgaben","starred":false,"hasError":false},{"sideA":"déficit de atención","sideB":"Aufmerksamkeitsdefizit","starred":false,"hasError":false},{"sideA":"desde nivel principiante hasta avanzado","sideB":"vom Anfänger- bis zum Fortgeschrittenenniveau","starred":false,"hasError":false},{"sideA":"director","sideB":"Schulleiter","starred":false,"hasError":false},{"sideA":"dotado para los idiomas","sideB":"sprachbegabt","starred":false,"hasError":false},{"sideA":"educación básica para actividad cualificada","sideB":"Grundbildung für qualifizierte Tätigkeit","starred":false,"hasError":false},{"sideA":"ejercicio (escrito / oral)","sideB":"(Schreib- / Sprach-)Übung","starred":false,"hasError":false},{"sideA":"ejercicio escrito","sideB":"schriftliche Übung","starred":false,"hasError":false},{"sideA":"ejercicio oral","sideB":"mündliche Übung","starred":false,"hasError":false},{"sideA":"entregar deberes a tiempo","sideB":"Hausaufgaben zur Zeit abliefern","starred":false,"hasError":false},{"sideA":"escrito","sideB":"schriftlich","starred":false,"hasError":false},{"sideA":"escuela integrada","sideB":"Gesamtschule","starred":false,"hasError":false},{"sideA":"escuela integrada = combinación","sideB":"Gesamtschule = eine Mischung","starred":false,"hasError":false},{"sideA":"escuela privada","sideB":"Privatsschule","starred":false,"hasError":false},{"sideA":"escuela pública","sideB":"Staatschule","starred":false,"hasError":false},{"sideA":"escuela secundaria básica","sideB":"Hauptschule","starred":false,"hasError":false},{"sideA":"escuela secundaria intermedia","sideB":"Realschule","starred":false,"hasError":false},{"sideA":"estar en 1º de la ESO","sideB":"in die siebte Klasse gehen (1ESO)","starred":false,"hasError":false},{"sideA":"estar en bachillerato","sideB":"in der Oberstufe sein","starred":false,"hasError":false},{"sideA":"estudiantes","sideB":"Studenten","starred":false,"hasError":false},{"sideA":"evaluación","sideB":"Bewertung","starred":false,"hasError":false},{"sideA":"evaluar","sideB":"zensieren","starred":false,"hasError":false},{"sideA":"examen","sideB":"Klausur(en)","starred":false,"hasError":false},{"sideA":"examen de selectividad","sideB":"die Abiturprüfung, -","starred":false,"hasError":false},{"sideA":"examinado","sideB":"Prüfling, -e","starred":false,"hasError":false},{"sideA":"examinador","sideB":"Prüfer","starred":false,"hasError":false},{"sideA":"exigente","sideB":"anspruchsvoll","starred":false,"hasError":false},{"sideA":"exposición","sideB":"Referat","starred":false,"hasError":false},{"sideA":"falta de concentración","sideB":"Konzentrationsschwäche","starred":false,"hasError":false},{"sideA":"formación","sideB":"Schulung","starred":false,"hasError":false},{"sideA":"formación / entrenamiento","sideB":"Training","starred":false,"hasError":false},{"sideA":"formación académica previa","sideB":"akademische VORbildung","starred":false,"hasError":false},{"sideA":"formación continua","sideB":"WEITERbildung","starred":false,"hasError":false},{"sideA":"formación permanente","sideB":"FORTbildung","starred":false,"hasError":false},{"sideA":"formación profesional","sideB":"AUSbildung","starred":false,"hasError":false},{"sideA":"franja","sideB":"Band","starred":false,"hasError":false},{"sideA":"franjas","sideB":"Bänder","starred":false,"hasError":false},{"sideA":"graduación o título, graduado escolar, cualificación profesional","sideB":"Abschluss, Schul-, Berufs- (nach einer Berufsausbildung)","starred":false,"hasError":false},{"sideA":"graduados","sideB":"Absolventen (fertig)","starred":false,"hasError":false},{"sideA":"hablar mal de alguien","sideB":"über jn lästern","starred":false,"hasError":false},{"sideA":"acosar, hacer bullying, la vida imposible x2 (m_ s_)","sideB":"mobben, schikanieren","starred":false,"hasError":false},{"sideA":"hacer novillos","sideB":"schwänzen","starred":false,"hasError":false},{"sideA":"hacer x3 / aprobar x2 / suspender un examen","sideB":"eine Prüfung machen / <b>ablegen</b> / sich einer ~ <b>unterziehen</b> / <b>bestehen</b> (ein Examen <b>absolvieren</b>) / <b>durchfallen</b>","starred":false,"hasError":false},{"sideA":"la escuela termina a las …","sideB":"Schule ist um X aus!","starred":false,"hasError":false},{"sideA":"la parte 1 consiste en…","sideB":"Teil 1 besteht aus...","starred":false,"hasError":false},{"sideA":"los flojitos y los potentes (en clase)","sideB":"die Schwächeren und die Stärkeren","starred":false,"hasError":false},{"sideA":"maestros enseñan / imparten algo / alumnos aprenden","sideB":"Lehrer unterrichten / beibringen / Schüler lernen","starred":false,"hasError":false},{"sideA":"miedo a los exámenes","sideB":"Prüfungsangst","starred":false,"hasError":false},{"sideA":"nivel","sideB":"Niveau","starred":false,"hasError":false},{"sideA":"notas","sideB":"Noten","starred":false,"hasError":false},{"sideA":"obligatorio","sideB":"verpflichtend","starred":false,"hasError":false},{"sideA":"obtener mejores resultados","sideB":"bessere Leistungen erzielen","starred":false,"hasError":false},{"sideA":"optativa","sideB":"Wahlfach","starred":false,"hasError":false},{"sideA":"participantes (de un curso)","sideB":"(Kurs)Teilnehmer","starred":false,"hasError":false},{"sideA":"pedir dinero al gobierno","sideB":"Geld aus der Regierung ausleihen","starred":false,"hasError":false},{"sideA":"pérdida total de tiempo","sideB":"eine reine Zeitverschwendung","starred":false,"hasError":false},{"sideA":"poner fecha de entrega","sideB":"nen Abgabetermin setzen","starred":false,"hasError":false},{"sideA":"prepararse","sideB":"sich darauf vorbereiten","starred":false,"hasError":false},{"sideA":"presión por el rendimiento","sideB":"Leistungsdruck","starred":false,"hasError":false},{"sideA":"primer nivel","sideB":"erste Stufe","starred":false,"hasError":false},{"sideA":"problemas","sideB":"Probleme","starred":false,"hasError":false},{"sideA":"enseñar (L_)","sideB":"Professoren lehren","starred":false,"hasError":false},{"sideA":"puntos débiles","sideB":"Schwächen","starred":false,"hasError":false},{"sideA":"puntos fuertes","sideB":"Stärken","starred":false,"hasError":false},{"sideA":"puntual","sideB":"termingerecht","starred":false,"hasError":false},{"sideA":"recibir notas","sideB":"Noten bekommen","starred":false,"hasError":false},{"sideA":"reconversión profesional","sideB":"Umschulung","starred":false,"hasError":false},{"sideA":"retroalimentación (positiva)","sideB":"(tolle) Rückmeldung","starred":false,"hasError":false},{"sideA":"reunión","sideB":"Besprechung","starred":false,"hasError":false},{"sideA":"reunión de padres","sideB":"Elternabend","starred":false,"hasError":false},{"sideA":"rúbrica","sideB":"Rubrik","starred":false,"hasError":false},{"sideA":"saber hacer algo bien","sideB":"etw gut können","starred":false,"hasError":false},{"sideA":"saber mucho sobre X","sideB":"mit X sich gut auskennen","starred":false,"hasError":false},{"sideA":"sacar buena nota","sideB":"gut abschneiden","starred":false,"hasError":false},{"sideA":"segundo nivel","sideB":"zweite Stufe","starred":false,"hasError":false},{"sideA":"seminario","sideB":"Seminar","starred":false,"hasError":false},{"sideA":"sesiones","sideB":"Sitzungen","starred":false,"hasError":false},{"sideA":"solicitar plaza en la universidad","sideB":"sich um einen Universitätsplatz bewerben","starred":false,"hasError":false},{"sideA":"superar (un examen) (s_)","sideB":"schaffen","starred":false,"hasError":false},{"sideA":"suspender","sideB":"durchfallen","starred":false,"hasError":false},{"sideA":"talento","sideB":"Begabung","starred":false,"hasError":false},{"sideA":"tarde","sideB":"verspätet","starred":false,"hasError":false},{"sideA":"tareas","sideB":"Aufgaben","starred":false,"hasError":false},{"sideA":"tener talento para ello","sideB":"talentiert darin sein","starred":false,"hasError":false},{"sideA":"terminar la carrera","sideB":"Studium beenden","starred":false,"hasError":false},{"sideA":"test (de prueba)","sideB":"(Probe)rTest","starred":false,"hasError":false},{"sideA":"test de nivel","sideB":"Einstufungstest","starred":false,"hasError":false},{"sideA":"texto","sideB":"der Text, -e","starred":false,"hasError":false},{"sideA":"tiempo de intervención","sideB":"Sprechzeit","starred":false,"hasError":false},{"sideA":"tiempo de preparación","sideB":"Vorbereitungszeit","starred":false,"hasError":false},{"sideA":"un mal necesario","sideB":"ein notwendiges Übel","starred":false,"hasError":false},{"sideA":"variedad de estructuras gramaticales","sideB":"Vielzahl an grammatischen Strukturen","starred":false,"hasError":false},{"sideA":"vinculante","sideB":"verbindlich","starred":false,"hasError":false},{"sideA":"vocabulario amplio y variado","sideB":"breiter & differenzierter Wortschatz","starred":false,"hasError":false},{"sideA":"voluntario","sideB":"freiwilig","starred":false,"hasError":false},{"sideA":"actividad extraescolar","sideB":"die AG (Arbeitsgemeinschaft), -s","starred":false,"hasError":false},{"sideA":"estructura","sideB":"die Gliederung, -en","starred":false,"hasError":false},{"sideA":"venir a clase de idiomas","sideB":"zum Sprachkurs kommen","starred":false,"hasError":false}];
+let deckTitle = "Bildung-INT-SUP";
+let deckImage = "";
+let isGeneratedFile = true;
+// <!-- DATA_SLOT_END -->
+
+let activeDeck = []; 
+let currentIndex = 0;
+let isFlipped = false;
+let isActionFrozen = false; 
+
+window.onload = function() {
+    if (originalDeck && originalDeck.length > 0) {
+      document.getElementById('deck-title-display').textContent = deckTitle;
+      document.getElementById('home-deck-title-display').textContent = deckTitle;
+      document.getElementById('home-progress').textContent = `${originalDeck.length} Cards`;
+      
+      if (deckImage) {
+        document.getElementById('home-image-container').innerHTML = `<img src="${deckImage}" class="cover-image" alt="Cover Image">`;
+      }
+
+      if (isGeneratedFile) {
+        const fullBtn = document.getElementById("saveFullBtn");
+        if(fullBtn) fullBtn.style.display = "none";
+        
+        document.getElementById('setup-container').style.display = 'none';
+        document.getElementById('flashcard-view').style.display = 'none'; 
+        document.getElementById('home-screen-view').style.display = 'flex';
+        generateClassroomQR();
+      } else {
+        document.getElementById('home-screen-view').style.display = 'none';
+        startApp();
+      }
+    }
+};
+
+// --- KEYBOARD SHORTCUTS ---
+document.addEventListener('keydown', function(event) {
+  if (event.target.tagName === 'TEXTAREA' || event.target.tagName === 'INPUT' || isActionFrozen) return;
+  const key = event.key.toLowerCase();
+  if (key === 'v') nextCard();
+  else if (key === 'z') knowCard();
+  else if (key === 'x') discardCardWithPeek();
+  else if (key === 'c') toggleStar();
+  else if (key === 'e') toggleError();
+  else if (key === ' ') { event.preventDefault(); flipCard(); }
+});
+
+function loadCustomDeck() {
+  const titleInput = document.getElementById('deck-title-input').value.trim();
+  if (titleInput) deckTitle = titleInput;
+  document.getElementById('deck-title-display').textContent = deckTitle;
+
+  deckImage = document.getElementById('deck-image-input').value.trim();
+
+  const input = document.getElementById('csv-input').value.trim();
+  if (!input) return alert("Please paste some data first!");
+  const lines = input.split('\n');
+  
+  originalDeck = lines.map(line => {
+    let parts = line.split('\t');
+    if (parts.length < 2) parts = line.split(',');
+    return { 
+      sideA: parts[0] ? parts[0].trim() : "", 
+      sideB: parts[1] ? parts[1].trim() : "",
+      starred: false,
+      hasError: false
+    };
+  }).filter(item => item.sideA || item.sideB);
+  
+  if (originalDeck.length === 0) return alert("No valid data found.");
+  startApp();
+}
+
+function startApp() {
+  document.getElementById('setup-container').style.display = 'none';
+  document.getElementById('home-screen-view').style.display = 'none';
+  document.getElementById('flashcard-view').style.display = 'flex';
+  generateClassroomQR();
+  resetDeckSequential(); 
+}
+
+function startFromHome() {
+  document.getElementById('home-screen-view').style.display = 'none';
+  document.getElementById('flashcard-view').style.display = 'flex';
+  resetDeckSequential();
+}
+
+function resetDeckSequential() {
+  activeDeck = [...originalDeck]; 
+  initSession();
+}
+
+function shuffleDeck() {
+  activeDeck = [...activeDeck].sort(() => Math.random() - 0.5); 
+  initSession();
+}
+
+function initSession() {
+  currentIndex = 0;
+  isFlipped = false;
+  isActionFrozen = false;
+  setButtonsDisabled(false);
+  updateDisplay();
+}
+
+function setButtonsDisabled(disabledState) {
+  document.getElementById("nextBtn").disabled = disabledState;
+  document.getElementById("knowBtn").disabled = disabledState;
+  document.getElementById("discardBtn").disabled = disabledState;
+  document.getElementById("shuffleBtn").disabled = disabledState;
+  document.getElementById("restartBtn").disabled = disabledState;
+  document.getElementById("starBtn").disabled = disabledState;
+  document.getElementById("errorBtn").disabled = disabledState;
+}
+
+function updateDisplay() {
+  const current = activeDeck[currentIndex];
+  const card = document.getElementById("card");
+  const starIndicator = document.getElementById("star-indicator");
+  const errorIndicator = document.getElementById("error-indicator");
+  
+  if (!current || activeDeck.length === 0 || currentIndex >= activeDeck.length) {
+    card.innerHTML = "<b>Excellent!</b><br>All cards completed.";
+    card.style.background = "#d4edda";
+    starIndicator.style.visibility = "hidden";
+    errorIndicator.style.visibility = "hidden";
+    setButtonsDisabled(true);
+    document.getElementById("restartBtn").disabled = false; 
+    return;
+  }
+
+  document.getElementById("progress").textContent = `Card ${currentIndex + 1} of ${activeDeck.length}`;
+  starIndicator.style.visibility = current.starred ? "visible" : "hidden";
+  errorIndicator.style.visibility = current.hasError ? "visible" : "hidden";
+
+  if (!isFlipped) {
+    card.innerHTML = `<div>${current.sideA}</div>`; 
+    card.style.background = "white";
+    card.style.color = "#2c3e50";
+  } else {
+    card.innerHTML = `<div>${current.sideB}</div>`;
+    card.style.background = "#eef6ff";
+    card.style.color = "#1565c0";
+  }
+}
+
+function flipCard() {
+  if (currentIndex >= activeDeck.length || isActionFrozen) return;
+  isFlipped = !isFlipped;
+  updateDisplay();
+}
+
+function toggleStar() {
+  if (currentIndex >= activeDeck.length || isActionFrozen) return;
+  activeDeck[currentIndex].starred = !activeDeck[currentIndex].starred;
+  updateDisplay();
+}
+
+function toggleError() {
+  if (currentIndex >= activeDeck.length || isActionFrozen) return;
+  activeDeck[currentIndex].hasError = !activeDeck[currentIndex].hasError;
+  updateDisplay();
+}
+
+function nextCard() {
+  if (currentIndex >= activeDeck.length || isActionFrozen) return;
+  currentIndex = (currentIndex < activeDeck.length - 1) ? currentIndex + 1 : 0;
+  isFlipped = false;
+  updateDisplay();
+}
+
+function knowCard() {
+  if (currentIndex >= activeDeck.length || isActionFrozen) return;
+  activeDeck.splice(currentIndex, 1);
+  if (currentIndex >= activeDeck.length) currentIndex = 0; 
+  isFlipped = false;
+  updateDisplay();
+}
+
+function discardCardWithPeek() {
+  if (currentIndex >= activeDeck.length || isActionFrozen) return;
+  isActionFrozen = true;
+  isFlipped = true; 
+  updateDisplay();
+  setButtonsDisabled(true);
+
+  setTimeout(() => {
+    activeDeck.splice(currentIndex, 1);
+    if (currentIndex >= activeDeck.length) currentIndex = 0;
+    isFlipped = false;
+    isActionFrozen = false;
+    setButtonsDisabled(false);
+    updateDisplay();
+  }, 2000);
+}
+
+function showList(filterType) {
+  const tbody = document.querySelector("#vocab-table tbody");
+  const modalTitle = document.getElementById("modal-title");
+  const downloadTxtBtn = document.getElementById("download-txt-btn");
+  tbody.innerHTML = "";
+  let listItems = [];
+  downloadTxtBtn.style.display = "none";
+  
+  if (filterType === 'star') {
+    listItems = originalDeck.filter(item => item.starred);
+    modalTitle.textContent = "👁 ⭐";
+    if (listItems.length === 0) return alert("No starred items to display!");
+  } else if (filterType === 'left') {
+    listItems = activeDeck;
+    modalTitle.textContent = "👁 ❌";
+    if (listItems.length === 0) return alert("No active items remaining!");
+  } else if (filterType === 'error') {
+    listItems = originalDeck.filter(item => item.hasError);
+    modalTitle.textContent = "👁 ⚠️";
+    if (listItems.length === 0) return alert("No items marked with errors!");
+    downloadTxtBtn.style.display = "block"; 
+  } else {
+    listItems = originalDeck;
+    modalTitle.textContent = "👁";
+  }
+
+  listItems.forEach(item => {
+    const row = tbody.insertRow();
+    const cell1 = row.insertCell(0);
+    const cell2 = row.insertCell(1);
+    let label = item.sideA;
+    if (item.starred) label = `⭐ ${label}`;
+    if (item.hasError) label = `⚠️ ${label}`;
+    cell1.innerHTML = label;
+    cell2.innerHTML = item.sideB;
+  });
+  document.getElementById("list-modal").style.display = "block";
+}
+
+function closeList() { document.getElementById("list-modal").style.display = "none"; }
+function openInfoModal() { document.getElementById("info-modal").style.display = "block"; }
+function closeInfoModal() { document.getElementById("info-modal").style.display = "none"; }
+function openQRModal() { document.getElementById("qr-modal").style.display = "block"; }
+function closeQRModal() { document.getElementById("qr-modal").style.display = "none"; }
+
+function downloadErrorTxt() {
+  const errorItems = originalDeck.filter(item => item.hasError);
+  if (errorItems.length === 0) return alert("No items to download.");
+  const txtContent = errorItems.map(item => `${item.sideA}\t${item.sideB}`).join('\n');
+  const blob = new Blob([txtContent], { type: 'text/plain;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'errors_to_correct.txt';
+  a.click();
+}
+
+function generateClassroomQR() {
+  const currentUrl = window.location.href;
+  const qrApiUrl = `https://quickchart.io/qr?text=${encodeURIComponent(currentUrl)}&size=220&margin=1`;
+  const qrImg = new Image();
+  qrImg.src = qrApiUrl;
+  qrImg.onload = function() {
+    const container = document.getElementById("classroom-qr-container");
+    if(container) { container.innerHTML = ""; container.appendChild(qrImg); }
+  };
+}
+
+function downloadDeck(mode) {
+    let targetDeck = [];
+    let filename = `fc-${deckTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.html`;
+
+    if (mode === 'full') {
+      targetDeck = originalDeck;
+    } else if (mode === 'left') {
+      targetDeck = activeDeck;
+      filename = 'Flashcards_Remaining.html';
+    } else if (mode === 'star') {
+      targetDeck = originalDeck.filter(item => item.starred);
+      filename = 'Flashcards_Starred.html';
+      if(targetDeck.length === 0) return alert("You haven't starred any cards yet!");
+    }
+
+    const cleanDeck = targetDeck.map(item => ({
+      sideA: item.sideA,
+      sideB: item.sideB,
+      starred: item.starred,
+      hasError: item.hasError
+    }));
+
+    let docHtml = document.documentElement.outerHTML;
+    
+    let flagState = (mode === 'full') ? "true" : "false";
+    const replacementString = `// <!-- DATA_SLOT -->\nlet originalDeck = ${JSON.stringify(cleanDeck)};\nlet deckTitle = ${JSON.stringify(deckTitle)};\nlet deckImage = ${JSON.stringify(deckImage)};\nlet isGeneratedFile = ${flagState};\n// <!-- DATA_SLOT_END -->`;
+    
+    let finalHtml = docHtml.replace(/\/\/ <!-- DATA_SLOT -->[\s\S]*?\/\/ <!-- DATA_SLOT_END -->/, replacementString);
+    
+    const blob = new Blob([finalHtml], { type: 'text/html' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+}
+</script>
+
+
+</body><text-blaze-app-reference style="display: contents !important;" role="none"></text-blaze-app-reference></html>
