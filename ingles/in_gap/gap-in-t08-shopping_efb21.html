@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>shopping efb21</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        .drop-zone { min-width: 90px; height: 1.6em; display: inline-flex; align-items: center; justify-content: center; border-bottom: 2px solid #4a5568; margin: 0 4px; padding: 0 8px; cursor: pointer; transition: all 0.2s; position: relative; top: 2px; }
+        .drop-zone:hover { background-color: #f7fafc; }
+        .drop-zone.selected { background-color: #ebf8ff; border-color: #4299e1; border-bottom-style: dashed; }
+        .item-card { cursor: pointer; user-select: none; transition: all 0.1s; }
+        .item-card:active { transform: scale(0.95); }
+        .item-card.selected { background-color: #4299e1 !important; color: white !important; box-shadow: 0 0 0 2px #bee3f8; }
+        .placed-word { color: #1a202c; font-weight: bold; }
+        .placed-word.active-orange { color: #ea580c !important; }
+        .correct { color: #38a169; font-weight: bold; display: inline-flex; align-items: center; gap: 2px; }
+        .incorrect { color: #e53e3e; font-weight: bold; text-decoration: line-through; }
+        .solution { color: #3182ce; font-weight: bold; margin-left: 6px; font-size: 0.95em; }
+
+        .title-paren {
+            color: rgba(31, 41, 55, 0.65);
+            font-weight: 600;
+        }
+
+        .qr-widget-box {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 4px;
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            transition: transform 0.15s ease, border-color 0.15s ease;
+        }
+        .qr-widget-box:hover {
+            transform: scale(1.06);
+            border-color: #94a3b8;
+        }
+        .qr-widget-box img, .qr-widget-box canvas,
+        #modal-qrcode img, #modal-qrcode canvas {
+            display: block;
+        }
+
+        .info-btn {
+            width: 34px;
+            height: 34px;
+            border-radius: 9999px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            font-size: 1.05rem;
+            line-height: 1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,.1);
+            transition: background-color .15s ease, transform .15s ease, border-color .15s ease;
+            cursor: pointer;
+        }
+        .info-btn:hover { background: #f8fafc; border-color: #94a3b8; transform: scale(1.06); }
+
+        .tabular-nums { font-variant-numeric: tabular-nums; }
+
+        .frozen-bank {
+            position: sticky;
+            top: 8px;
+            z-index: 15;
+            min-height: 64px;
+            background-color: #eff6ff;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        @media (orientation: landscape) and (max-height: 540px) {
+            .frozen-bank {
+                max-height: 34vh;
+                overflow-y: auto;
+                min-height: 48px;
+                padding: 0.6rem;
+                margin-bottom: 0.9rem;
+            }
+        }
+
+        .btn-go { background-color: #16a34a; color: white; font-weight: bold; }
+        .btn-go:hover { background-color: #15803d; }
+        .btn-shuffle { background-color: #7c3aed; color: white; font-weight: bold; }
+        .btn-shuffle:hover { background-color: #6d28d9; }
+        .btn-stop { background-color: #dc2626; color: white; font-weight: bold; }
+        .btn-stop:hover { background-color: #b91c1c; }
+        .btn-pass { background-color: #d97706; color: white; font-weight: bold; }
+        .btn-pass:hover { background-color: #b45309; }
+        .btn-next { background-color: #2563eb; color: white; font-weight: bold; }
+        .btn-next:hover { background-color: #1d4ed8; }
+
+        .qr-lightbox-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.55);
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        .qr-lightbox-overlay.hidden { display: none; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-2 sm:p-4 font-sans flex items-center justify-center">
+
+    <div id="game-container" class="w-full max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-3 sm:p-6">
+        
+        <!-- Top Bar: HUD Left + Controls Right (single top line, full width below) -->
+        <div class="flex items-center justify-between gap-2 mb-3">
+            <div id="hud-box" class="invisible inline-flex items-center gap-2 sm:gap-3 bg-slate-100 border border-slate-200 px-2.5 sm:px-3 py-1 rounded-lg text-xs font-bold text-slate-700 tabular-nums">
+                <span id="hud-counter">0 / 0</span>
+                <span class="text-slate-300">|</span>
+                <span id="hud-timer">00:00</span>
+            </div>
+
+            <div class="flex items-center gap-2 ml-auto">
+                <span class="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 text-slate-500 border border-slate-200 select-none">GAP-FILL</span>
+                <button type="button" onclick="openInfoModal()" class="info-btn" title="Instrucciones">ℹ️</button>
+                <div id="qrcode" onclick="openQRModal()" class="qr-widget-box" title="Click para ampliar QR"></div>
+            </div>
+        </div>
+
+        <!-- START SCREEN -->
+        <div id="start-screen" class="w-full text-center py-6 sm:py-8">
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-800 mb-2 break-words">shopping efb21</h1>
+            <p id="start-subtitle" class="text-base font-bold text-slate-500 mb-6 sm:mb-8 tabular-nums"></p>
+            <div class="flex flex-wrap justify-center gap-3 sm:gap-4">
+                <button id="btn-start-go" class="btn-go px-8 py-3 rounded-full text-base shadow-md transition transform hover:scale-105">
+                    GO
+                </button>
+                <button id="btn-start-shuffle" class="btn-shuffle px-8 py-3 rounded-full text-base shadow-md transition transform hover:scale-105">
+                    SHUFFLE
+                </button>
+            </div>
+        </div>
+
+        <!-- ACTIVE GAMEPLAY SCREEN -->
+        <div id="play-screen" class="w-full hidden">
+            <div id="items-container" class="frozen-bank w-full flex flex-wrap gap-2 p-3 sm:p-4 rounded-lg border-2 border-dashed border-blue-200 mb-5"></div>
+            <div id="sentences-list" class="w-full space-y-3.5 sm:space-y-4 mb-6"></div>
+            <div id="result-container" class="hidden w-full mb-6 p-4 rounded-xl text-center font-bold text-xl border shadow-sm tabular-nums"></div>
+
+            <div class="flex flex-wrap gap-3 justify-center items-center">
+                <button id="btn-stop-score" class="btn-stop px-6 py-2.5 rounded-full text-sm transition shadow-md">
+                    STOP &amp; SCORE
+                </button>
+                <button id="btn-reset" class="btn-next px-6 py-2.5 rounded-full text-sm transition shadow-md">
+                    NEXT / REINICIAR
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- INFO MODAL -->
+    <div id="info-modal" onclick="closeInfoModal()" class="qr-lightbox-overlay hidden">
+        <div onclick="event.stopPropagation()" class="bg-white p-6 rounded-xl shadow-2xl max-w-sm w-full relative">
+            <button onclick="closeInfoModal()" class="absolute top-2 right-3 text-gray-400 hover:text-gray-700 font-bold text-xl">&times;</button>
+            <h3 class="text-base font-bold text-blue-800 mb-2 flex items-center gap-2">ℹ️ Instrucciones del Juego</h3>
+            <p class="text-sm text-gray-600 leading-relaxed">
+                Pulsa <strong>GO</strong> para empezar en orden original o <strong>SHUFFLE</strong> para mezclar las frases. Marca un ítem y un hueco para moverlo ahí, o al revés. Para devolver o cambiar una palabra ya colocada, tócala (se pondrá naranja) y pulsa otro hueco o tócala de nuevo. Pulsa <strong>STOP &amp; SCORE</strong> en cualquier momento para pausar el tiempo, revelar las soluciones y ver tu puntuación.
+            </p>
+        </div>
+    </div>
+
+    <!-- QR LIGHTBOX MODAL -->
+    <div id="qr-modal" onclick="closeQRModal()" class="qr-lightbox-overlay hidden">
+        <div onclick="event.stopPropagation()" class="bg-white p-6 rounded-xl shadow-2xl text-center max-w-xs w-full relative flex flex-col items-center">
+            <button onclick="closeQRModal()" class="absolute top-2 right-3 text-gray-400 hover:text-gray-700 font-bold text-lg">&times;</button>
+            <div id="modal-qrcode" class="bg-white p-2 border border-gray-200 rounded mt-2 mb-4"></div>
+            <button type="button" onclick="downloadQRCode()" class="btn-next w-12 h-12 rounded-full text-xl shadow transition inline-flex items-center justify-center" title="Descargar QR">📥</button>
+        </div>
+    </div>
+
+    <script>
+        const vocabulary = [{"id":1,"text":"baker’s","solution":"baker’s","sentence":"I bought some fresh bread from the [gap]."},{"id":2,"text":"out of","solution":"out of","sentence":"I’m sorry, we’re [gap] light bulbs at the moment, but we should be getting some in soon."},{"id":3,"text":"butcher’s","solution":"butcher’s","sentence":"Can you buy some chicken from the [gap]?"},{"id":4,"text":"chain stores","solution":"chain stores","sentence":"You find [gap] like Starbucks everywhere."},{"id":5,"text":"close down","solution":"close down","sentence":"A lot of local shops and businesses have been forced to [gap] because of the recession."},{"id":6,"text":"DIY store","solution":"DIY store","sentence":"I got all the tools I need from the [gap]."},{"id":7,"text":"estate agent’s","solution":"estate agent’s","sentence":"I bought my house through the [gap] on the high street."},{"id":8,"text":"fishmonger’s","solution":"fishmonger’s","sentence":"They have fresh fish every day in the [gap]."},{"id":9,"text":"greengrocer’s","solution":"greengrocer’s","sentence":"There are some lovely seasonal fruit and vegetables in the [gap]."},{"id":10,"text":"hairdresser’s","solution":"hairdresser’s","sentence":"At which [gap] did you get your hair cut?"},{"id":11,"text":"jeweller’s","solution":"jeweller’s","sentence":"I bought this watch from the [gap]."},{"id":12,"text":"look for","solution":"look for","sentence":"These directions say to [gap] the old town hall, because the bus stop we need is over the road from there."},{"id":13,"text":"look round","solution":"look round","sentence":"Do you need any help? ~ No, thanks, I just want to [gap]."},{"id":14,"text":"sell out","solution":"sell out","sentence":"You need to buy your ticket quickly before they all [gap]!"},{"id":15,"text":"stationer’s","solution":"stationer’s","sentence":"The [gap] will have lots of different coloured paper."}];
+        const SAFE_TITLE = "shopping_efb21";
+        let state = {
+            selectedItem: null,
+            selectedSlot: null,
+            placements: {},
+            isCorrected: false,
+            currentOrder: [],
+            bankOrder: [],
+            secondsElapsed: 0,
+            timerInterval: null
+        };
+
+        const itemsContainer = document.getElementById('items-container');
+        const sentencesList = document.getElementById('sentences-list');
+        const resultContainer = document.getElementById('result-container');
+        const hudBox = document.getElementById('hud-box');
+        const hudCounter = document.getElementById('hud-counter');
+        const hudTimer = document.getElementById('hud-timer');
+
+        function generateQRCodes() {
+            const currentURL = window.location.href;
+            new QRCode(document.getElementById("qrcode"), { text: currentURL, width: 32, height: 32, correctLevel: QRCode.CorrectLevel.M });
+            new QRCode(document.getElementById("modal-qrcode"), { text: currentURL, width: 200, height: 200, correctLevel: QRCode.CorrectLevel.H });
+        }
+
+        function downloadQRCode() {
+            const container = document.getElementById('modal-qrcode');
+            const canvas = container.querySelector('canvas');
+            const img = container.querySelector('img');
+            let dataUrl = canvas ? canvas.toDataURL('image/png') : (img ? img.src : '');
+            if (!dataUrl) return;
+            const link = document.createElement('a');
+            link.href = dataUrl;
+            link.download = 'qr-' + SAFE_TITLE + '.png';
+            link.click();
+        }
+
+        function openQRModal() { document.getElementById('qr-modal').classList.remove('hidden'); }
+        function closeQRModal() { document.getElementById('qr-modal').classList.add('hidden'); }
+        function openInfoModal() { document.getElementById('info-modal').classList.remove('hidden'); }
+        function closeInfoModal() { document.getElementById('info-modal').classList.add('hidden'); }
+
+        function formatTime(sec) {
+            const m = String(Math.floor(sec / 60)).padStart(2, '0');
+            const s = String(sec % 60).padStart(2, '0');
+            return m + ':' + s;
+        }
+
+        function startTimer() {
+            stopTimer();
+            state.secondsElapsed = 0;
+            hudTimer.textContent = "00:00";
+            state.timerInterval = setInterval(() => {
+                state.secondsElapsed++;
+                hudTimer.textContent = formatTime(state.secondsElapsed);
+            }, 1000);
+        }
+
+        function stopTimer() {
+            if (state.timerInterval) {
+                clearInterval(state.timerInterval);
+                state.timerInterval = null;
+            }
+        }
+
+        function updateCounterHUD() {
+            const placedCount = Object.keys(state.placements).length;
+            hudCounter.textContent = placedCount + ' / ' + vocabulary.length;
+        }
+
+        function shuffleArray(arr) {
+            const copy = [...arr];
+            for (let i = copy.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [copy[i], copy[j]] = [copy[j], copy[i]];
+            }
+            return copy;
+        }
+
+        function showStartScreen() {
+            stopTimer();
+            hudBox.classList.add('invisible');
+            document.getElementById('start-subtitle').textContent = '0 / ' + vocabulary.length;
+            document.getElementById('start-screen').classList.remove('hidden');
+            document.getElementById('play-screen').classList.add('hidden');
+        }
+
+        function startGame(shuffle) {
+            state.isCorrected = false;
+            state.placements = {};
+            state.selectedItem = null;
+            state.selectedSlot = null;
+            resultContainer.classList.add('hidden');
+            itemsContainer.classList.remove('hidden');
+            hudBox.classList.remove('invisible');
+            state.currentOrder = shuffle ? shuffleArray(vocabulary) : [...vocabulary];
+            state.bankOrder = shuffleArray(vocabulary);
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('play-screen').classList.remove('hidden');
+            startTimer();
+            render();
+        }
+
+        document.getElementById('btn-start-go').onclick = () => startGame(false);
+        document.getElementById('btn-start-shuffle').onclick = () => startGame(true);
+        document.getElementById('btn-reset').onclick = showStartScreen;
+
+        function render() {
+            updateCounterHUD();
+            itemsContainer.innerHTML = '';
+            const placedItemIds = Object.values(state.placements);
+
+            state.bankOrder.forEach(item => {
+                if (!placedItemIds.includes(item.id)) {
+                    const div = document.createElement('div');
+                    div.className = 'item-card px-3 py-1 bg-white border border-blue-300 rounded shadow-sm text-sm font-medium ' + (state.selectedItem === item.id ? 'selected' : '');
+                    div.textContent = item.text;
+                    div.onclick = () => handleItemClick(item.id);
+                    itemsContainer.appendChild(div);
+                }
+            });
+
+            sentencesList.innerHTML = '';
+            state.currentOrder.forEach((data, index) => {
+                const div = document.createElement('div');
+                div.className = "flex flex-wrap items-baseline text-gray-800 leading-relaxed text-sm sm:text-base";
+                const parts = data.sentence.split('[gap]');
+                const startText = document.createElement('span');
+                startText.textContent = (index + 1) + '. ' + parts[0];
+                div.appendChild(startText);
+
+                const slot = document.createElement('span');
+                slot.className = 'drop-zone ' + (state.selectedSlot === index ? 'selected' : '');
+                const placedId = state.placements[index];
+                if (placedId) {
+                    const itemData = vocabulary.find(v => v.id === placedId);
+                    if (state.isCorrected) {
+                        const isRight = itemData.id === data.id;
+                        const span = document.createElement('span');
+                        span.className = isRight ? 'correct' : 'incorrect';
+                        if (isRight) {
+                            span.innerHTML = itemData.text + ' <span class="text-emerald-600 ml-1">✔</span>';
+                            slot.appendChild(span);
+                        } else {
+                            span.textContent = itemData.text;
+                            slot.appendChild(span);
+                            const solSpan = document.createElement('span');
+                            solSpan.className = 'solution';
+                            solSpan.textContent = ' ' + data.solution;
+                            slot.appendChild(solSpan);
+                        }
+                    } else {
+                        const isOrange = (state.selectedSlot === index);
+                        const span = document.createElement('span');
+                        span.className = 'placed-word ' + (isOrange ? 'active-orange' : '');
+                        span.textContent = itemData.text;
+                        slot.appendChild(span);
+                    }
+                } else if (state.isCorrected) {
+                    const solSpan = document.createElement('span');
+                    solSpan.className = 'solution';
+                    solSpan.textContent = ' ' + data.solution;
+                    slot.appendChild(solSpan);
+                }
+                slot.onclick = () => handleSlotClick(index);
+                div.appendChild(slot);
+                if (parts[1]) {
+                    const endText = document.createElement('span');
+                    endText.textContent = parts[1];
+                    div.appendChild(endText);
+                }
+                sentencesList.appendChild(div);
+            });
+        }
+
+        function handleItemClick(itemId) {
+            if (state.isCorrected) return;
+            if (state.selectedSlot !== null && !state.placements[state.selectedSlot]) {
+                moveItemToSlot(itemId, state.selectedSlot);
+            } else {
+                state.selectedItem = state.selectedItem === itemId ? null : itemId;
+                state.selectedSlot = null;
+            }
+            render();
+        }
+
+        function handleSlotClick(slotIndex) {
+            if (state.isCorrected) return;
+            if (state.selectedItem !== null) {
+                moveItemToSlot(state.selectedItem, slotIndex);
+            } else if (state.selectedSlot !== null) {
+                if (state.selectedSlot === slotIndex) {
+                    delete state.placements[slotIndex];
+                    state.selectedSlot = null;
+                } else {
+                    const itemToMove = state.placements[state.selectedSlot];
+                    if (itemToMove) {
+                        for (let key in state.placements) { if (state.placements[key] === itemToMove) delete state.placements[key]; }
+                        state.placements[slotIndex] = itemToMove;
+                    }
+                    state.selectedSlot = null;
+                }
+            } else {
+                state.selectedSlot = slotIndex;
+            }
+            render();
+        }
+
+        function moveItemToSlot(itemId, slotIndex) {
+            for (let key in state.placements) { if (state.placements[key] === itemId) delete state.placements[key]; }
+            state.placements[slotIndex] = itemId;
+            state.selectedItem = null;
+            state.selectedSlot = null;
+        }
+
+        document.getElementById('btn-stop-score').onclick = () => {
+            if (state.isCorrected) return;
+            stopTimer();
+            let correctCount = 0;
+            state.currentOrder.forEach((data, index) => {
+                if (state.placements[index] === data.id) correctCount++;
+            });
+            state.isCorrected = true;
+
+            itemsContainer.classList.add('hidden');
+            resultContainer.textContent = correctCount + ' / ' + vocabulary.length + ' 🏆(' + formatTime(state.secondsElapsed) + ')';
+            resultContainer.className = 'w-full mb-6 p-4 rounded-xl text-center font-bold text-xl border shadow-sm tabular-nums ' + (correctCount === vocabulary.length ? 'bg-green-50 border-green-200 text-green-800' : 'bg-amber-50 border-amber-200 text-amber-900');
+            resultContainer.classList.remove('hidden');
+            render();
+        };
+
+        window.onload = () => {
+            showStartScreen();
+            generateQRCodes();
+        };
+    </script>
+</body>
+</html>
