@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Match - shopping efb2.1</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
-<style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Match Game Generator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+    <style>
         :root {
             --success-bg: #f0fdf4;
             --success-green: #10b981;
@@ -269,27 +269,23 @@
             white-space: nowrap;
         }
 
-        .row-top {
+        .game-top-bar {
             display: flex;
-            justify-content: center;
+            justify-content: space-between;
             align-items: center;
             width: 100%;
-            position: relative;
-            min-height: 44px;
+            min-height: 40px;
             z-index: 10;
         }
 
-        .top-left {
-            position: absolute;
-            left: 0;
-            top: 50%;
-            transform: translateY(-50%);
+        .top-left-inline {
             display: flex;
-            flex-direction: column;
+            align-items: baseline;
+            gap: 10px;
             font-variant-numeric: tabular-nums;
         }
 
-        #counter, .tabular-counter {
+        #counter {
             font-size: 18px;
             font-weight: bold;
             font-variant-numeric: tabular-nums;
@@ -303,20 +299,13 @@
         }
 
         .standalone-title {
-            font-size: 22px;
+            font-size: 24px;
             font-weight: bold;
             color: #111827;
             text-align: center;
             width: 100%;
-            padding: 0 95px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .standalone-title.has-qr {
-            padding-right: 145px;
-            padding-left: 75px;
+            padding: 0 110px 0 10px;
+            word-break: break-word;
         }
 
         .home-title {
@@ -332,10 +321,17 @@
             padding: 4px 0;
         }
 
-        .top-right-controls {
+        .top-right-start {
             position: absolute;
             top: 10px;
             right: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 20;
+        }
+
+        .top-right-inline {
             display: flex;
             align-items: center;
             gap: 8px;
@@ -420,7 +416,7 @@
         .bambalina-curtain {
             position: absolute;
             inset: 0;
-            z-index: 15;
+            z-index: 25;
             border-radius: 12px;
             overflow: hidden;
             cursor: pointer;
@@ -430,12 +426,16 @@
             align-items: center;
             justify-content: center;
             user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
         }
 
         .bambalina-curtain svg {
             width: 100%;
             height: 100%;
             display: block;
+            pointer-events: none;
         }
 
         .letter-block {
@@ -597,20 +597,69 @@
     </style>
 </head>
 <body>
-<div id="screen-start" class="screen">
-        <div class="top-right-controls">
-            <span class="game-type-badge">MATCH</span>
-            <div class="info-btn" onclick="showInfo()" title="Instructions">ℹ️</div>
-            <div class="qr-widget" onclick="expandQR()" title="Expand QR">
-                <canvas id="qr-canvas-start" height="120" width="120"></canvas>
+
+    <!-- GENERATOR INPUT SCREEN -->
+    <div id="screen-generator" class="screen active">
+        <div class="title-row">
+            <input type="text" id="input-title" placeholder="Title (e.g. unit1_Verbos (Nivel A1))..." oninput="updateFilenamePreview()">
+
+            <!-- Dropdown 1: al / in -->
+            <div class="custom-dd" id="dd1">
+                <div class="dd-trigger" onclick="toggleDropdown('dd1')"><span id="dd1-label">al</span></div>
+                <div class="dd-menu">
+                    <div class="dd-option selected" data-val="al" onclick="selectDD1('al')">al</div>
+                    <div class="dd-option" data-val="in" onclick="selectDD1('in')">in</div>
+                </div>
+            </div>
+
+            <!-- Dropdown 2: t00 - t15 -->
+            <div class="custom-dd" id="dd2">
+                <div class="dd-trigger" onclick="toggleDropdown('dd2')"><span id="dd2-label">—</span></div>
+                <div class="dd-menu" id="dd2-menu"></div>
+            </div>
+
+            <!-- Dropdown 3: g1a - g1d -->
+            <div class="custom-dd" id="dd3">
+                <div class="dd-trigger" onclick="toggleDropdown('dd3')"><span id="dd3-label">—</span></div>
+                <div class="dd-menu" id="dd3-menu"></div>
             </div>
         </div>
 
-        <div class="row-top" style="margin-top: 26px;">
-            <div id="start-title-display" class="standalone-title home-title has-qr">shopping efb2.1</div>
+        <div class="filename-preview-bar">
+            <span id="filename-preview-text">match-al-untitled.html</span>
         </div>
 
-        <div id="start-item-counter" class="start-counter-box">0 / 21</div>
+        <textarea id="input-data" placeholder="Term A, Term B (one per line)&#10;Or paste two columns from Excel..."></textarea>
+
+        <div class="tools-row">
+            <button type="button" id="btn-swap-cols" class="btn-swap" onclick="toggleSwapColumns()">⇄ Swap Columns: OFF</button>
+            <label class="checkbox-container">
+                <input type="checkbox" id="check-pro-gen">
+                <span><i>pro mode</i>: sólo un intento por palabra</span>
+            </label>
+        </div>
+
+        <div class="btn-group">
+            <button type="button" id="btn-preview" onclick="previewGame()">Preview</button>
+            <button type="button" id="btn-save-html" onclick="generateHTML()" title="Save to HTML">💾</button>
+        </div>
+    </div>
+
+    <!-- PREVIEW / STANDALONE START SCREEN -->
+    <div id="screen-start" class="screen">
+        <div class="top-right-start">
+            <span class="game-type-badge">MATCH</span>
+            <div class="info-btn" onclick="showInfo()" title="Instructions">ℹ️</div>
+            <div class="qr-widget" onclick="expandQR()" title="Expand QR">
+                <canvas id="qr-canvas-start"></canvas>
+            </div>
+        </div>
+
+        <div style="margin-top: 32px; width: 100%;">
+            <div id="start-title-display" class="standalone-title home-title"></div>
+        </div>
+
+        <div id="start-item-counter" class="start-counter-box">0 / 0</div>
 
         <div class="btn-group" style="margin-top: 6px;">
             <button type="button" id="btn-go" onclick="startGame(false)">GO</button>
@@ -619,7 +668,7 @@
 
         <div class="checkbox-group-start">
             <label class="checkbox-container">
-                <input type="checkbox" id="check-bambalina" checked="">
+                <input type="checkbox" id="check-bambalina" checked>
                 <span>bambalina</span>
             </label>
             <label class="checkbox-container">
@@ -628,58 +677,69 @@
             </label>
         </div>
     </div>
-<div id="screen-game" class="screen active">
-        <div class="top-right-controls">
-            <span class="game-type-badge">MATCH</span>
-            <div class="info-btn" onclick="showInfo()" title="Instructions">ℹ️</div>
-            <div class="qr-widget" onclick="expandQR()" title="Expand QR">
-                <canvas id="qr-canvas-game" height="120" width="120"></canvas>
+
+    <!-- ACTIVE GAME SCREEN -->
+    <div id="screen-game" class="screen">
+        <div class="game-top-bar">
+            <div class="top-left-inline">
+                <div id="counter">0 / 0</div>
+                <div id="timer">00:00</div>
+            </div>
+            <div class="top-right-inline">
+                <span class="game-type-badge">MATCH</span>
+                <div class="info-btn" onclick="showInfo()" title="Instructions">ℹ️</div>
+                <div class="qr-widget" onclick="expandQR()" title="Expand QR">
+                    <canvas id="qr-canvas-game"></canvas>
+                </div>
             </div>
         </div>
 
-        <div class="row-top" style="margin-top: 26px;">
-            <div class="top-left">
-                <div id="counter">1 / 21</div>
-                <div id="timer">00:16</div>
-            </div>
-            <div id="game-title-header" class="standalone-title has-qr">shopping efb2.1</div>
-        </div>
-
-        <div id="clue-container">comparar precios</div>
+        <div id="clue-container"></div>
 
         <div class="options-wrapper" id="options-wrapper">
-            <div class="row-middle" id="options-container"><div class="letter-block size-short">reviews</div><div class="letter-block size-short">reliable</div><div class="letter-block size-short">shipping</div><div class="letter-block size-short">send back</div><div class="letter-block size-short">convenient</div><div class="letter-block size-short">shop around</div><div class="letter-block size-short">delivery fee</div><div class="letter-block size-short">get a refund</div></div>
-        <div class="bambalina-curtain"><svg viewBox="0 0 320 140" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="140" fill="#991b1b"></rect><g fill="#b91c1c"><rect x="16" y="0" width="24" height="140"></rect><rect x="64" y="0" width="24" height="140"></rect><rect x="112" y="0" width="24" height="140"></rect><rect x="160" y="0" width="24" height="140"></rect><rect x="208" y="0" width="24" height="140"></rect><rect x="256" y="0" width="24" height="140"></rect><rect x="296" y="0" width="24" height="140"></rect></g><path d="M0,0 Q80,45 160,18 Q240,45 320,0 L320,24 Q240,68 160,36 Q80,68 0,24 Z" fill="#7f1d1d"></path><path d="M0,0 Q80,40 160,14 Q240,40 320,0 L320,18 Q240,58 160,28 Q80,58 0,18 Z" fill="#dc2626"></path><path d="M0,18 Q80,58 160,28 Q240,58 320,18" fill="none" stroke="#facc15" stroke-width="3"></path><rect x="0" y="0" width="320" height="6" fill="#facc15"></rect></svg></div></div>
+            <div class="row-middle" id="options-container"></div>
+        </div>
 
         <div class="row-bottom">
             <button type="button" id="btn-pass" onclick="handlePass()">PASS</button>
-            <button type="button" id="btn-stop" onclick="endGame()">STOP &amp; SCORE</button>
+            <button type="button" id="btn-stop" onclick="endGame()">STOP & SCORE</button>
         </div>
 
         <button type="button" class="secret-backup-btn" onclick="triggerSecretBackup()" title="Backup">📝</button>
     </div>
-<div id="screen-results" class="screen">
+
+    <!-- RESULTS / STOP & SCORE SCREEN -->
+    <div id="screen-results" class="screen">
         <div id="results-summary">
             <div id="res-score-line">0 / 0 🏆(00:00)</div>
         </div>
         <div class="results-list" id="results-list-container"></div>
         <button type="button" id="btn-restart" onclick="restartToStart()">Restart</button>
     </div>
-<div id="popup-overlay" class="popup-overlay" onclick="closePopup()">
+
+    <!-- POPUP & QR LIGHTBOX OVERLAY -->
+    <div id="popup-overlay" class="popup-overlay" onclick="closePopup()">
         <div class="popup-content" id="popup-content" onclick="event.stopPropagation()"></div>
     </div>
-<script>
 
-        let GAME_CONFIG = {"rawInput":"probar (un producto o aparato)\ttry out\ncomparar precios\tshop around\nojear / mirar sin compromiso\tbrowse\nser entregado / entregarse\tbe delivered\nobtener un reembolso\tget a refund\ncambiar (un artículo)\texchange\nhacer un pedido\tplace an order\nhacer cola\tqueue\nhacer fila\tstand in line\ndevolver (por correo) (s_)\tsend back\ndevolver (r_)\treturn\ngastos de entrega (d_)\tdelivery fee\ngastos de envío (s_)\tshipping\natención al cliente\tcustomer service\nreseñas / opiniones\treviews\nque lleva mucho tiempo\ttime-consuming\nagotado\tout of stock\npráctico / conveniente\tconvenient\nfiable\treliable\ndefectuoso\tfaulty\ndañado\tdamaged","compositeName":"match-in-t11-shopping_efb21","safeTitle":"shopping_efb21","displayTitle":"shopping efb2.1","swapColumns":false,"proModeDefault":false};
+    <script>
+        let GAME_CONFIG = {
+            rawInput: "",
+            compositeName: "match-al-untitled",
+            safeTitle: "untitled",
+            displayTitle: "Juego",
+            swapColumns: false,
+            proModeDefault: false
+        };
 
-        let rawItems = [{"a":"probar (un producto o aparato)","b":"try out","id":0,"status":"pending"},{"a":"comparar precios","b":"shop around","id":1,"status":"pending"},{"a":"ojear / mirar sin compromiso","b":"browse","id":2,"status":"pending"},{"a":"ser entregado / entregarse","b":"be delivered","id":3,"status":"pending"},{"a":"obtener un reembolso","b":"get a refund","id":4,"status":"pending"},{"a":"cambiar (un artículo)","b":"exchange","id":5,"status":"pending"},{"a":"hacer un pedido","b":"place an order","id":6,"status":"pending"},{"a":"hacer cola","b":"queue","id":7,"status":"pending"},{"a":"hacer fila","b":"stand in line","id":8,"status":"pending"},{"a":"devolver (por correo) (s_)","b":"send back","id":9,"status":"pending"},{"a":"devolver (r_)","b":"return","id":10,"status":"pending"},{"a":"gastos de entrega (d_)","b":"delivery fee","id":11,"status":"pending"},{"a":"gastos de envío (s_)","b":"shipping","id":12,"status":"pending"},{"a":"atención al cliente","b":"customer service","id":13,"status":"pending"},{"a":"reseñas / opiniones","b":"reviews","id":14,"status":"pending"},{"a":"que lleva mucho tiempo","b":"time-consuming","id":15,"status":"pending"},{"a":"agotado","b":"out of stock","id":16,"status":"pending"},{"a":"práctico / conveniente","b":"convenient","id":17,"status":"pending"},{"a":"fiable","b":"reliable","id":18,"status":"pending"},{"a":"defectuoso","b":"faulty","id":19,"status":"pending"},{"a":"dañado","b":"damaged","id":20,"status":"pending"}];
+        let rawItems = [];
         let originalTotal = 0;
         let gameQueue = [];
         let currentItem = null;
         let timerInterval = null;
         let secondsElapsed = 0;
         let completedCorrectly = 0;
-        let isStandalone = true;
+        let isStandalone = false;
         let proModeActive = false;
         let bambalinaActive = true;
         let isLocked = false;
@@ -883,9 +943,7 @@
         function applyStartScreenData() {
             const formattedTitle = formatTitleWithGrayParens(GAME_CONFIG.displayTitle);
             const startTitleEl = document.getElementById('start-title-display');
-            const gameTitleEl = document.getElementById('game-title-header');
             if (startTitleEl) startTitleEl.innerHTML = formattedTitle;
-            if (gameTitleEl) gameTitleEl.innerHTML = formattedTitle;
 
             const counterBox = document.getElementById('start-item-counter');
             if (counterBox) {
@@ -1002,9 +1060,20 @@
                 '<path d="M0,18 Q80,58 160,28 Q240,58 320,18" fill="none" stroke="#facc15" stroke-width="3"/>' +
                 '<rect x="0" y="0" width="320" height="6" fill="#facc15"/>' +
                 '</svg>';
-            curtain.onclick = function() {
+
+            let dismissed = false;
+            const dismissCurtain = function(e) {
+                if (dismissed) return;
+                dismissed = true;
+                if (e && e.cancelable) e.preventDefault();
+                if (e) e.stopPropagation();
                 curtain.remove();
             };
+
+            curtain.addEventListener('pointerdown', dismissCurtain, { passive: false });
+            curtain.addEventListener('touchstart', dismissCurtain, { passive: false });
+            curtain.addEventListener('click', dismissCurtain, { passive: false });
+
             return curtain;
         }
 
@@ -1272,7 +1341,6 @@
                 applyStartScreenData();
             }
         });
-    
-</script>
+    </script>
 </body>
 </html>
