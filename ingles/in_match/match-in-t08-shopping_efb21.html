@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Match - shop</title>
+<title>Match - shopping</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
 <style>
         :root {
@@ -118,6 +118,12 @@
             min-width: 54px;
             height: 40px;
             color: #111827;
+            outline: none;
+        }
+
+        .dd-trigger:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
         }
 
         .dd-trigger::after {
@@ -234,6 +240,14 @@
             gap: 8px;
         }
 
+        .checkbox-inline-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 18px;
+            flex-wrap: wrap;
+        }
+
         .checkbox-container {
             display: flex;
             align-items: center;
@@ -304,7 +318,7 @@
             color: #111827;
             text-align: center;
             width: 100%;
-            padding: 0 110px 0 10px;
+            padding: 0 16px;
             word-break: break-word;
         }
 
@@ -399,16 +413,16 @@
         .options-wrapper {
             position: relative;
             margin: 4px 0 12px 0;
-            min-height: 150px;
+            min-height: 96px;
         }
 
         .row-middle {
             display: flex;
             flex-wrap: wrap;
-            gap: 10px;
+            gap: 8px;
             justify-content: center;
             align-items: stretch;
-            min-height: 150px;
+            min-height: 96px;
             position: relative;
             z-index: 5;
         }
@@ -442,7 +456,7 @@
             background-color: var(--tile-bg);
             border: 2px solid var(--tile-border);
             color: #1e3a8a;
-            padding: 14px 18px;
+            padding: 6px 14px;
             border-radius: 10px;
             cursor: pointer;
             user-select: none;
@@ -454,26 +468,27 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            min-height: 105px;
+            min-height: 42px;
+            line-height: 1.2;
         }
 
         .size-short {
-            flex-basis: calc(33.33% - 10px);
+            flex-basis: calc(33.33% - 8px);
             min-width: 130px;
-            font-size: 24px;
+            font-size: 20px;
             font-weight: 700;
         }
 
         .size-medium {
-            flex-basis: calc(50% - 10px);
+            flex-basis: calc(50% - 8px);
             min-width: 180px;
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 600;
         }
 
         .size-long {
             flex-basis: 100%;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 500;
         }
 
@@ -481,7 +496,7 @@
             background-color: var(--success-bg) !important;
             border-color: var(--success-green) !important;
             color: var(--success-green) !important;
-            opacity: 0;
+            opacity: 1;
             pointer-events: none;
         }
 
@@ -602,15 +617,15 @@
             <span class="game-type-badge">MATCH</span>
             <div class="info-btn" onclick="showInfo()" title="Instructions">ℹ️</div>
             <div class="qr-widget" onclick="expandQR()" title="Expand QR">
-                <canvas id="qr-canvas-start" height="120" width="120"></canvas>
+                <canvas id="qr-canvas-start"></canvas>
             </div>
         </div>
 
         <div style="margin-top: 32px; width: 100%;">
-            <div id="start-title-display" class="standalone-title home-title">shop</div>
+            <div id="start-title-display" class="standalone-title home-title"></div>
         </div>
 
-        <div id="start-item-counter" class="start-counter-box">0 / 21</div>
+        <div id="start-item-counter" class="start-counter-box">0 / 0</div>
 
         <div class="btn-group" style="margin-top: 6px;">
             <button type="button" id="btn-go" onclick="startGame(false)">GO</button>
@@ -618,13 +633,19 @@
         </div>
 
         <div class="checkbox-group-start">
-            <label class="checkbox-container">
-                <input type="checkbox" id="check-bambalina" checked="">
-                <span>bambalina</span>
-            </label>
+            <div class="checkbox-inline-row">
+                <label class="checkbox-container">
+                    <input type="checkbox" id="check-bambalina" checked="">
+                    <span>bambalina</span>
+                </label>
+                <label class="checkbox-container">
+                    <input type="checkbox" id="check-swap-start">
+                    <span>intercambiar columnas</span>
+                </label>
+            </div>
             <label class="checkbox-container">
                 <input type="checkbox" id="check-pro">
-                <span><i>pro mode</i>: sólo un intento por palabra</span>
+                <span><i>pro mode</i>: sólo un intento</span>
             </label>
         </div>
     </div>
@@ -638,7 +659,7 @@
                 <span class="game-type-badge">MATCH</span>
                 <div class="info-btn" onclick="showInfo()" title="Instructions">ℹ️</div>
                 <div class="qr-widget" onclick="expandQR()" title="Expand QR">
-                    <canvas id="qr-canvas-game" height="120" width="120"></canvas>
+                    <canvas id="qr-canvas-game"></canvas>
                 </div>
             </div>
         </div>
@@ -668,9 +689,10 @@
     </div>
 <script>
 
-        let GAME_CONFIG = {"rawInput":"probar (un producto o aparato)\ttry out\ncomparar precios\tshop around\nojear / mirar sin compromiso\tbrowse\nser entregado / entregarse\tbe delivered\nobtener un reembolso\tget a refund\ncambiar (un artículo)\texchange\nhacer un pedido\tplace an order\nhacer cola\tqueue\nhacer fila\tstand in line\ndevolver (por correo) (s_)\tsend back\ndevolver (r_)\treturn\ngastos de entrega (d_)\tdelivery fee\ngastos de envío (s_)\tshipping\natención al cliente\tcustomer service\nreseñas / opiniones\treviews\nque lleva mucho tiempo\ttime-consuming\nagotado\tout of stock\npráctico / conveniente\tconvenient\nfiable\treliable\ndefectuoso\tfaulty\ndañado\tdamaged","compositeName":"match-in-t04-shop","safeTitle":"shop","displayTitle":"shop","swapColumns":false,"proModeDefault":false};
+        let GAME_CONFIG = {"rawInput":"probar (un producto o aparato)\ttry out\ncomparar precios\tshop around\nojear / mirar sin compromiso\tbrowse\nser entregado / entregarse\tbe delivered\nobtener un reembolso\tget a refund\ncambiar (un artículo)\texchange\nhacer un pedido\tplace an order\nhacer cola\tqueue\nhacer fila\tstand in line\ndevolver (por correo) (s_)\tsend back\ndevolver (r_)\treturn\ngastos de entrega (d_)\tdelivery fee\ngastos de envío (s_)\tshipping\natención al cliente\tcustomer service\nreseñas / opiniones\treviews\nque lleva mucho tiempo\ttime-consuming\nagotado\tout of stock\npráctico / conveniente\tconvenient\nfiable\treliable\ndefectuoso\tfaulty\ndañado\tdamaged","compositeName":"match-in-t08-shopping","safeTitle":"shopping","displayTitle":"shopping","swapColumns":false,"proModeDefault":false};
 
         let rawItems = [{"a":"probar (un producto o aparato)","b":"try out","id":0,"status":"pending"},{"a":"comparar precios","b":"shop around","id":1,"status":"pending"},{"a":"ojear / mirar sin compromiso","b":"browse","id":2,"status":"pending"},{"a":"ser entregado / entregarse","b":"be delivered","id":3,"status":"pending"},{"a":"obtener un reembolso","b":"get a refund","id":4,"status":"pending"},{"a":"cambiar (un artículo)","b":"exchange","id":5,"status":"pending"},{"a":"hacer un pedido","b":"place an order","id":6,"status":"pending"},{"a":"hacer cola","b":"queue","id":7,"status":"pending"},{"a":"hacer fila","b":"stand in line","id":8,"status":"pending"},{"a":"devolver (por correo) (s_)","b":"send back","id":9,"status":"pending"},{"a":"devolver (r_)","b":"return","id":10,"status":"pending"},{"a":"gastos de entrega (d_)","b":"delivery fee","id":11,"status":"pending"},{"a":"gastos de envío (s_)","b":"shipping","id":12,"status":"pending"},{"a":"atención al cliente","b":"customer service","id":13,"status":"pending"},{"a":"reseñas / opiniones","b":"reviews","id":14,"status":"pending"},{"a":"que lleva mucho tiempo","b":"time-consuming","id":15,"status":"pending"},{"a":"agotado","b":"out of stock","id":16,"status":"pending"},{"a":"práctico / conveniente","b":"convenient","id":17,"status":"pending"},{"a":"fiable","b":"reliable","id":18,"status":"pending"},{"a":"defectuoso","b":"faulty","id":19,"status":"pending"},{"a":"dañado","b":"damaged","id":20,"status":"pending"}];
+        let activeItems = [];
         let originalTotal = 0;
         let gameQueue = [];
         let currentItem = null;
@@ -681,6 +703,7 @@
         let proModeActive = false;
         let bambalinaActive = true;
         let isLocked = false;
+        let blockClicksUntil = 0;
 
         // Dropdown states
         let dd1Value = 'al';
@@ -717,8 +740,16 @@
 
             document.addEventListener('click', (e) => {
                 if (!e.target.closest('.custom-dd')) {
-                    document.querySelectorAll('.custom-dd').forEach(d => d.classList.remove('open'));
+                    closeAllDropdowns();
                 }
+            });
+        }
+
+        function closeAllDropdowns() {
+            document.querySelectorAll('.custom-dd').forEach(d => {
+                d.classList.remove('open');
+                const trig = d.querySelector('.dd-trigger');
+                if (trig) trig.setAttribute('aria-expanded', 'false');
             });
         }
 
@@ -726,51 +757,89 @@
             const el = document.getElementById(id);
             if (el.classList.contains('disabled')) return;
             const isOpen = el.classList.contains('open');
-            document.querySelectorAll('.custom-dd').forEach(d => d.classList.remove('open'));
-            if (!isOpen) el.classList.add('open');
+            closeAllDropdowns();
+            if (!isOpen) {
+                el.classList.add('open');
+                const trig = el.querySelector('.dd-trigger');
+                if (trig) trig.setAttribute('aria-expanded', 'true');
+            }
         }
 
-        function selectDD1(val) {
+        function handleDropdownKey(e, id) {
+            const el = document.getElementById(id);
+            if (!el || el.classList.contains('disabled')) return;
+
+            const options = Array.from(el.querySelectorAll('.dd-option'));
+            if (options.length === 0) return;
+
+            const currentIndex = options.findIndex(o => o.classList.contains('selected'));
+
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                toggleDropdown(id);
+            } else if (e.key === 'Escape') {
+                closeAllDropdowns();
+            } else if (e.key === 'Tab') {
+                closeAllDropdowns();
+            } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                const delta = e.key === 'ArrowDown' ? 1 : -1;
+                const nextIdx = Math.max(0, Math.min(options.length - 1, currentIndex + delta));
+                const nextVal = options[nextIdx].dataset.val;
+                if (id === 'dd1') selectDD1(nextVal, true);
+                else if (id === 'dd2') selectDD2(nextVal, true);
+                else if (id === 'dd3') selectDD3(nextVal, true);
+                options[nextIdx].scrollIntoView({ block: 'nearest' });
+            }
+        }
+
+        function selectDD1(val, keepOpen = false) {
             dd1Value = val;
             document.getElementById('dd1-label').textContent = val;
             document.querySelectorAll('#dd1 .dd-option').forEach(o => {
                 o.classList.toggle('selected', o.dataset.val === val);
             });
-            document.getElementById('dd1').classList.remove('open');
+            if (!keepOpen) closeAllDropdowns();
             updateFilenamePreview();
         }
 
-        function selectDD2(val) {
+        function selectDD2(val, keepOpen = false) {
             dd2Value = val;
             const label = document.getElementById('dd2-label');
+            const dd3Trigger = document.getElementById('dd3-trigger');
             if (val) {
                 label.innerHTML = 't<strong>' + val.slice(1) + '</strong>';
                 document.getElementById('dd3').classList.add('disabled');
+                if (dd3Trigger) dd3Trigger.tabIndex = -1;
             } else {
                 label.textContent = '—';
                 document.getElementById('dd3').classList.remove('disabled');
+                if (dd3Trigger) dd3Trigger.tabIndex = 0;
             }
             document.querySelectorAll('#dd2 .dd-option').forEach(o => {
                 o.classList.toggle('selected', o.dataset.val === val);
             });
-            document.getElementById('dd2').classList.remove('open');
+            if (!keepOpen) closeAllDropdowns();
             updateFilenamePreview();
         }
 
-        function selectDD3(val) {
+        function selectDD3(val, keepOpen = false) {
             dd3Value = val;
             const label = document.getElementById('dd3-label');
+            const dd2Trigger = document.getElementById('dd2-trigger');
             if (val) {
                 label.innerHTML = 'g<strong>' + val.slice(1, 2) + '</strong>' + val.slice(2);
                 document.getElementById('dd2').classList.add('disabled');
+                if (dd2Trigger) dd2Trigger.tabIndex = -1;
             } else {
                 label.textContent = '—';
                 document.getElementById('dd2').classList.remove('disabled');
+                if (dd2Trigger) dd2Trigger.tabIndex = 0;
             }
             document.querySelectorAll('#dd3 .dd-option').forEach(o => {
                 o.classList.toggle('selected', o.dataset.val === val);
             });
-            document.getElementById('dd3').classList.remove('open');
+            if (!keepOpen) closeAllDropdowns();
             updateFilenamePreview();
         }
 
@@ -898,6 +967,11 @@
                 checkBambalina.checked = true;
             }
 
+            const checkSwapStart = document.getElementById('check-swap-start');
+            if (checkSwapStart) {
+                checkSwapStart.checked = false;
+            }
+
             renderQRCodes();
         }
 
@@ -930,7 +1004,9 @@
         function startGame(shuffleMode) {
             proModeActive = document.getElementById('check-pro').checked;
             bambalinaActive = document.getElementById('check-bambalina').checked;
+            const swapStartCols = document.getElementById('check-swap-start').checked;
             isLocked = false;
+            blockClicksUntil = 0;
 
             if (!isStandalone) {
                 const rawText = document.getElementById('input-data').value;
@@ -941,11 +1017,17 @@
                 }
             }
 
-            originalTotal = rawItems.length;
-            completedCorrectly = 0;
-            rawItems.forEach(item => item.status = 'pending');
+            activeItems = rawItems.map(item => ({
+                a: swapStartCols ? item.b : item.a,
+                b: swapStartCols ? item.a : item.b,
+                id: item.id,
+                status: 'pending'
+            }));
 
-            gameQueue = [...rawItems];
+            originalTotal = activeItems.length;
+            completedCorrectly = 0;
+
+            gameQueue = [...activeItems];
             if (shuffleMode) {
                 gameQueue.sort(() => Math.random() - 0.5);
             }
@@ -1005,18 +1087,20 @@
                 dismissed = true;
                 if (e && e.cancelable) e.preventDefault();
                 if (e) e.stopPropagation();
+
+                blockClicksUntil = Date.now() + 1000;
                 curtain.remove();
             };
 
-            curtain.addEventListener('pointerdown', dismissCurtain, { passive: false });
-            curtain.addEventListener('touchstart', dismissCurtain, { passive: false });
-            curtain.addEventListener('click', dismissCurtain, { passive: false });
+            curtain.addEventListener('click', dismissCurtain);
+            curtain.addEventListener('touchend', dismissCurtain);
 
             return curtain;
         }
 
         function nextTurn() {
             isLocked = false;
+            blockClicksUntil = 0;
             if (gameQueue.length === 0) {
                 endGame();
                 return;
@@ -1027,7 +1111,7 @@
             document.getElementById('clue-container').innerHTML = currentItem.a;
 
             let options = [currentItem.b];
-            let pool = rawItems.filter(i => i.id !== currentItem.id && i.status !== 'correct').map(i => i.b);
+            let pool = activeItems.filter(i => i.id !== currentItem.id && i.status !== 'correct').map(i => i.b);
             pool.sort(() => Math.random() - 0.5);
 
             for (let i = 0; i < pool.length && options.length < 8; i++) {
@@ -1058,7 +1142,7 @@
                     block.classList.add('size-long');
                 }
 
-                block.onclick = () => checkAnswer(block, opt);
+                block.addEventListener('click', () => checkAnswer(block, opt));
                 container.appendChild(block);
             });
 
@@ -1068,12 +1152,12 @@
         }
 
         function checkAnswer(element, selectedValue) {
-            if (isLocked) return;
+            if (isLocked || Date.now() < blockClicksUntil) return;
 
             if (selectedValue === currentItem.b) {
                 isLocked = true;
-                const indexRaw = rawItems.findIndex(i => i.id === currentItem.id);
-                if (indexRaw !== -1) rawItems[indexRaw].status = 'correct';
+                const indexActive = activeItems.findIndex(i => i.id === currentItem.id);
+                if (indexActive !== -1) activeItems[indexActive].status = 'correct';
 
                 element.classList.add('status-correct');
                 completedCorrectly++;
@@ -1126,7 +1210,7 @@
             const listContainer = document.getElementById('results-list-container');
             listContainer.innerHTML = '';
 
-            rawItems.forEach(item => {
+            activeItems.forEach(item => {
                 const div = document.createElement('div');
                 if (item.status === 'correct') {
                     div.className = 'result-item correct';
@@ -1248,15 +1332,23 @@
 
             const docStyle = document.querySelector('style').innerHTML;
 
+            // Ensure clean start screen in exported HTML
+            const startClone = document.getElementById('screen-start').cloneNode(true);
+            startClone.classList.add('active');
+            const gameClone = document.getElementById('screen-game').cloneNode(true);
+            gameClone.classList.remove('active');
+            const resultsClone = document.getElementById('screen-results').cloneNode(true);
+            resultsClone.classList.remove('active');
+
             const standaloneHTML =
                 '<!DOCTYPE html>\n<html lang="es">\n<head>\n' +
                 '<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1.0">\n' +
                 '<title>Match - ' + exportConfig.displayTitle + '</title>\n' +
                 '<script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"><\/script>\n' +
                 '<style>' + docStyle + '</style>\n</head>\n<body>\n' +
-                document.getElementById('screen-start').outerHTML + '\n' +
-                document.getElementById('screen-game').outerHTML + '\n' +
-                document.getElementById('screen-results').outerHTML + '\n' +
+                startClone.outerHTML + '\n' +
+                gameClone.outerHTML + '\n' +
+                resultsClone.outerHTML + '\n' +
                 document.getElementById('popup-overlay').outerHTML + '\n' +
                 '<script>\n' + currentScript + '\n<\/script>\n</body>\n</html>';
 
